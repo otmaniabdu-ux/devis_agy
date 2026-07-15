@@ -1,0 +1,186 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { LayoutDashboard, FileText, Users, Hotel, Plane, Settings, Plus, Menu, X } from 'lucide-react'
+import { DashboardView } from '@/components/views/DashboardView'
+import { ListeDevisView } from '@/components/views/ListeDevisView'
+import { NouveauDevisView } from '@/components/views/NouveauDevisView'
+import { ClientsView } from '@/components/views/ClientsView'
+import { CataloguesView } from '@/components/views/CataloguesView'
+import { ParametresView } from '@/components/views/ParametresView'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+type View = 'dashboard' | 'liste-devis' | 'nouveau-devis' | 'clients' | 'catalogues' | 'parametres'
+
+const NAV: { id: View; label: string; icon: any }[] = [
+  { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
+  { id: 'liste-devis', label: 'Devis', icon: FileText },
+  { id: 'nouveau-devis', label: 'Nouveau devis', icon: Plus },
+  { id: 'clients', label: 'Clients', icon: Users },
+  { id: 'catalogues', label: 'Catalogues', icon: Hotel },
+  { id: 'parametres', label: 'Paramètres', icon: Settings },
+]
+
+export default function Home() {
+  const [view, setView] = useState<View>('dashboard')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [editDevisId, setEditDevisId] = useState<string | null>(null)
+  const [seeded, setSeeded] = useState<boolean | null>(null)
+
+  // Vérifie si la base a des données ; sinon seed automatiquement au premier lancement
+  const checkSeed = useCallback(async () => {
+    try {
+      const r = await fetch('/api/devis')
+      const d = await r.json()
+      if (Array.isArray(d) && d.length === 0) {
+        // pas de données → seed auto
+        await fetch('/api/seed', { method: 'POST' })
+        setSeeded(true)
+      } else {
+        setSeeded(true)
+      }
+    } catch {
+      setSeeded(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    checkSeed()
+  }, [checkSeed])
+
+  const navigate = (v: View, devisId?: string) => {
+    setEditDevisId(devisId ?? null)
+    setView(v)
+    setSidebarOpen(false)
+  }
+
+  if (seeded === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="inline-block w-10 h-10 border-2 border-brand-or border-t-transparent rounded-full animate-spin mb-3" />
+          <p className="text-sm text-muted-foreground">Initialisation de l'application…</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="min-h-screen flex bg-background">
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-sidebar text-sidebar-foreground transition-transform duration-300 flex flex-col',
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+        )}
+      >
+        {/* Brand */}
+        <div className="px-5 py-5 border-b border-sidebar-border">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-or to-brand-rouge flex items-center justify-center shadow-md">
+              <span className="text-sidebar font-bold text-lg" style={{ fontFamily: 'Georgia, serif' }}>E</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-bold text-sidebar-foreground truncate" style={{ fontFamily: 'Georgia, serif' }}>
+                El Mouhssinouen
+              </h1>
+              <p className="text-[10px] text-sidebar-foreground/60 truncate" dir="rtl">المحسنون للسياحة</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Nav */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto scrollbar-thin">
+          {NAV.map((item) => {
+            const Icon = item.icon
+            const active = view === item.id
+            return (
+              <button
+                key={item.id}
+                onClick={() => navigate(item.id)}
+                className={cn(
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all',
+                  active
+                    ? 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold shadow-sm'
+                    : 'text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+                )}
+              >
+                <Icon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{item.label}</span>
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-sidebar-border">
+          <p className="text-[10px] text-sidebar-foreground/50 leading-relaxed">
+            <span className="text-brand-or">●</span> Application locale — 100% hors-ligne<br />
+            Données stockées sur ce poste
+          </p>
+        </div>
+      </aside>
+
+      {/* Overlay mobile */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main */}
+      <main className="flex-1 min-w-0 flex flex-col">
+        {/* Header */}
+        <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm border-b border-border">
+          <div className="flex items-center justify-between px-4 lg:px-8 py-3">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-md hover:bg-muted"
+                aria-label="Menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+              <div>
+                <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: 'Georgia, serif' }}>
+                  {NAV.find((n) => n.id === view)?.label ?? 'Tableau de bord'}
+                </h2>
+                <p className="text-[11px] text-muted-foreground">
+                  {view === 'dashboard' && "Vue d'ensemble de l'activité Omra VIP"}
+                  {view === 'liste-devis' && 'Tous les devis créés'}
+                  {view === 'nouveau-devis' && (editDevisId ? 'Modifier un devis' : 'Créer un nouveau devis VIP')}
+                  {view === 'clients' && 'Gestion des clients'}
+                  {view === 'catalogues' && 'Hôtels et compagnies aériennes'}
+                  {view === 'parametres' && "Paramètres de l'agence et taux de change"}
+                </p>
+              </div>
+            </div>
+            {view !== 'nouveau-devis' && (
+              <Button
+                onClick={() => navigate('nouveau-devis')}
+                className="bg-brand-rouge hover:bg-brand-rouge/90 text-white gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Nouveau devis</span>
+              </Button>
+            )}
+          </div>
+        </header>
+
+        {/* Content */}
+        <div className="flex-1 p-4 lg:p-8 animate-fade-in">
+          {view === 'dashboard' && <DashboardView onNavigate={navigate} />}
+          {view === 'liste-devis' && <ListeDevisView onNavigate={navigate} />}
+          {view === 'nouveau-devis' && (
+            <NouveauDevisView editDevisId={editDevisId} onDone={() => navigate('liste-devis')} />
+          )}
+          {view === 'clients' && <ClientsView />}
+          {view === 'catalogues' && <CataloguesView />}
+          {view === 'parametres' && <ParametresView />}
+        </div>
+      </main>
+    </div>
+  )
+}
