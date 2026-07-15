@@ -1,0 +1,255 @@
+// El Mouhssinouen Tours — OmraVIP Quotes
+// Schéma basé sur PROMPT_AGENT_OmraVIP.md
+// Toute valeur monétaire est stockée en String (decimal TEXT) — jamais REAL/Float.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// --- Paramètres globaux de l'agence (singleton) ---
+model ParametresAgence {
+  id              String   @id @default("default")
+  nomFr           String   @default("El Mouhssinouen Tours")
+  nomAr           String   @default("المحسنون للسياحة")
+  sloganFr        String?
+  sloganAr        String?
+  adresse         String?
+  telephone       String?
+  email           String?
+  rc              String?  // Registre de commerce
+  if              String?  // Identifiant fiscal
+  art             String?  // Article d'imposition
+  capital         String?
+  logoPath        String?
+  primaryColor    String   @default("#CC1A1A")
+  darkColor       String   @default("#0A1628")
+  goldColor       String   @default("#C4A152")
+  royalColor      String   @default("#1B3A6B")
+  ivoryColor      String   @default("#F7F5F0")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// --- Taux de change par défaut (modifiables dans Paramètres) ---
+// À la création d'un devis, ces taux sont COPIÉS dans la ligne Devis (verrouillage).
+model TauxChange {
+  id        String   @id @default(cuid())
+  code      String   @unique  // SAR, USD, EUR
+  libelleFr String
+  libelleAr String
+  tauxDzd   String             // montant en DZD pour 1 unité, en string decimal
+  updatedAt DateTime @updatedAt
+}
+
+// --- Compteur de numérotation mensuel DEVIS-YYYY-MM-NNN ---
+model CompteurNumerotation {
+  cle             String   @id  // ex: "DEVIS-2026-07"
+  dernierNumero   Int      @default(0)
+  updatedAt       DateTime @updatedAt
+}
+
+// --- Clients ---
+model Client {
+  id           String   @id @default(cuid())
+  type         String   @default("particulier")  // particulier | societe
+  nom          String
+  prenom       String?
+  raisonSociale String?
+  telephone    String?
+  email        String?
+  adresse      String?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  devis        Devis[]
+}
+
+// --- Devis ---
+model Devis {
+  id              String   @id @default(cuid())
+  numero          String   @unique  // DEVIS-YYYY-MM-NNN
+  clientId        String
+  client          Client   @relation(fields: [clientId], references: [id])
+
+  // Dates du voyage
+  dateDepart      DateTime
+  dateRetour      DateTime
+
+  // Taux de change VERROUILLÉS à la création (jamais modifiés a posteriori)
+  tauxSarDzd      String   // ex: "35.50"
+  tauxUsdDzd      String
+  tauxEurDzd      String
+
+  // Visa
+  visaType        String   @default("omra_standard")  // omra_standard | touristique | hadj
+  visaPrixUnit    String   @default("0")              // par passager, en SAR
+  visaDevise      String   @default("SAR")
+
+  // Assurance médicale
+  assurancePrixUnit String @default("0")  // par passager, en SAR
+  assuranceDevise   String @default("SAR")
+
+  // Marge agence
+  margeType       String   @default("pourcentage")  // pourcentage | montant_fixe
+  margeValeur     String   @default("0")             // % ou montant DZD
+
+  // Totaux calculés (cout net DZD, prix vente DZD, marge DZD)
+  coutNetDzd      String   @default("0")
+  prixVenteDzd    String   @default("0")
+  margeMontantDzd String   @default("0")
+
+  statut          String   @default("brouillon")  // brouillon | envoye | accepte | refuse | archive
+  notesInternes   String?
+  notesClient     String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  passagers       Passager[]
+  segmentsVol     SegmentVol[]
+  hebergements    Hebergement[]
+  transferts      Transfert[]
+  trainsHaramain  TrainHaramain[]
+  prestationsVip  PrestationVIP[]
+
+  @@index([clientId])
+  @@index([numero])
+  @@index([statut])
+}
+
+// --- Passagers ---
+model Passager {
+  id              String   @id @default(cuid())
+  devisId         String
+  devis           Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  categorie       String   // adulte | enfant_avec_lit | enfant_sans_lit | bebe
+  nom             String
+  prenom          String
+  dateNaissance   DateTime?
+  passeportNumero String?
+  passeportExpiration DateTime?
+  createdAt       DateTime @default(now())
+  @@index([devisId])
+}
+
+// --- Segments de vol ---
+model SegmentVol {
+  id              String   @id @default(cuid())
+  devisId         String
+  devis           Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  ordre           Int      @default(0)
+  compagnieId     String?
+  compagnie       CatalogueCompagnie? @relation(fields: [compagnieId], references: [id])
+  origine         String
+  destination     String
+  dateVol         DateTime
+  classe          String   @default("economique")  // economique | affaires | premiere
+  prixAdulte      String   @default("0")  // devise source
+  prixEnfant      String   @default("0")
+  prixBebe        String   @default("0")
+  devise          String   @default("SAR")
+  createdAt       DateTime @default(now())
+  @@index([devisId])
+}
+
+// --- Hébergements ---
+model Hebergement {
+  id              String   @id @default(cuid())
+  devisId         String
+  devis           Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  ville           String   // Makkah | Medine
+  hotelId         String?
+  hotel           CatalogueHotel? @relation(fields: [hotelId], references: [id])
+  hotelNom        String   // snapshot
+  typeChambre     String   @default("double")  // single | double | triple | quadruple
+  formuleRepas    String   @default("demi_pension")  // petit_dejeuner | demi_pension | pension_complete
+  vue             String   @default("city")  // kaaba | haram | city
+  dateCheckin     DateTime
+  dateCheckout    DateTime
+  nbNuitees       Int      @default(0)  // calculé côté serveur
+  prixNuitChambre String   @default("0")  // prix par nuit par chambre, devise source
+  nbChambres      Int      @default(1)
+  devise          String   @default("SAR")
+  createdAt       DateTime @default(now())
+  @@index([devisId])
+}
+
+// --- Transferts terrestres ---
+model Transfert {
+  id              String   @id @default(cuid())
+  devisId         String
+  devis           Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  ordre           Int      @default(0)
+  trajet          String   // ex: "Aéroport Djeddah → Hôtel Makkah"
+  typeVehicule    String   // GMC_Yukon | Mercedes_Classe_E | Bus_VIP_prive
+  prix            String   @default("0")  // par véhicule
+  devise          String   @default("SAR")
+  obligatoire     Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  @@index([devisId])
+}
+
+// --- Train Haramain ---
+model TrainHaramain {
+  id              String   @id @default(cuid())
+  devisId         String
+  devis           Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  trajet          String   // ex: "Makkah → Médine"
+  classe          String   @default("economique")  // economique | business
+  dateTrain       DateTime
+  prixAdulte      String   @default("0")
+  prixEnfant      String   @default("0")
+  devise          String   @default("SAR")
+  createdAt       DateTime @default(now())
+  @@index([devisId])
+}
+
+// --- Prestations VIP libres ---
+model PrestationVIP {
+  id              String   @id @default(cuid())
+  devisId         String
+  devis           Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  type            String   // ziyarate | lounge | fast_track | bagagerie | zamzam | autre
+  descriptionFr   String
+  descriptionAr   String?
+  prix            String   @default("0")  // prix total prestation
+  devise          String   @default("SAR")
+  createdAt       DateTime @default(now())
+  @@index([devisId])
+}
+
+// --- Catalogue des hôtels ---
+model CatalogueHotel {
+  id              String   @id @default(cuid())
+  ville           String   // Makkah | Medine
+  nom             String
+  nomAr           String?
+  etoiles         Int      @default(4)
+  distanceHaram   Int?     // en mètres
+  prixSingleSar   String   @default("0")
+  prixDoubleSar   String   @default("0")
+  prixTripleSar   String   @default("0")
+  prixQuadrupleSar String  @default("0")
+  devise          String   @default("SAR")
+  actif           Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  hebergements    Hebergement[]
+}
+
+// --- Catalogue des compagnies aériennes ---
+model CatalogueCompagnie {
+  id              String   @id @default(cuid())
+  nom             String
+  codeIata        String?
+  logoPath        String?
+  actif           Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  segments        SegmentVol[]
+}
