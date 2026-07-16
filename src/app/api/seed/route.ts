@@ -2,11 +2,36 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
 // POST /api/seed — remplit la base avec des données de démonstration
+// Idempotent : supprime d'abord les anciennes données puis recrée
 export async function POST(_req: NextRequest) {
+  // 0. Nettoyage préalable (ordre inverse des dépendances)
+  await db.prestationVIP.deleteMany()
+  await db.trainHaramain.deleteMany()
+  await db.transfert.deleteMany()
+  await db.hebergement.deleteMany()
+  await db.segmentVol.deleteMany()
+  await db.passager.deleteMany()
+  await db.devis.deleteMany()
+  await db.client.deleteMany()
+  await db.catalogueHotel.deleteMany()
+  await db.catalogueCompagnie.deleteMany()
+  await db.compteurNumerotation.deleteMany()
   // 1. Paramètres agence
   await db.parametresAgence.upsert({
     where: { id: 'default' },
-    update: {},
+    update: {
+      nomFr: 'El Mouhssinouen Tours',
+      nomAr: 'المحسنون للسياحة',
+      sloganFr: 'Pèlerinage VIP — Hajj & Omra',
+      sloganAr: 'حج وعمرة VIP',
+      adresse: '14 Rue Didouche Mourad, Alger Centre, Algérie',
+      telephone: '+213 21 63 00 00',
+      email: 'contact@elmouhssinouen.dz',
+      rc: '16/00-1234567 B 23',
+      if: '000016312345678',
+      art: '16001234567',
+      capital: '1 000 000 DZD',
+    },
     create: {
       id: 'default',
       nomFr: 'El Mouhssinouen Tours',
@@ -46,8 +71,7 @@ export async function POST(_req: NextRequest) {
     { nom: 'Emirates', codeIata: 'EK' },
   ]
   for (const c of compagnies) {
-    const existing = await db.catalogueCompagnie.findFirst({ where: { nom: c.nom } })
-    if (!existing) await db.catalogueCompagnie.create({ data: c })
+    await db.catalogueCompagnie.create({ data: c })
   }
 
   // 4. Hôtels
@@ -63,8 +87,7 @@ export async function POST(_req: NextRequest) {
     { ville: 'Medine', nom: 'Dar Al Taqwa Hotel', nomAr: 'دار التقوى', etoiles: 5, distanceHaram: 30, prixSingleSar: '1500', prixDoubleSar: '1050', prixTripleSar: '900', prixQuadrupleSar: '820' },
   ]
   for (const h of hotels) {
-    const existing = await db.catalogueHotel.findFirst({ where: { nom: h.nom } })
-    if (!existing) await db.catalogueHotel.create({ data: { ...h, devise: 'SAR' } })
+    await db.catalogueHotel.create({ data: { ...h, devise: 'SAR' } })
   }
 
   // 5. Clients
@@ -76,9 +99,7 @@ export async function POST(_req: NextRequest) {
   ]
   const createdClients = []
   for (const c of clients) {
-    const existing = await db.client.findFirst({ where: { nom: c.nom, prenom: c.prenom ?? undefined } })
-    if (existing) createdClients.push(existing)
-    else createdClients.push(await db.client.create({ data: c as any }))
+    createdClients.push(await db.client.create({ data: c as any }))
   }
 
   // 6. Devis d'exemple (2 devis complets)
