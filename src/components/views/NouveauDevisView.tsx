@@ -54,6 +54,9 @@ interface DevisData {
   statut: string
   notesClient: string
   notesInternes: string
+  tauxSarDzd: string
+  tauxUsdDzd: string
+  tauxEurDzd: string
   passagers: any[]
   segmentsVol: any[]
   hebergements: any[]
@@ -81,6 +84,12 @@ export function NouveauDevisView({
     try {
       const cls = await api('/api/clients')
       setClients(cls)
+      // Récupère les taux de change par défaut depuis les paramètres
+      const paramsRes = await api('/api/parametres')
+      const defaultTaux: Record<string, string> = {}
+      for (const t of paramsRes.taux ?? []) {
+        defaultTaux[t.code] = t.tauxDzd
+      }
       if (editDevisId) {
         const d = await api(`/api/devis/${editDevisId}`)
         setDevis({
@@ -99,6 +108,9 @@ export function NouveauDevisView({
           statut: d.statut,
           notesClient: d.notesClient ?? '',
           notesInternes: d.notesInternes ?? '',
+          tauxSarDzd: d.tauxSarDzd,
+          tauxUsdDzd: d.tauxUsdDzd,
+          tauxEurDzd: d.tauxEurDzd,
           passagers: d.passagers.map((p: any) => ({
             ...p,
             dateNaissance: fmtDateInput(p.dateNaissance),
@@ -139,6 +151,10 @@ export function NouveauDevisView({
           statut: 'brouillon',
           notesClient: '',
           notesInternes: '',
+          // Taux par défaut depuis les paramètres — l'utilisateur peut les modifier dans l'étape Financier
+          tauxSarDzd: defaultTaux.SAR ?? '35.50',
+          tauxUsdDzd: defaultTaux.USD ?? '240.00',
+          tauxEurDzd: defaultTaux.EUR ?? '260.00',
           passagers: [],
           segmentsVol: [],
           hebergements: [],
@@ -185,6 +201,9 @@ export function NouveauDevisView({
         statut: devis.statut,
         notesClient: devis.notesClient || null,
         notesInternes: devis.notesInternes || null,
+        tauxSarDzd: devis.tauxSarDzd,
+        tauxUsdDzd: devis.tauxUsdDzd,
+        tauxEurDzd: devis.tauxEurDzd,
         passagers: devis.passagers.map((p) => ({
           categorie: p.categorie,
           nom: p.nom,

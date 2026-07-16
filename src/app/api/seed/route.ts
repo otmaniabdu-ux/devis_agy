@@ -221,5 +221,26 @@ export async function POST(_req: NextRequest) {
     },
   })
 
+  // 7. Synchronise les compteurs de numérotation avec les devis créés
+  const allDevis = await db.devis.findMany({ select: { numero: true } })
+  const parCle: Record<string, number> = {}
+  for (const d of allDevis) {
+    const match = d.numero.match(/^DEVIS-(\d{4})-(\d{2})-(\d+)$/)
+    if (match) {
+      const cle = `DEVIS-${match[1]}-${match[2]}`
+      const num = parseInt(match[3], 10)
+      if (!parCle[cle] || parCle[cle] < num) {
+        parCle[cle] = num
+      }
+    }
+  }
+  for (const [cle, maxNum] of Object.entries(parCle)) {
+    await db.compteurNumerotation.upsert({
+      where: { cle },
+      update: { dernierNumero: maxNum },
+      create: { cle, dernierNumero: maxNum },
+    })
+  }
+
   return NextResponse.json({ ok: true, message: 'Base seedée avec succès' })
 }

@@ -106,18 +106,58 @@ export function FinancierStep({ devis, setDevis, resultatCalcul }: Props) {
             />
           </div>
 
-          {/* Taux verrouillés (info) */}
-          <div className="p-3 bg-brand-or/5 border border-brand-or/20 rounded-md text-xs space-y-1">
-            <p className="font-semibold text-brand-bleu-nuit">Taux de change verrouillés</p>
-            <p className="text-muted-foreground">Ces taux sont figés à la création du devis et ne changeront pas.</p>
-            <div className="grid grid-cols-3 gap-2 mt-2 font-mono">
-              <div>1 SAR = ? DZD</div>
-              <div>1 USD = ? DZD</div>
-              <div>1 EUR = ? DZD</div>
+          {/* Taux de change éditables — verrouillés à la sauvegarde du devis */}
+          <div className="p-3 bg-brand-or/5 border border-brand-or/20 rounded-md text-xs space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="font-semibold text-brand-bleu-nuit">Taux de change du devis</p>
+              {devis.id && (
+                <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full font-medium">
+                  ⚠ Verrouillés — modifier avec précaution
+                </span>
+              )}
+              {!devis.id && (
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium">
+                  Éditables
+                </span>
+              )}
             </div>
-            <p className="text-[10px] text-muted-foreground mt-1 italic">
-              (Les taux sont automatiquement récupérés depuis les Paramètres à la sauvegarde du devis)
+            <p className="text-muted-foreground">
+              {devis.id
+                ? "Ce devis a déjà été créé. Modifier ces taux recalculera tous les montants."
+                : "Ces taux seront verrouillés à la création du devis et ne changeront plus."}
             </p>
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              <div className="space-y-1">
+                <Label className="text-[10px] text-muted-foreground">1 SAR =</Label>
+                <Input
+                  type="number" step="0.01"
+                  value={devis.tauxSarDzd ?? ''}
+                  onChange={(e) => update('tauxSarDzd', e.target.value)}
+                  className="h-8 font-mono text-xs"
+                />
+                <p className="text-[9px] text-muted-foreground">DZD</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] text-muted-foreground">1 USD =</Label>
+                <Input
+                  type="number" step="0.01"
+                  value={devis.tauxUsdDzd ?? ''}
+                  onChange={(e) => update('tauxUsdDzd', e.target.value)}
+                  className="h-8 font-mono text-xs"
+                />
+                <p className="text-[9px] text-muted-foreground">DZD</p>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] text-muted-foreground">1 EUR =</Label>
+                <Input
+                  type="number" step="0.01"
+                  value={devis.tauxEurDzd ?? ''}
+                  onChange={(e) => update('tauxEurDzd', e.target.value)}
+                  className="h-8 font-mono text-xs"
+                />
+                <p className="text-[9px] text-muted-foreground">DZD</p>
+              </div>
+            </div>
           </div>
 
           <div className="space-y-2">
@@ -155,7 +195,7 @@ export function FinancierStep({ devis, setDevis, resultatCalcul }: Props) {
               <p className="text-[10px] text-white/60 mt-0.5">
                 {devis.margeType === 'pourcentage' ? `${devis.margeValeur}%` : 'montant fixe'}
                 {Number(D(resultatCalcul.coutNetDzd)) > 0 && (
-                  <> • {Number(D(resultatCalcul.margeMontantDzd)).div(D(resultatCalcul.prixVenteDzd)).mul(100).toFixed(1)}% du CA</>
+                  <> • {(Number(D(resultatCalcul.margeMontantDzd)) / Number(D(resultatCalcul.prixVenteDzd)) * 100).toFixed(1)}% du CA</>
                 )}
               </p>
             </div>

@@ -199,14 +199,29 @@ export async function persisterTotaux(devisId: string, resultat: ResultatCalculD
   })
 }
 
-/** Attribue le prochain numéro de devis au format DEVIS-YYYY-MM-NNN. */
+/** Attribue le prochain numéro de devis au format DEVIS-YYYY-MM-NNN.
+ *  Robuste : si le numéro généré existe déjà (désynchronisation du compteur),
+ *  retry en incrémentant jusqu'à trouver un numéro libre.
+ */
 export async function attribuerNumeroDevis(date: Date = new Date()): Promise<string> {
   const cle = `DEVIS-${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
-  // upsert atomique
-  const compteur = await db.compteurNumerotation.upsert({
-    where: { cle },
-    update: { dernierNumero: { increment: 1 } },
-    create: { cle, dernierNumero: 1 },
-  })
-  return `${cle}-${String(compteur.dernierNumero).padStart(3, '0')}`
+
+  for (let attempt = 0; attempt < 50; attempt++) {
+    // upsert atomique
+    const compteur = await db.compteurNumerotation.upsert({
+      where: { cle },
+      update: { dernierNumero: { increment: 1 } },
+      create: { cle, dernierNumero: 1 },
+    })
+    const numero = `${cle}-${String(compteur.dernierNumero).padStart(3, '0')}`
+
+    // Vérifie si le numéro existe déjà (sécurité anti-désynchronisation)
+    const existing = await db.devis.findUnique({ where: { numero }, select: { id: true } })
+    if (!existing) {
+      return numero
+    }
+    // Sinon, on boucle et incrémente à nouveau
+  }
+
+  throw new Error(`Impossible d'attribuer un numéro de devis unique après 50 tentatives`)
 }
