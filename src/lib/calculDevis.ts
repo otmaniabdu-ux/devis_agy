@@ -7,7 +7,7 @@ import { db } from '@/lib/db'
 import {
   D, convertirEnDzd, round2, calculerPrixVente, type Money,
 } from '@/lib/money'
-import { calculerNbNuitees, CATEGORIES_PASSAGER } from '@/lib/business'
+import { calculerNbNuitees } from '@/lib/business'
 
 export interface LigneCout {
   poste: string
