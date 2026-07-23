@@ -308,12 +308,19 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
         {/* Récapitulatif financier — prix de vente par ligne (marge incluse) */}
         <Text style={styles.sectionTitle}>Récapitulatif — Prix de vente par poste (marge incluse)</Text>
         <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderCell, { flex: 2.5 }]}>Poste</Text>
-          <Text style={[styles.tableHeaderCell, { flex: 4 }]}>Description</Text>
-          <Text style={[styles.tableHeaderCell, { flex: 2 }]}>Devise source</Text>
-          <Text style={[styles.tableHeaderCell, { flex: 2.5, textAlign: 'right' }]}>Prix vente DZD</Text>
+          <Text style={[styles.tableHeaderCell, { flex: 3 }]}>Poste</Text>
+          <Text style={[styles.tableHeaderCell, { flex: 6 }]}>Description</Text>
+          {(!isClient) && <Text style={[styles.tableHeaderCell, { flex: 2.5 }]}>Devise source</Text>}
+          <Text style={[styles.tableHeaderCell, { flex: 3, textAlign: 'right' }]}>Prix vente DZD</Text>
         </View>
-        {recapLignes}
+        {resultat ? resultat.lignes.map((l, i) => (
+          <View key={`l${i}`} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt} wrap={false}>
+            <Text style={[styles.tableCell, { flex: 3 }]}>{l.poste}</Text>
+            <Text style={[styles.tableCell, { flex: 6 }]}>{l.description}</Text>
+            {(!isClient) && <Text style={[styles.tableCell, { flex: 2.5 }]}>{fmtPdfMontant(l.montantSource)} {l.deviseSource}</Text>}
+            <Text style={[styles.tableCell, { flex: 3, textAlign: 'right' }]}>{fmtPdfMontant(l.prixVenteDzd)}</Text>
+          </View>
+        )) : null}
 
         {/* Total */}
         <View style={styles.totalRow}>
