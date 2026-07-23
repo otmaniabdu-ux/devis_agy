@@ -43,7 +43,7 @@ export function VolsStep({ devis, setDevis }: Props) {
         classe: 'economique',
         compagnieId: '',
         prixAdulte: '0', prixEnfant: '0', prixBebe: '0',
-        devise: 'USD',
+        devise: 'DZD',
       }],
     }))
   }
