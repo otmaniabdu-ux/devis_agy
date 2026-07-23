@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <!-- Cercle extérieur -->
+  <circle cx="100" cy="100" r="95" fill="none" stroke="#C4A152" stroke-width="2"/>
+  <!-- Cercle intérieur -->
+  <circle cx="100" cy="100" r="88" fill="none" stroke="#CC1A1A" stroke-width="1"/>
+  <!-- Kaaba stylisée -->
+  <rect x="70" y="60" width="60" height="60" fill="#0A1628" rx="2"/>
+  <!-- Bande dorée Kaaba -->
+  <rect x="70" y="85" width="60" height="6" fill="#C4A152"/>
+  <!-- Étoile -->
+  <polygon points="100,30 103,40 113,40 105,46 108,56 100,50 92,56 95,46 87,40 97,40" fill="#C4A152"/>
+  <!-- Texte -->
+  <text x="100" y="145" text-anchor="middle" font-family="Georgia, serif" font-size="11" font-weight="bold" fill="#CC1A1A">EL MOUHSSINOUN</text>
+  <text x="100" y="158" text-anchor="middle" font-family="Georgia, serif" font-size="8" fill="#0A1628">TOURS</text>
+  <text x="100" y="175" text-anchor="middle" font-family="Georgia, serif" font-size="7" fill="#C4A152" font-style="italic">Hajj &amp; Omra VIP</text>
+</svg>
