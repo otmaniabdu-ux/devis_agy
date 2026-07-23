@@ -1,6 +1,6 @@
 'use client'
 
-import { Plus, Trash2, AlertTriangle, Users } from 'lucide-react'
+import { Plus, Trash2, AlertTriangle, Users, Minus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -18,17 +18,35 @@ export function PassagersStep({ devis, setDevis, clients }: Props) {
     setDevis((d) => ({ ...d, [field]: value }))
   }
 
-  const addPassager = () => {
+  // Compte les passagers par catégorie
+  const counts: Record<string, number> = { adulte: 0, enfant_avec_lit: 0, enfant_sans_lit: 0, bebe: 0 }
+  for (const p of devis.passagers) {
+    counts[p.categorie] = (counts[p.categorie] ?? 0) + 1
+  }
+
+  // Ajoute un passager d'une catégorie donnée (sans info détaillée)
+  const addByCategory = (categorie: string) => {
     setDevis((d) => ({
       ...d,
       passagers: [...d.passagers, {
-        categorie: 'adulte',
-        nom: '', prenom: '',
+        categorie,
+        nom: '',
+        prenom: '',
         dateNaissance: '',
         passeportNumero: '',
         passeportExpiration: '',
       }],
     }))
+  }
+
+  // Retire le dernier passager d'une catégorie
+  const removeByCategory = (categorie: string) => {
+    setDevis((d) => {
+      const idx = [...d.passagers].reverse().findIndex((p) => p.categorie === categorie)
+      if (idx === -1) return d
+      const realIdx = d.passagers.length - 1 - idx
+      return { ...d, passagers: d.passagers.filter((_: any, i: number) => i !== realIdx) }
+    })
   }
 
   const updatePassager = (idx: number, field: string, value: any) => {
@@ -41,11 +59,6 @@ export function PassagersStep({ devis, setDevis, clients }: Props) {
   const removePassager = (idx: number) => {
     setDevis((d) => ({ ...d, passagers: d.passagers.filter((_: any, i: number) => i !== idx) }))
   }
-
-  const counts = devis.passagers.reduce((acc: any, p: any) => {
-    acc[p.categorie] = (acc[p.categorie] ?? 0) + 1
-    return acc
-  }, {} as Record<string, number>)
 
   return (
     <div className="space-y-6">
@@ -76,38 +89,71 @@ export function PassagersStep({ devis, setDevis, clients }: Props) {
         </div>
       </div>
 
-      {/* Répartition passagers */}
-      <div className="flex flex-wrap gap-2">
-        {Object.entries(CATEGORIES_PASSAGER).map(([k, v]) => (
-          <div key={k} className="px-3 py-1.5 bg-muted/60 rounded-full text-xs">
-            <span className="text-muted-foreground">{v.label}: </span>
-            <span className="font-bold">{counts[k] ?? 0}</span>
-          </div>
-        ))}
+      {/* Steppers par catégorie */}
+      <div>
+        <h3 className="font-semibold text-sm flex items-center gap-2 mb-3">
+          <Users className="w-4 h-4" /> Nombre de passagers par catégorie
+        </h3>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {Object.entries(CATEGORIES_PASSAGER).map(([key, cat]) => (
+            <div
+              key={key}
+              className="border border-border rounded-lg p-4 bg-muted/20 hover:border-brand-or transition-colors"
+            >
+              <div className="text-center mb-3">
+                <p className="font-semibold text-sm">{cat.label}</p>
+                <p className="text-[10px] text-muted-foreground" dir="rtl">{cat.labelAr}</p>
+              </div>
+              <div className="flex items-center justify-center gap-3">
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="h-9 w-9 rounded-full"
+                  onClick={() => removeByCategory(key)}
+                  disabled={counts[key] === 0}
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <span className="text-2xl font-bold tabular-nums min-w-[2ch] text-center" style={{ fontFamily: 'Georgia, serif' }}>
+                  {counts[key] ?? 0}
+                </span>
+                <Button
+                  size="icon"
+                  className="h-9 w-9 rounded-full bg-brand-rouge hover:bg-brand-rouge/90"
+                  onClick={() => addByCategory(key)}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
-      {/* Liste passagers */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-sm flex items-center gap-2">
-            <Users className="w-4 h-4" /> Liste des passagers ({devis.passagers.length})
-          </h3>
-          <Button size="sm" onClick={addPassager} className="gap-1">
-            <Plus className="w-3.5 h-3.5" /> Ajouter
-          </Button>
-        </div>
-
-        {devis.passagers.length === 0 ? (
-          <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
-            <Users className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
-            <p className="text-sm text-muted-foreground">Aucun passager. Cliquez sur « Ajouter ».</p>
+      {/* Liste détaillée (infos optionnelles) */}
+      {devis.passagers.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <Users className="w-4 h-4" /> Détail des passagers ({devis.passagers.length})
+            </h3>
+            <p className="text-xs text-muted-foreground italic">
+              Les champs ci-dessous sont optionnels — complétés uniquement si disponibles
+            </p>
           </div>
-        ) : (
+
           <div className="space-y-3">
             {devis.passagers.map((p: any, i: number) => {
               const alerte = p.passeportExpiration && verifierAlertePasseport(p.passeportExpiration, devis.dateRetour).alerte
+              const catLabel = CATEGORIES_PASSAGER[p.categorie as keyof typeof CATEGORIES_PASSAGER]?.label ?? p.categorie
               return (
                 <div key={i} className="border border-border rounded-lg p-4 bg-muted/20">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-bleu-nuit text-white font-medium">
+                      {i + 1}
+                    </span>
+                    <span className="text-xs font-semibold text-muted-foreground">{catLabel}</span>
+                  </div>
                   <div className="grid sm:grid-cols-12 gap-3 items-end">
                     <div className="sm:col-span-2 space-y-1.5">
                       <Label className="text-xs">Catégorie</Label>
@@ -121,20 +167,20 @@ export function PassagersStep({ devis, setDevis, clients }: Props) {
                       </Select>
                     </div>
                     <div className="sm:col-span-3 space-y-1.5">
-                      <Label className="text-xs">Prénom</Label>
-                      <Input value={p.prenom} onChange={(e) => updatePassager(i, 'prenom', e.target.value)} className="h-9" />
+                      <Label className="text-xs">Prénom (optionnel)</Label>
+                      <Input value={p.prenom} onChange={(e) => updatePassager(i, 'prenom', e.target.value)} className="h-9" placeholder="—" />
                     </div>
                     <div className="sm:col-span-3 space-y-1.5">
-                      <Label className="text-xs">Nom</Label>
-                      <Input value={p.nom} onChange={(e) => updatePassager(i, 'nom', e.target.value)} className="h-9" />
+                      <Label className="text-xs">Nom (optionnel)</Label>
+                      <Input value={p.nom} onChange={(e) => updatePassager(i, 'nom', e.target.value)} className="h-9" placeholder="—" />
                     </div>
                     <div className="sm:col-span-2 space-y-1.5">
-                      <Label className="text-xs">Naissance</Label>
+                      <Label className="text-xs">Naissance (optionnel)</Label>
                       <Input type="date" value={p.dateNaissance} onChange={(e) => updatePassager(i, 'dateNaissance', e.target.value)} className="h-9" />
                     </div>
                     <div className="sm:col-span-2 space-y-1.5">
-                      <Label className="text-xs">N° passeport</Label>
-                      <Input value={p.passeportNumero} onChange={(e) => updatePassager(i, 'passeportNumero', e.target.value)} className="h-9" />
+                      <Label className="text-xs">N° passeport (optionnel)</Label>
+                      <Input value={p.passeportNumero} onChange={(e) => updatePassager(i, 'passeportNumero', e.target.value)} className="h-9" placeholder="—" />
                     </div>
                     <div className="sm:col-span-2 space-y-1.5">
                       <Label className="text-xs flex items-center gap-1">
@@ -160,15 +206,24 @@ export function PassagersStep({ devis, setDevis, clients }: Props) {
                   {alerte && (
                     <p className="text-[11px] text-red-600 mt-2 flex items-center gap-1">
                       <AlertTriangle className="w-3 h-3" />
-                      Passeport expire moins de 6 mois après le retour — alerte à signaler au client.
+                      Passeport expire moins de 6 mois après le retour.
                     </p>
                   )}
                 </div>
               )
             })}
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {devis.passagers.length === 0 && (
+        <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
+          <Users className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
+          <p className="text-sm text-muted-foreground">
+            Utilisez les boutons + ci-dessus pour ajouter des passagers.
+          </p>
+        </div>
+      )}
     </div>
   )
 }

@@ -25,7 +25,7 @@ export function safeDate(v: any): Date | null {
 // ============ Filtres lignes vides ============
 
 const isEmpty = {
-  passager: (p: any) => !p.nom && !p.prenom,
+  passager: (p: any) => !p.categorie && !p.nom && !p.prenom,
   segmentVol: (s: any) => !s.origine && !s.destination && !s.dateVol,
   hebergement: (h: any) => !h.hotelNom && !h.dateCheckin && !h.dateCheckout,
   transfert: (t: any) => !t.trajet,
@@ -139,12 +139,12 @@ export async function buildDevisCreateData(body: any) {
   const numero = await attribuerNumeroDevis(body.dateDepart ? safeDate(body.dateDepart) ?? new Date() : new Date())
 
   // Filtre les lignes vides
-  const passagers = (body.passagers ?? []).filter((p: any) => !isEmpty.passager(p)).map(mapPassager)
+  const passagers = (body.passagers ?? []).filter((p: any) => !isEmpty.passager(p)).map((p: any) => mapPassager(p))
   const segmentsVol = (body.segmentsVol ?? []).filter((s: any) => !isEmpty.segmentVol(s)).map((s: any, i: number) => mapSegmentVol(s, undefined, i))
-  const hebergements = (body.hebergements ?? []).filter((h: any) => !isEmpty.hebergement(h)).map(mapHebergement)
+  const hebergements = (body.hebergements ?? []).filter((h: any) => !isEmpty.hebergement(h)).map((h: any) => mapHebergement(h))
   const transferts = (body.transferts ?? []).filter((t: any) => !isEmpty.transfert(t)).map((t: any, i: number) => mapTransfert(t, undefined, i))
-  const trainsHaramain = (body.trainsHaramain ?? []).filter((t: any) => !isEmpty.train(t)).map(mapTrain)
-  const prestationsVip = (body.prestationsVip ?? []).filter((p: any) => !isEmpty.prestation(p)).map(mapPrestation)
+  const trainsHaramain = (body.trainsHaramain ?? []).filter((t: any) => !isEmpty.train(t)).map((t: any) => mapTrain(t))
+  const prestationsVip = (body.prestationsVip ?? []).filter((p: any) => !isEmpty.prestation(p)).map((p: any) => mapPrestation(p))
 
   return {
     numero,

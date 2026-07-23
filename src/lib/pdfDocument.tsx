@@ -225,7 +225,9 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
         </View>
         {devis.passagers.map((pa, i) => (
           <View key={`p${i}`} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt} wrap={false}>
-            <Text style={[styles.tableCell, { flex: 3 }]}>{pa.prenom} {pa.nom}</Text>
+            <Text style={[styles.tableCell, { flex: 3 }]}>
+              {pa.prenom || pa.nom ? `${pa.prenom} ${pa.nom}`.trim() : `Passager ${i + 1}`}
+            </Text>
             <Text style={[styles.tableCell, { flex: 2 }]}>{labFr(CATEGORIES_PASSAGER, pa.categorie)}</Text>
             <Text style={[styles.tableCell, { flex: 2 }]}>{pa.passeportNumero ?? '—'}</Text>
             <Text style={[styles.tableCell, { flex: 2 }]}>{pa.passeportExpiration ? formatDate(pa.passeportExpiration) : '—'}</Text>

@@ -116,8 +116,9 @@ export function NouveauDevisView({
             dateNaissance: fmtDateInput(p.dateNaissance),
             passeportExpiration: fmtDateInput(p.passeportExpiration),
           })),
-          segmentsVol: d.segmentsVol.map((s: any) => ({
+          segmentsVol: d.segmentsVol.map((s: any, idx: number) => ({
             ...s,
+            typeVol: s.typeVol || (idx === 0 ? 'aller' : 'retour'),
             dateVol: fmtDateInput(s.dateVol) + 'T' + new Date(s.dateVol).toTimeString().slice(0, 5),
           })),
           hebergements: d.hebergements.map((h: any) => ({
