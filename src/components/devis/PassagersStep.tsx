@@ -168,19 +168,19 @@ export function PassagersStep({ devis, setDevis, clients }: Props) {
                     </div>
                     <div className="sm:col-span-3 space-y-1.5">
                       <Label className="text-xs">Prénom (optionnel)</Label>
-                      <Input value={p.prenom} onChange={(e) => updatePassager(i, 'prenom', e.target.value)} className="h-9" placeholder="—" />
+                      <Input value={p.prenom ?? ''} onChange={(e) => updatePassager(i, 'prenom', e.target.value)} className="h-9" placeholder="—" />
                     </div>
                     <div className="sm:col-span-3 space-y-1.5">
                       <Label className="text-xs">Nom (optionnel)</Label>
-                      <Input value={p.nom} onChange={(e) => updatePassager(i, 'nom', e.target.value)} className="h-9" placeholder="—" />
+                      <Input value={p.nom ?? ''} onChange={(e) => updatePassager(i, 'nom', e.target.value)} className="h-9" placeholder="—" />
                     </div>
                     <div className="sm:col-span-2 space-y-1.5">
                       <Label className="text-xs">Naissance (optionnel)</Label>
-                      <Input type="date" value={p.dateNaissance} onChange={(e) => updatePassager(i, 'dateNaissance', e.target.value)} className="h-9" />
+                      <Input type="date" value={p.dateNaissance ?? ''} onChange={(e) => updatePassager(i, 'dateNaissance', e.target.value)} className="h-9" />
                     </div>
                     <div className="sm:col-span-2 space-y-1.5">
                       <Label className="text-xs">N° passeport (optionnel)</Label>
-                      <Input value={p.passeportNumero} onChange={(e) => updatePassager(i, 'passeportNumero', e.target.value)} className="h-9" placeholder="—" />
+                      <Input value={p.passeportNumero ?? ''} onChange={(e) => updatePassager(i, 'passeportNumero', e.target.value)} className="h-9" placeholder="—" />
                     </div>
                     <div className="sm:col-span-2 space-y-1.5">
                       <Label className="text-xs flex items-center gap-1">
@@ -189,7 +189,7 @@ export function PassagersStep({ devis, setDevis, clients }: Props) {
                       </Label>
                       <Input
                         type="date"
-                        value={p.passeportExpiration}
+                        value={p.passeportExpiration ?? ''}
                         onChange={(e) => updatePassager(i, 'passeportExpiration', e.target.value)}
                         className={`h-9 ${alerte ? 'border-red-500 bg-red-50' : ''}`}
                       />

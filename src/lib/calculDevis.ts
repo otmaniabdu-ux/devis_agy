@@ -12,7 +12,8 @@ import { calculerNbNuitees } from '@/lib/business'
 export interface LigneCout {
   poste: string
   description: string
-  montantDzd: Money
+  montantDzd: Money           // coût net en DZD
+  prixVenteDzd: Money          // prix de vente en DZD (marge incluse)
   deviseSource: string
   montantSource: Money
 }
@@ -170,17 +171,37 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
   const coutNet = lignes.reduce<Decimal>((acc, l) => acc.plus(D(l.montantDzd)), new Decimal(0))
   const coutNetStr = round2(coutNet)
 
-  // Marge + prix de vente
+  // Marge + prix de vente global
   const { prixVente, margeMontant } = calculerPrixVente(
     coutNetStr,
     devis.margeType as 'pourcentage' | 'montant_fixe',
     devis.margeValeur,
   )
 
+  // Applique la marge à chaque ligne pour que la somme des prix de vente par ligne = prix de vente total
+  // Pour une marge en pourcentage : prixVente_ligne = montantDzd * (1 + marge/100)
+  // Pour une marge en montant fixe : on distribue proportionnellement au coût net
+  const margeType = devis.margeType as 'pourcentage' | 'montant_fixe'
+  const margeVal = D(devis.margeValeur)
+  for (const l of lignes) {
+    let pvLigne: Decimal
+    if (margeType === 'pourcentage') {
+      pvLigne = D(l.montantDzd).mul(new Decimal(1).plus(margeVal.div(100)))
+    } else {
+      // montant_fixe : distribution proportionnelle
+      if (coutNet.gt(0)) {
+        pvLigne = D(l.montantDzd).plus(margeMontant.mul(D(l.montantDzd)).div(coutNet))
+      } else {
+        pvLigne = D(l.montantDzd)
+      }
+    }
+    l.prixVenteDzd = round2(pvLigne)
+  }
+
   return {
     lignes,
     coutNetDzd: coutNetStr,
-    margeType: devis.margeType as 'pourcentage' | 'montant_fixe',
+    margeType,
     margeValeur: devis.margeValeur,
     margeMontantDzd: round2(margeMontant),
     prixVenteDzd: round2(prixVente),

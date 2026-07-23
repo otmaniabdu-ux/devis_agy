@@ -29,12 +29,27 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const resultat = await recalculerDevis(id)
   await persisterTotaux(id, resultat)
 
+  // Re-fetch le devis avec les totaux à jour
+  const devisUpdated = await db.devis.findUnique({
+    where: { id },
+    include: {
+      client: true,
+      passagers: true,
+      segmentsVol: { include: { compagnie: true } },
+      hebergements: { include: { hotel: true } },
+      transferts: true,
+      trainsHaramain: true,
+      prestationsVip: true,
+    },
+  })
+  if (!devisUpdated) return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 })
+
   const parametres = await db.parametresAgence.findUnique({ where: { id: 'default' } })
 
   const devisForPdf: DevisForPdf = {
-    ...devis,
-    dateDepart: devis.dateDepart.toISOString(),
-    dateRetour: devis.dateRetour.toISOString(),
+    ...devisUpdated,
+    dateDepart: devisUpdated.dateDepart.toISOString(),
+    dateRetour: devisUpdated.dateRetour.toISOString(),
     parametres: parametres ?? undefined,
     _resultatCalcul: resultat,
   } as DevisForPdf

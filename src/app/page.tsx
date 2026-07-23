@@ -67,7 +67,21 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="min-h-screen flex bg-background relative">
+      {/* Watermark logo en fond */}
+      <div
+        className="fixed inset-0 pointer-events-none flex items-center justify-center z-0"
+        style={{ opacity: 0.03 }}
+        aria-hidden
+      >
+        <img
+          src="/logo-agence.svg"
+          alt=""
+          className="w-[600px] h-[600px]"
+          style={{ filter: 'grayscale(20%)' }}
+        />
+      </div>
+
       {/* Sidebar */}
       <aside
         className={cn(
@@ -131,7 +145,7 @@ export default function Home() {
       )}
 
       {/* Main */}
-      <main className="flex-1 min-w-0 flex flex-col">
+      <main className="flex-1 min-w-0 flex flex-col relative z-10">
         {/* Header */}
         <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-sm border-b border-border">
           <div className="flex items-center justify-between px-4 lg:px-8 py-3">
