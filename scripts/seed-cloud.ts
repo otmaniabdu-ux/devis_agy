@@ -1,14 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { db } from '../src/lib/db'
 
-// POST /api/seed — remplit la base avec des données de démonstration
-// Idempotent : supprime d'abord les anciennes données puis recrée
-export async function GET(req: NextRequest) {
-  return POST(req)
-}
+async function seedCloud() {
+  console.log('🌱 Démarrage du remplissage de la base PostgreSQL Supabase...')
 
-export async function POST(_req: NextRequest) {
-  // 0. Nettoyage préalable (ordre inverse des dépendances)
+  // 0. Nettoyage
   await db.prestationVIP.deleteMany()
   await db.trainHaramain.deleteMany()
   await db.transfert.deleteMany()
@@ -20,6 +15,7 @@ export async function POST(_req: NextRequest) {
   await db.catalogueHotel.deleteMany()
   await db.catalogueCompagnie.deleteMany()
   await db.compteurNumerotation.deleteMany()
+
   // 1. Paramètres agence
   await db.parametresAgence.upsert({
     where: { id: 'default' },
@@ -66,7 +62,7 @@ export async function POST(_req: NextRequest) {
     })
   }
 
-  // 3. Compagnies aériennes (qui exercent depuis l'Algérie vers l'Arabie Saoudite)
+  // 3. Compagnies aériennes
   const compagnies = [
     { nom: 'Air Algérie', codeIata: 'AH' },
     { nom: 'Saudi Arabian Airlines (Saudia)', codeIata: 'SV' },
@@ -84,9 +80,9 @@ export async function POST(_req: NextRequest) {
     await db.catalogueCompagnie.create({ data: c })
   }
 
-  // 4. Hôtels (20 Hôtels 4* et 5* à Makkah et Médine)
+  // 4. Hôtels
   const hotels = [
-    // --- MAKKAH (10 Hôtels 4* et 5*) ---
+    // MAKKAH
     { ville: 'Makkah', nom: 'Swissôtel Al Maqam', nomAr: 'سويس أوتيل المقام', etoiles: 5, distanceHaram: 50, prixSingleSar: '1200', prixDoubleSar: '850', prixTripleSar: '750', prixQuadrupleSar: '700' },
     { ville: 'Makkah', nom: 'Fairmont Clock Tower', nomAr: 'فيرمونت برج الساعة', etoiles: 5, distanceHaram: 30, prixSingleSar: '2500', prixDoubleSar: '1800', prixTripleSar: '1500', prixQuadrupleSar: '1300' },
     { ville: 'Makkah', nom: 'Hilton Suites Makkah', nomAr: 'هيلتون سويتس مكة', etoiles: 5, distanceHaram: 100, prixSingleSar: '1400', prixDoubleSar: '950', prixTripleSar: '820', prixQuadrupleSar: '760' },
@@ -98,7 +94,7 @@ export async function POST(_req: NextRequest) {
     { ville: 'Makkah', nom: 'Voco Makkah (IHG Hotel)', nomAr: 'فوكو مكة', etoiles: 4, distanceHaram: 900, prixSingleSar: '550', prixDoubleSar: '400', prixTripleSar: '350', prixQuadrupleSar: '310' },
     { ville: 'Makkah', nom: 'Park Inn by Radisson Makkah Al Naseem', nomAr: 'بارك إن باي راديسون مكة النسيم', etoiles: 4, distanceHaram: 800, prixSingleSar: '480', prixDoubleSar: '360', prixTripleSar: '310', prixQuadrupleSar: '280' },
 
-    // --- MEDINE (10 Hôtels 4* et 5*) ---
+    // MEDINE
     { ville: 'Medine', nom: 'The Oberoi Madina', nomAr: 'أوبروي المدينة', etoiles: 5, distanceHaram: 80, prixSingleSar: '1800', prixDoubleSar: '1300', prixTripleSar: '1100', prixQuadrupleSar: '980' },
     { ville: 'Medine', nom: 'Anwar Al Madinah Mövenpick', nomAr: 'أنوار المدينة موفنبيك', etoiles: 5, distanceHaram: 50, prixSingleSar: '1100', prixDoubleSar: '780', prixTripleSar: '680', prixQuadrupleSar: '620' },
     { ville: 'Medine', nom: 'Dar Al Taqwa Hotel', nomAr: 'دار التقوى', etoiles: 5, distanceHaram: 30, prixSingleSar: '1500', prixDoubleSar: '1050', prixTripleSar: '900', prixQuadrupleSar: '820' },
@@ -126,24 +122,29 @@ export async function POST(_req: NextRequest) {
     createdClients.push(await db.client.create({ data: c as any }))
   }
 
-  // 6. Devis d'exemple (2 devis complets)
-  const dateDepart1 = new Date('2026-09-15')
-  const dateRetour1 = new Date('2026-09-29')
+  // 6. Devis de démonstration
+  const svComp = await db.catalogueCompagnie.findFirst({ where: { codeIata: 'SV' } })
+  const qrComp = await db.catalogueCompagnie.findFirst({ where: { codeIata: 'QR' } })
+  const makkahHotel = await db.catalogueHotel.findFirst({ where: { nom: 'Swissôtel Al Maqam' } })
+  const medineHotel = await db.catalogueHotel.findFirst({ where: { nom: 'Anwar Al Madinah Mövenpick' } })
+  const fairmontHotel = await db.catalogueHotel.findFirst({ where: { nom: 'Fairmont Clock Tower' } })
 
   await db.devis.create({
     data: {
       numero: 'DEVIS-2026-09-001',
       clientId: createdClients[0].id,
-      dateDepart: dateDepart1,
-      dateRetour: dateRetour1,
+      dateDepart: new Date('2026-09-15'),
+      dateRetour: new Date('2026-09-29'),
       tauxSarDzd: '35.50',
       tauxUsdDzd: '240.00',
       tauxEurDzd: '260.00',
       visaType: 'omra_standard',
       visaPrixUnit: '450',
       visaDevise: 'SAR',
-      assurancePrixUnit: '80',
+      assurancePrixUnit: '0',
       assuranceDevise: 'SAR',
+      fraisOnpoPrixUnit: '5000',
+      fraisOnpoDevise: 'DZD',
       margeType: 'pourcentage',
       margeValeur: '15',
       statut: 'brouillon',
@@ -158,14 +159,28 @@ export async function POST(_req: NextRequest) {
       },
       segmentsVol: {
         create: [
-          { origine: 'Alger (ALG)', destination: 'Médine (MED)', dateVol: new Date('2026-09-15T08:00:00'), classe: 'economique', compagnieId: (await db.catalogueCompagnie.findFirst({ where: { codeIata: 'SV' } }))!.id, prixAdulte: '850', prixEnfant: '650', prixBebe: '100', devise: 'USD', ordre: 0 },
-          { origine: 'Djeddah (JED)', destination: 'Alger (ALG)', dateVol: new Date('2026-09-29T16:00:00'), classe: 'economique', compagnieId: (await db.catalogueCompagnie.findFirst({ where: { codeIata: 'SV' } }))!.id, prixAdulte: '780', prixEnfant: '600', prixBebe: '90', devise: 'USD', ordre: 1 },
+          {
+            origine: 'Alger (ALG)',
+            destination: 'Médine (MED)',
+            dateVol: new Date('2026-09-15T08:00:00'),
+            classe: 'economique',
+            origineRetour: 'Djeddah (JED)',
+            destinationRetour: 'Alger (ALG)',
+            dateVolRetour: new Date('2026-09-29T16:00:00'),
+            classeRetour: 'economique',
+            compagnieId: svComp?.id,
+            prixAdulte: '850',
+            prixEnfant: '650',
+            prixBebe: '100',
+            devise: 'USD',
+            ordre: 0,
+          },
         ],
       },
       hebergements: {
         create: [
-          { ville: 'Medine', hotelId: (await db.catalogueHotel.findFirst({ where: { nom: 'Anwar Al Madinah Mövenpick' } }))!.id, hotelNom: 'Anwar Al Madinah Mövenpick', typeChambre: 'quadruple', formuleRepas: 'demi_pension', vue: 'haram', dateCheckin: new Date('2026-09-15'), dateCheckout: new Date('2026-09-20'), nbNuitees: 5, nbChambres: 1, prixNuitChambre: '780', devise: 'SAR' },
-          { ville: 'Makkah', hotelId: (await db.catalogueHotel.findFirst({ where: { nom: 'Swissôtel Al Maqam' } }))!.id, hotelNom: 'Swissôtel Al Maqam', typeChambre: 'quadruple', formuleRepas: 'demi_pension', vue: 'haram', dateCheckin: new Date('2026-09-20'), dateCheckout: new Date('2026-09-29'), nbNuitees: 9, nbChambres: 1, prixNuitChambre: '850', devise: 'SAR' },
+          { ville: 'Medine', hotelId: medineHotel?.id, hotelNom: 'Anwar Al Madinah Mövenpick', typeChambre: 'quadruple', formuleRepas: 'demi_pension', vue: 'haram', dateCheckin: new Date('2026-09-15'), dateCheckout: new Date('2026-09-20'), nbNuitees: 5, nbChambres: 1, prixNuitChambre: '780', devise: 'SAR' },
+          { ville: 'Makkah', hotelId: makkahHotel?.id, hotelNom: 'Swissôtel Al Maqam', typeChambre: 'quadruple', formuleRepas: 'demi_pension', vue: 'haram', dateCheckin: new Date('2026-09-20'), dateCheckout: new Date('2026-09-29'), nbNuitees: 9, nbChambres: 1, prixNuitChambre: '850', devise: 'SAR' },
         ],
       },
       transferts: {
@@ -193,7 +208,6 @@ export async function POST(_req: NextRequest) {
     },
   })
 
-  // Devis 2 — Client Cherif (couple, voyage premium)
   await db.devis.create({
     data: {
       numero: 'DEVIS-2026-09-002',
@@ -206,8 +220,10 @@ export async function POST(_req: NextRequest) {
       visaType: 'omra_standard',
       visaPrixUnit: '450',
       visaDevise: 'SAR',
-      assurancePrixUnit: '80',
+      assurancePrixUnit: '0',
       assuranceDevise: 'SAR',
+      fraisOnpoPrixUnit: '5000',
+      fraisOnpoDevise: 'DZD',
       margeType: 'pourcentage',
       margeValeur: '18',
       statut: 'envoye',
@@ -220,13 +236,27 @@ export async function POST(_req: NextRequest) {
       },
       segmentsVol: {
         create: [
-          { origine: 'Alger (ALG)', destination: 'Makkah (JED)', dateVol: new Date('2026-10-10T09:00:00'), classe: 'affaires', compagnieId: (await db.catalogueCompagnie.findFirst({ where: { codeIata: 'QR' } }))!.id, prixAdulte: '1450', prixEnfant: '0', prixBebe: '0', devise: 'USD', ordre: 0 },
-          { origine: 'Djeddah (JED)', destination: 'Alger (ALG)', dateVol: new Date('2026-10-22T17:00:00'), classe: 'affaires', compagnieId: (await db.catalogueCompagnie.findFirst({ where: { codeIata: 'QR' } }))!.id, prixAdulte: '1350', prixEnfant: '0', prixBebe: '0', devise: 'USD', ordre: 1 },
+          {
+            origine: 'Alger (ALG)',
+            destination: 'Makkah (JED)',
+            dateVol: new Date('2026-10-10T09:00:00'),
+            classe: 'affaires',
+            origineRetour: 'Djeddah (JED)',
+            destinationRetour: 'Alger (ALG)',
+            dateVolRetour: new Date('2026-10-22T17:00:00'),
+            classeRetour: 'affaires',
+            compagnieId: qrComp?.id,
+            prixAdulte: '1450',
+            prixEnfant: '0',
+            prixBebe: '0',
+            devise: 'USD',
+            ordre: 0,
+          },
         ],
       },
       hebergements: {
         create: [
-          { ville: 'Makkah', hotelId: (await db.catalogueHotel.findFirst({ where: { nom: 'Fairmont Clock Tower' } }))!.id, hotelNom: 'Fairmont Clock Tower', typeChambre: 'double', formuleRepas: 'pension_complete', vue: 'kaaba', dateCheckin: new Date('2026-10-10'), dateCheckout: new Date('2026-10-22'), nbNuitees: 12, nbChambres: 1, prixNuitChambre: '1800', devise: 'SAR' },
+          { ville: 'Makkah', hotelId: fairmontHotel?.id, hotelNom: 'Fairmont Clock Tower', typeChambre: 'double', formuleRepas: 'pension_complete', vue: 'kaaba', dateCheckin: new Date('2026-10-10'), dateCheckout: new Date('2026-10-22'), nbNuitees: 12, nbChambres: 1, prixNuitChambre: '1800', devise: 'SAR' },
         ],
       },
       transferts: {
@@ -245,7 +275,7 @@ export async function POST(_req: NextRequest) {
     },
   })
 
-  // 7. Synchronise les compteurs de numérotation avec les devis créés
+  // 7. Compteurs
   const allDevis = await db.devis.findMany({ select: { numero: true } })
   const parCle: Record<string, number> = {}
   for (const d of allDevis) {
@@ -266,5 +296,12 @@ export async function POST(_req: NextRequest) {
     })
   }
 
-  return NextResponse.json({ ok: true, message: 'Base seedée avec succès' })
+  console.log('✅ Base Supabase remplie avec succès ! (20 Hôtels, 11 Compagnies, 4 Clients, 2 Devis complets)')
 }
+
+seedCloud()
+  .then(() => process.exit(0))
+  .catch((e) => {
+    console.error('❌ Erreur seed :', e)
+    process.exit(1)
+  })
