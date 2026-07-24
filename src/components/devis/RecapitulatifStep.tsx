@@ -2,8 +2,9 @@
 
 import { FileDown, FileText, Save, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { fmt, fmtDate } from '@/lib/client-utils'
+import { fmt, fmtDate, downloadPdf } from '@/lib/client-utils'
 import { D } from '@/lib/money'
+import { toast } from 'sonner'
 
 interface Props {
   devis: any
@@ -60,7 +61,7 @@ export function RecapitulatifStep({ devis, resultatCalcul, onSaved }: Props) {
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-brand-bleu-nuit text-white">
-                <th className="text-left px-4 py-3 font-semibold text-xs uppercase">Poste</th>
+                <th className="text-left px-4 py-3 font-semibold text-xs uppercase">Prestation</th>
                 <th className="text-right px-4 py-3 font-semibold text-xs uppercase">Nombre</th>
                 <th className="text-right px-4 py-3 font-semibold text-xs uppercase">Montant DZD</th>
               </tr>
@@ -109,7 +110,7 @@ export function RecapitulatifStep({ devis, resultatCalcul, onSaved }: Props) {
       {devis.id && (
         <div className="grid sm:grid-cols-3 gap-3">
           <Button
-            onClick={() => window.open(`/api/pdf/${devis.id}?variante=client`, '_blank')}
+            onClick={() => downloadPdf(devis.id, 'client', devis.numero).catch((e) => toast.error(e.message))}
             className="gap-2 bg-brand-bleu-royal hover:bg-brand-bleu-royal/90 h-12"
           >
             <FileDown className="w-5 h-5" />
@@ -119,7 +120,7 @@ export function RecapitulatifStep({ devis, resultatCalcul, onSaved }: Props) {
             </div>
           </Button>
           <Button
-            onClick={() => window.open(`/api/pdf/${devis.id}?variante=interne`, '_blank')}
+            onClick={() => downloadPdf(devis.id, 'interne', devis.numero).catch((e) => toast.error(e.message))}
             className="gap-2 bg-brand-or hover:bg-brand-or/90 text-brand-bleu-nuit h-12"
           >
             <FileText className="w-5 h-5" />

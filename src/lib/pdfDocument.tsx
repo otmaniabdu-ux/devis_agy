@@ -2,17 +2,18 @@
 // Polices : DejaVu Sans (corps) + DejaVu Serif (titres).
 // Marge incluse dans chaque ligne (somme des lignes = prix de vente total).
 
-import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer'
+import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer'
 import type { ResultatCalculDevis } from '@/lib/calculDevis'
 import { D } from '@/lib/money'
 import {
   CATEGORIES_PASSAGER, TYPES_VEHICULE, TYPES_CHAMBRE, FORMULES_REPAS,
-  TYPES_PRESTATION_VIP,
+  TYPES_PRESTATION_VIP, VUES_HOTEL,
 } from '@/lib/business'
 import { differenceInCalendarDays } from 'date-fns'
 import path from 'path'
 
 const FONTS_DIR = path.join(process.cwd(), 'public', 'fonts')
+const LOGO_PATH = path.join(process.cwd(), 'public', 'Logo_S.png')
 
 Font.register({
   family: 'DejaVuSans',
@@ -32,9 +33,8 @@ Font.registerHyphenationCallback((word) => [word])
 
 const styles = StyleSheet.create({
   page: { padding: 28, fontSize: 8, fontFamily: 'DejaVuSans', color: '#0A1628', position: 'relative' },
-  // Watermark logo en fond
-  watermark: { position: 'absolute', top: '35%', left: '50%', transform: 'translateX(-50%)', opacity: 0.04, fontSize: 80, fontFamily: 'DejaVuSerif', fontWeight: 'bold', color: '#0A1628' },
-  watermarkSub: { position: 'absolute', top: '52%', left: '50%', transform: 'translateX(-50%)', opacity: 0.04, fontSize: 24, fontFamily: 'DejaVuSerif', color: '#CC1A1A' },
+  // Watermark logo en fond de page (transparence filigrane)
+  watermarkLogo: { position: 'absolute', top: '28%', left: '18%', width: 350, opacity: 0.06 },
   // Header
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10, borderBottomWidth: 2, borderBottomColor: '#C4A152', paddingBottom: 6 },
   brandCol: { flexDirection: 'column' },
@@ -107,8 +107,20 @@ interface DevisForPdf {
 }
 
 function formatDate(d: Date | string): string {
+  if (!d) return '—'
   const date = typeof d === 'string' ? new Date(d) : d
+  if (isNaN(date.getTime())) return '—'
   return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+}
+
+function formatDateTime(d: Date | string): string {
+  if (!d) return '—'
+  const date = typeof d === 'string' ? new Date(d) : d
+  if (isNaN(date.getTime())) return '—'
+  const dateStr = date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const hours = String(date.getHours()).padStart(2, '0')
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  return `${dateStr} à ${hours}:${minutes}`
 }
 
 function nbJours(d1: Date | string, d2: Date | string): number {
@@ -150,7 +162,7 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
 
   // Construction des éléments du header
   const headerBrandChildren = [
-    <Text key="bn" style={styles.brandNameFr}>{p?.nomFr ?? 'El Mouhssinouen Tours'}</Text>,
+    <Text key="bn" style={styles.brandNameFr}>{p?.nomFr ?? 'El Mouhssinoune Tours'}</Text>,
   ]
   if (p?.sloganFr) {
     headerBrandChildren.push(<Text key="sg" style={styles.brandSlogan}>{p.sloganFr}</Text>)
@@ -165,22 +177,11 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
     headerBrandChildren.push(<Text key="em" style={styles.brandInfo}>Email: {email}</Text>)
   }
 
-  // Construction des lignes du récap financier (avec prix de vente par ligne = marge incluse)
-  const recapLignes = resultat ? resultat.lignes.map((l, i) => (
-    <View key={`l${i}`} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt} wrap={false}>
-      <Text style={[styles.tableCell, { flex: 2.5 }]}>{l.poste}</Text>
-      <Text style={[styles.tableCell, { flex: 4 }]}>{l.description}</Text>
-      <Text style={[styles.tableCell, { flex: 2 }]}>{fmtPdfMontant(l.montantSource)} {l.deviseSource}</Text>
-      <Text style={[styles.tableCell, { flex: 2.5, textAlign: 'right' }]}>{fmtPdfMontant(l.prixVenteDzd)}</Text>
-    </View>
-  )) : []
-
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Watermark logo en fond */}
-        <Text style={styles.watermark} fixed>EMT</Text>
-        <Text style={styles.watermarkSub} fixed>EL MOUHSSINOUN</Text>
+        {/* Watermark logo en fond de page (transparence filigrane) */}
+        <Image src={LOGO_PATH} style={styles.watermarkLogo} fixed />
 
         {/* Header */}
         <View style={styles.headerRow}>
@@ -245,11 +246,21 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
           <View style={{ marginBottom: 4 }}>
             <Text style={styles.detailLabel}>Vols</Text>
             {devis.segmentsVol.map((s, i) => (
-              <View key={`s${i}`} style={styles.detailRow}>
-                <Text style={[styles.tableCell, { flex: 5 }]}>{s.origine} → {s.destination}</Text>
-                <Text style={[styles.tableCell, { flex: 2 }]}>{formatDate(s.dateVol)}</Text>
-                <Text style={[styles.tableCell, { flex: 2 }]}>{s.compagnie?.nom ?? '—'}</Text>
-                <Text style={[styles.tableCell, { flex: 2 }]}> {s.classe}</Text>
+              <View key={`s${i}`} style={{ marginBottom: 2 }}>
+                <View style={styles.detailRow}>
+                  <Text style={[styles.tableCell, { flex: 4.5 }]}>Aller : {s.origine} → {s.destination}</Text>
+                  <Text style={[styles.tableCell, { flex: 2.5 }]}>{formatDate(s.dateVol)}</Text>
+                  <Text style={[styles.tableCell, { flex: 2.5 }]}>{s.compagnie?.nom ?? '—'}</Text>
+                  <Text style={[styles.tableCell, { flex: 2.5 }]}>{s.classe ? (s.classe.charAt(0).toUpperCase() + s.classe.slice(1)) : 'Économique'}</Text>
+                </View>
+                {(s.origineRetour || s.destinationRetour) && (
+                  <View style={styles.detailRow}>
+                    <Text style={[styles.tableCell, { flex: 4.5 }]}>Retour : {s.origineRetour} → {s.destinationRetour}</Text>
+                    <Text style={[styles.tableCell, { flex: 2.5 }]}>{s.dateVolRetour ? formatDate(s.dateVolRetour) : '—'}</Text>
+                    <Text style={[styles.tableCell, { flex: 2.5 }]}>{s.compagnie?.nom ?? '—'}</Text>
+                    <Text style={[styles.tableCell, { flex: 2.5 }]}>{s.classeRetour ? (s.classeRetour.charAt(0).toUpperCase() + s.classeRetour.slice(1)) : (s.classe ? (s.classe.charAt(0).toUpperCase() + s.classe.slice(1)) : 'Économique')}</Text>
+                  </View>
+                )}
               </View>
             ))}
           </View>
@@ -260,8 +271,8 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
             <Text style={styles.detailLabel}>Hébergements</Text>
             {devis.hebergements.map((h, i) => (
               <View key={`h${i}`} style={styles.detailRow}>
-                <Text style={[styles.tableCell, { flex: 5 }]}>{h.hotelNom} ({h.ville})</Text>
-                <Text style={[styles.tableCell, { flex: 3 }]}>{labFr(TYPES_CHAMBRE, h.typeChambre)} • {labFr(FORMULES_REPAS, h.formuleRepas)}</Text>
+                <Text style={[styles.tableCell, { flex: 4 }]}>{h.hotelNom} ({h.ville})</Text>
+                <Text style={[styles.tableCell, { flex: 5 }]}>{labFr(TYPES_CHAMBRE, h.typeChambre)} • {labFr(FORMULES_REPAS, h.formuleRepas)} • {labFr(VUES_HOTEL, h.vue)}</Text>
                 <Text style={[styles.tableCell, { flex: 3, textAlign: 'right' }]}>{h.nbNuitees} nuits × {h.nbChambres} ch.</Text>
               </View>
             ))}
@@ -285,9 +296,9 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
             <Text style={styles.detailLabel}>Train Haramain</Text>
             {devis.trainsHaramain.map((t, i) => (
               <View key={`tr${i}`} style={styles.detailRow}>
-                <Text style={[styles.tableCell, { flex: 6 }]}>{t.trajet}</Text>
-                <Text style={[styles.tableCell, { flex: 2 }]}>{formatDate(t.dateTrain)}</Text>
-                <Text style={[styles.tableCell, { flex: 2, textAlign: 'right' }]}>{t.classe}</Text>
+                <Text style={[styles.tableCell, { flex: 5 }]}>{t.trajet}</Text>
+                <Text style={[styles.tableCell, { flex: 4 }]}>{formatDateTime(t.dateTrain)}</Text>
+                <Text style={[styles.tableCell, { flex: 3, textAlign: 'right' }]}>{t.classe}</Text>
               </View>
             ))}
           </View>
@@ -306,21 +317,24 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
         ) : null}
 
         {/* Récapitulatif financier — prix de vente par ligne (marge incluse) */}
-        <Text style={styles.sectionTitle}>Récapitulatif — Prix de vente par poste (marge incluse)</Text>
+        <Text style={styles.sectionTitle}>Récapitulatif des Prix</Text>
         <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderCell, { flex: 3 }]}>Poste</Text>
+          <Text style={[styles.tableHeaderCell, { flex: 3 }]}>Prestation</Text>
           <Text style={[styles.tableHeaderCell, { flex: 6 }]}>Description</Text>
           {(!isClient) && <Text style={[styles.tableHeaderCell, { flex: 2.5 }]}>Devise source</Text>}
           <Text style={[styles.tableHeaderCell, { flex: 3, textAlign: 'right' }]}>Prix vente DZD</Text>
         </View>
-        {resultat ? resultat.lignes.map((l, i) => (
-          <View key={`l${i}`} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt} wrap={false}>
-            <Text style={[styles.tableCell, { flex: 3 }]}>{l.poste}</Text>
-            <Text style={[styles.tableCell, { flex: 6 }]}>{l.description}</Text>
-            {(!isClient) && <Text style={[styles.tableCell, { flex: 2.5 }]}>{fmtPdfMontant(l.montantSource)} {l.deviseSource}</Text>}
-            <Text style={[styles.tableCell, { flex: 3, textAlign: 'right' }]}>{fmtPdfMontant(l.prixVenteDzd)}</Text>
-          </View>
-        )) : null}
+        {resultat ? resultat.lignes.map((l, i) => {
+          const posteDisplay = l.poste === 'Vol' ? 'Billet' : (l.poste === 'Assurance médicale' ? 'Frais ONPO' : l.poste)
+          return (
+            <View key={`l${i}`} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt} wrap={false}>
+              <Text style={[styles.tableCell, { flex: 3 }]}>{posteDisplay}</Text>
+              <Text style={[styles.tableCell, { flex: 6 }]}>{l.description}</Text>
+              {(!isClient) && <Text style={[styles.tableCell, { flex: 2.5 }]}>{fmtPdfMontant(l.montantSource)} {l.deviseSource}</Text>}
+              <Text style={[styles.tableCell, { flex: 3, textAlign: 'right' }]}>{fmtPdfMontant(l.prixVenteDzd)}</Text>
+            </View>
+          )
+        }) : null}
 
         {/* Total */}
         <View style={styles.totalRow}>
@@ -368,7 +382,7 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
 
         {/* Footer */}
         <View style={styles.footer} fixed>
-          <Text>{p?.nomFr ?? 'El Mouhssinouen Tours'}</Text>
+          <Text>{p?.nomFr ?? 'El Mouhssinoune Tours'}</Text>
           <Text>{devis.numero} — {isClient ? 'Client' : 'INTERNE'}</Text>
         </View>
       </Page>

@@ -32,15 +32,19 @@ export function VolsStep({ devis, setDevis }: Props) {
     api('/api/catalogues/compagnies').then(setCompagnies)
   }, [])
 
-  const addVol = (type: 'aller' | 'retour' = 'aller') => {
+  const addVol = () => {
     setDevis((d) => ({
       ...d,
       segmentsVol: [...d.segmentsVol, {
-        typeVol: type,
-        origine: type === 'aller' ? 'Alger (ALG)' : '',
-        destination: type === 'aller' ? '' : 'Alger (ALG)',
-        dateVol: type === 'aller' ? d.dateDepart + 'T08:00' : d.dateRetour + 'T16:00',
+        typeVol: 'aller_retour',
+        origine: 'Alger (ALG)',
+        destination: 'Djeddah (JED)',
+        dateVol: d.dateDepart + 'T08:00',
         classe: 'economique',
+        origineRetour: 'Djeddah (JED)',
+        destinationRetour: 'Alger (ALG)',
+        dateVolRetour: d.dateRetour + 'T18:00',
+        classeRetour: 'economique',
         compagnieId: '',
         prixAdulte: '0', prixEnfant: '0', prixBebe: '0',
         devise: 'DZD',
@@ -65,16 +69,13 @@ export function VolsStep({ devis, setDevis }: Props) {
         <div className="flex items-center justify-between mb-3">
           <div>
             <h3 className="font-semibold text-sm flex items-center gap-2">
-              <Plane className="w-4 h-4" /> Segments de vol ({devis.segmentsVol.length})
+              <Plane className="w-4 h-4" /> Billet d'avion ({devis.segmentsVol.length})
             </h3>
-            <p className="text-xs text-muted-foreground mt-1">Ajoutez un vol aller et/ou retour</p>
+            <p className="text-xs text-muted-foreground mt-1">Ajoutez un vol (Billet Aller/Retour)</p>
           </div>
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" onClick={() => addVol('aller')} className="gap-1">
-              <Plus className="w-3.5 h-3.5" /> Vol Aller
-            </Button>
-            <Button size="sm" onClick={() => addVol('retour')} className="gap-1 bg-brand-rouge hover:bg-brand-rouge/90">
-              <Plus className="w-3.5 h-3.5" /> Vol Retour
+            <Button size="sm" onClick={() => addVol()} className="gap-1 bg-brand-rouge hover:bg-brand-rouge/90">
+              <Plus className="w-3.5 h-3.5" /> Ajouter Vol (Aller/Retour)
             </Button>
           </div>
         </div>
@@ -82,52 +83,89 @@ export function VolsStep({ devis, setDevis }: Props) {
         {devis.segmentsVol.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-border rounded-lg">
             <Plane className="w-10 h-10 mx-auto text-muted-foreground/40 mb-2" />
-            <p className="text-sm text-muted-foreground">Cliquez sur « Vol Aller » ou « Vol Retour » pour commencer.</p>
+            <p className="text-sm text-muted-foreground">Cliquez sur « Ajouter Vol (Aller/Retour) » pour commencer.</p>
           </div>
         ) : (
           <div className="space-y-3">
             {devis.segmentsVol.map((s: any, i: number) => (
-              <div key={i} className={`border rounded-lg p-4 bg-muted/20 ${s.typeVol === 'retour' ? 'border-brand-bleu-royal/30' : 'border-border'}`}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                    s.typeVol === 'retour' ? 'bg-brand-bleu-royal text-white' : 'bg-brand-rouge text-white'
-                  }`}>
-                    {s.typeVol === 'retour' ? 'RETOUR' : 'ALLER'}
+              <div key={i} className="border rounded-lg p-4 bg-muted/20 border-brand-bleu-royal/30 space-y-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-brand-bleu-royal text-white">
+                    VOL ALLER/RETOUR
                   </span>
-                  <span className="text-xs text-muted-foreground">Segment {i + 1}</span>
+                  <span className="text-xs text-muted-foreground font-medium">Billet {i + 1}</span>
                 </div>
-                <div className="grid sm:grid-cols-12 gap-3 items-end">
+
+                {/* Section Vol Aller */}
+                <div className="bg-background/80 border border-border/60 rounded-md p-3 space-y-2">
+                  <p className="text-xs font-semibold text-brand-bleu-nuit">Vol Aller</p>
+                  <div className="grid sm:grid-cols-12 gap-3 items-end">
+                    <div className="sm:col-span-3 space-y-1.5">
+                      <Label className="text-xs">Origine Aller</Label>
+                      <Input value={s.origine} onChange={(e) => update(i, 'origine', e.target.value)} className="h-9" placeholder="Alger (ALG)" />
+                    </div>
+                    <div className="sm:col-span-3 space-y-1.5">
+                      <Label className="text-xs">Destination Aller</Label>
+                      <Input value={s.destination} onChange={(e) => update(i, 'destination', e.target.value)} className="h-9" placeholder="Djeddah (JED)" />
+                    </div>
+                    <div className="sm:col-span-3 space-y-1.5">
+                      <Label className="text-xs">Date / heure Aller</Label>
+                      <Input type="datetime-local" value={s.dateVol} onChange={(e) => update(i, 'dateVol', e.target.value)} className="h-9" />
+                    </div>
+                    <div className="sm:col-span-3 space-y-1.5">
+                      <Label className="text-xs">Classe Aller</Label>
+                      <Select value={s.classe} onValueChange={(v) => update(i, 'classe', v)}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="economique">Économique</SelectItem>
+                          <SelectItem value="affaires">Affaires</SelectItem>
+                          <SelectItem value="premiere">Première</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section Vol Retour */}
+                <div className="bg-background/80 border border-border/60 rounded-md p-3 space-y-2">
+                  <p className="text-xs font-semibold text-brand-bleu-nuit">Vol Retour</p>
+                  <div className="grid sm:grid-cols-12 gap-3 items-end">
+                    <div className="sm:col-span-3 space-y-1.5">
+                      <Label className="text-xs">Origine Retour</Label>
+                      <Input value={s.origineRetour ?? ''} onChange={(e) => update(i, 'origineRetour', e.target.value)} className="h-9" placeholder="Djeddah (JED)" />
+                    </div>
+                    <div className="sm:col-span-3 space-y-1.5">
+                      <Label className="text-xs">Destination Retour</Label>
+                      <Input value={s.destinationRetour ?? ''} onChange={(e) => update(i, 'destinationRetour', e.target.value)} className="h-9" placeholder="Alger (ALG)" />
+                    </div>
+                    <div className="sm:col-span-3 space-y-1.5">
+                      <Label className="text-xs">Date / heure Retour</Label>
+                      <Input type="datetime-local" value={s.dateVolRetour ?? ''} onChange={(e) => update(i, 'dateVolRetour', e.target.value)} className="h-9" />
+                    </div>
+                    <div className="sm:col-span-3 space-y-1.5">
+                      <Label className="text-xs">Classe Retour</Label>
+                      <Select value={s.classeRetour ?? s.classe ?? 'economique'} onValueChange={(v) => update(i, 'classeRetour', v)}>
+                        <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="economique">Économique</SelectItem>
+                          <SelectItem value="affaires">Affaires</SelectItem>
+                          <SelectItem value="premiere">Première</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tarification & Compagnie */}
+                <div className="grid sm:grid-cols-12 gap-3 items-end pt-1">
                   <div className="sm:col-span-3 space-y-1.5">
-                    <Label className="text-xs">Origine</Label>
-                    <Input value={s.origine} onChange={(e) => update(i, 'origine', e.target.value)} className="h-9" placeholder="Alger (ALG)" />
-                  </div>
-                  <div className="sm:col-span-3 space-y-1.5">
-                    <Label className="text-xs">Destination</Label>
-                    <Input value={s.destination} onChange={(e) => update(i, 'destination', e.target.value)} className="h-9" placeholder="Médine (MED)" />
-                  </div>
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <Label className="text-xs">Date / heure</Label>
-                    <Input type="datetime-local" value={s.dateVol} onChange={(e) => update(i, 'dateVol', e.target.value)} className="h-9" />
-                  </div>
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <Label className="text-xs">Compagnie</Label>
+                    <Label className="text-xs">Compagnie aérienne</Label>
                     <Select value={s.compagnieId ?? ''} onValueChange={(v) => update(i, 'compagnieId', v)}>
                       <SelectTrigger className="h-9"><SelectValue placeholder="—" /></SelectTrigger>
                       <SelectContent>
                         {compagnies.map((c) => (
                           <SelectItem key={c.id} value={c.id}>{c.nom}</SelectItem>
                         ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="sm:col-span-2 space-y-1.5">
-                    <Label className="text-xs">Classe</Label>
-                    <Select value={s.classe} onValueChange={(v) => update(i, 'classe', v)}>
-                      <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="economique">Économique</SelectItem>
-                        <SelectItem value="affaires">Affaires</SelectItem>
-                        <SelectItem value="premiere">Première</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

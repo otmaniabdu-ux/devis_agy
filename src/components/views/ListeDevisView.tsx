@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { fmt, fmtDate, api } from '@/lib/client-utils'
+import { fmt, fmtDate, api, downloadPdf } from '@/lib/client-utils'
 import { STATUTS_DEVIS } from '@/lib/business'
 import { D } from '@/lib/money'
 import { toast } from 'sonner'
@@ -79,8 +79,12 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
     }
   }
 
-  const openPdf = (id: string, variante: 'client' | 'interne') => {
-    window.open(`/api/pdf/${id}?variante=${variante}`, '_blank')
+  const openPdf = async (id: string, variante: 'client' | 'interne', numero?: string) => {
+    try {
+      await downloadPdf(id, variante, numero)
+    } catch (e: any) {
+      toast.error(e.message || 'Erreur lors du téléchargement du PDF')
+    }
   }
 
   return (
@@ -198,14 +202,14 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
                           </Button>
                           <Button
                             size="icon" variant="ghost" className="h-8 w-8"
-                            onClick={() => openPdf(d.id, 'client')}
+                            onClick={() => openPdf(d.id, 'client', d.numero)}
                             title="PDF client"
                           >
                             <FileDown className="w-3.5 h-3.5 text-brand-bleu-royal" />
                           </Button>
                           <Button
                             size="icon" variant="ghost" className="h-8 w-8"
-                            onClick={() => openPdf(d.id, 'interne')}
+                            onClick={() => openPdf(d.id, 'interne', d.numero)}
                             title="PDF interne"
                           >
                             <FileText className="w-3.5 h-3.5 text-brand-or" />

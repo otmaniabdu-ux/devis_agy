@@ -67,39 +67,37 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex bg-background relative">
-      {/* Watermark logo en fond */}
+    <div className="min-h-screen flex bg-background relative overflow-x-hidden">
+      {/* Watermark logo en fond de l'application */}
       <div
-        className="fixed inset-0 pointer-events-none flex items-center justify-center z-0"
-        style={{ opacity: 0.03 }}
+        className="fixed inset-0 pointer-events-none flex items-center justify-center z-0 overflow-hidden"
         aria-hidden
       >
         <img
-          src="/logo-agence.svg"
+          src="/Logo_S.png"
           alt=""
-          className="w-[600px] h-[600px]"
-          style={{ filter: 'grayscale(20%)' }}
+          className="w-[550px] md:w-[700px] max-w-[85vw] opacity-[0.05] dark:opacity-[0.07] select-none filter drop-shadow-2xl transition-all duration-700 hover:scale-105"
         />
       </div>
 
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-sidebar text-sidebar-foreground transition-transform duration-300 flex flex-col',
+          'fixed lg:sticky top-0 left-0 z-40 h-screen w-64 bg-sidebar text-sidebar-foreground transition-transform duration-300 flex flex-col border-r border-sidebar-border/50 shadow-xl',
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         )}
       >
         {/* Brand */}
-        <div className="px-5 py-5 border-b border-sidebar-border">
+        <div className="px-5 py-4 border-b border-sidebar-border bg-sidebar-accent/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-or to-brand-rouge flex items-center justify-center shadow-md">
-              <span className="text-sidebar font-bold text-lg" style={{ fontFamily: 'Georgia, serif' }}>E</span>
+            <div className="w-10 h-10 rounded-xl bg-white/90 p-1 flex items-center justify-center shadow-md border border-brand-or/30 shrink-0">
+              <img src="/Logo_S.png" alt="Logo El Mouhssinoune" className="w-full h-full object-contain" />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-base font-bold text-sidebar-foreground truncate" style={{ fontFamily: 'Georgia, serif' }}>
-                El Mouhssinouen
+              <h1 className="text-sm font-extrabold text-sidebar-foreground truncate tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
+                El Mouhssinoune
               </h1>
-              <p className="text-[10px] text-sidebar-foreground/60 truncate" dir="rtl">المحسنون للسياحة</p>
+              <p className="text-[11px] font-medium text-brand-or truncate" dir="rtl">المحسنون للسياحة</p>
             </div>
           </div>
         </div>

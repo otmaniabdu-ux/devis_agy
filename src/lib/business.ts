@@ -59,6 +59,11 @@ export const CATEGORIES_PASSAGER = {
 
 export type CategoriePassager = keyof typeof CATEGORIES_PASSAGER
 
+/** Helper pour récupérer le libellé français d'une option. */
+export function labFr(map: Record<string, { label: string; labelAr?: string }>, key: string): string {
+  return map[key]?.label ?? key
+}
+
 export const TYPES_VISA = {
   omra_standard: { label: 'Omra Standard', labelAr: 'عمرة قياسية' },
   touristique: { label: 'Touristique', labelAr: 'سياحي' },

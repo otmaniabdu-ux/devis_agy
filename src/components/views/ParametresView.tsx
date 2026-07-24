@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 
 export function ParametresView() {
   const [parametres, setParametres] = useState<any>({
-    nomFr: 'El Mouhssinouen Tours',
+    nomFr: 'El Mouhssinoune Tours',
     nomAr: 'المحسنون للسياحة',
     sloganFr: '', sloganAr: '',
     adresse: '', telephone: '', email: '',
