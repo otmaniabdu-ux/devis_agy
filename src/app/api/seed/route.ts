@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // POST /api/seed — remplit la base avec des données de démonstration
-// Idempotent : supprime d'abord les anciennes données puis recrée
 export async function GET(req: NextRequest) {
   return POST(req)
 }
@@ -266,5 +268,5 @@ export async function POST(_req: NextRequest) {
     })
   }
 
-  return NextResponse.json({ ok: true, message: 'Base seedée avec succès' })
+  return NextResponse.json({ success: true, message: 'Database seeded successfully', ok: true })
 }
