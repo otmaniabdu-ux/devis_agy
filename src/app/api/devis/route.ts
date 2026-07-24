@@ -4,6 +4,9 @@ import { recalculerDevis, persisterTotaux } from '@/lib/calculDevis'
 import { verifierAlertePasseport } from '@/lib/business'
 import { buildDevisCreateData } from '@/lib/devisPayload'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // GET /api/devis — liste tous les devis avec alerte passeport
 export async function GET() {
   const devis = await db.devis.findMany({
