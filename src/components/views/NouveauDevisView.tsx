@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
-import { fmt, fmtDate, fmtDateInput, api } from '@/lib/client-utils'
+import { fmt, fmtDate, fmtDateInput, api, downloadPdf } from '@/lib/client-utils'
 import {
   CATEGORIES_PASSAGER, TYPES_VISA, TYPES_VEHICULE, TYPES_CHAMBRE,
   FORMULES_REPAS, VUES_HOTEL, TYPES_PRESTATION_VIP, STATUTS_DEVIS,
@@ -119,7 +119,11 @@ export function NouveauDevisView({
           segmentsVol: d.segmentsVol.map((s: any, idx: number) => ({
             ...s,
             typeVol: s.typeVol || (idx === 0 ? 'aller' : 'retour'),
-            dateVol: fmtDateInput(s.dateVol) + 'T' + new Date(s.dateVol).toTimeString().slice(0, 5),
+            dateVol: fmtDateInput(s.dateVol) + 'T' + (s.dateVol ? new Date(s.dateVol).toTimeString().slice(0, 5) : '08:00'),
+            origineRetour: s.origineRetour ?? '',
+            destinationRetour: s.destinationRetour ?? '',
+            dateVolRetour: s.dateVolRetour ? (fmtDateInput(s.dateVolRetour) + 'T' + new Date(s.dateVolRetour).toTimeString().slice(0, 5)) : '',
+            classeRetour: s.classeRetour ?? s.classe ?? 'economique',
           })),
           hebergements: d.hebergements.map((h: any) => ({
             ...h,
@@ -145,8 +149,8 @@ export function NouveauDevisView({
           visaType: 'omra_standard',
           visaPrixUnit: '450',
           visaDevise: 'SAR',
-          assurancePrixUnit: '80',
-          assuranceDevise: 'SAR',
+          assurancePrixUnit: '5000',
+          assuranceDevise: 'DZD',
           margeType: 'pourcentage',
           margeValeur: '15',
           statut: 'brouillon',
@@ -218,6 +222,10 @@ export function NouveauDevisView({
           destination: s.destination,
           dateVol: s.dateVol,
           classe: s.classe,
+          origineRetour: s.origineRetour || null,
+          destinationRetour: s.destinationRetour || null,
+          dateVolRetour: s.dateVolRetour || null,
+          classeRetour: s.classeRetour || null,
           compagnieId: s.compagnieId || null,
           prixAdulte: s.prixAdulte,
           prixEnfant: s.prixEnfant,
@@ -411,14 +419,14 @@ export function NouveauDevisView({
             <>
               <Button
                 variant="outline"
-                onClick={() => window.open(`/api/pdf/${devis.id}?variante=client`, '_blank')}
+                onClick={() => downloadPdf(devis.id!, 'client', devis.numero).catch((e) => toast.error(e.message))}
                 className="gap-2"
               >
                 <FileDown className="w-4 h-4 text-brand-bleu-royal" /> PDF client
               </Button>
               <Button
                 variant="outline"
-                onClick={() => window.open(`/api/pdf/${devis.id}?variante=interne`, '_blank')}
+                onClick={() => downloadPdf(devis.id!, 'interne', devis.numero).catch((e) => toast.error(e.message))}
                 className="gap-2"
               >
                 <FileText className="w-4 h-4 text-brand-or" /> PDF interne

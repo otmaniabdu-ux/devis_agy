@@ -14,7 +14,7 @@ datasource db {
 // --- Paramètres globaux de l'agence (singleton) ---
 model ParametresAgence {
   id              String   @id @default("default")
-  nomFr           String   @default("El Mouhssinouen Tours")
+  nomFr           String   @default("El Mouhssinoune Tours")
   nomAr           String   @default("المحسنون للسياحة")
   sloganFr        String?
   sloganAr        String?
@@ -94,6 +94,10 @@ model Devis {
   assurancePrixUnit String @default("0")  // par passager, en SAR
   assuranceDevise   String @default("SAR")
 
+  // Frais ONPO
+  fraisOnpoPrixUnit String @default("5000") // par passager, en DZD
+  fraisOnpoDevise   String @default("DZD")
+
   // Marge agence
   margeType       String   @default("pourcentage")  // pourcentage | montant_fixe
   margeValeur     String   @default("0")             // % ou montant DZD
@@ -139,21 +143,25 @@ model Passager {
 
 // --- Segments de vol ---
 model SegmentVol {
-  id              String   @id @default(cuid())
-  devisId         String
-  devis           Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
-  ordre           Int      @default(0)
-  compagnieId     String?
-  compagnie       CatalogueCompagnie? @relation(fields: [compagnieId], references: [id])
-  origine         String
-  destination     String
-  dateVol         DateTime
-  classe          String   @default("economique")  // economique | affaires | premiere
-  prixAdulte      String   @default("0")  // devise source
-  prixEnfant      String   @default("0")
-  prixBebe        String   @default("0")
-  devise          String   @default("SAR")
-  createdAt       DateTime @default(now())
+  id                String   @id @default(cuid())
+  devisId           String
+  devis             Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  ordre             Int      @default(0)
+  compagnieId       String?
+  compagnie         CatalogueCompagnie? @relation(fields: [compagnieId], references: [id])
+  origine           String
+  destination       String
+  dateVol           DateTime
+  classe            String   @default("economique")  // economique | affaires | premiere
+  origineRetour     String?
+  destinationRetour String?
+  dateVolRetour     DateTime?
+  classeRetour      String?  @default("economique")
+  prixAdulte        String   @default("0")  // devise source
+  prixEnfant        String   @default("0")
+  prixBebe          String   @default("0")
+  devise            String   @default("SAR")
+  createdAt         DateTime @default(now())
   @@index([devisId])
 }
 

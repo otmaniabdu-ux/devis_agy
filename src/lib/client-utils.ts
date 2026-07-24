@@ -35,4 +35,25 @@ export async function api<T = any>(
   return r.json()
 }
 
+export async function downloadPdf(devisId: string, variante: 'client' | 'interne', devisNumero?: string): Promise<void> {
+  const url = `/api/pdf/${devisId}?variante=${variante}`
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error('Erreur lors du téléchargement du PDF')
+  }
+  const blob = await response.blob()
+  const blobUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = blobUrl
+  const filename = devisNumero
+    ? `Devis_${devisNumero}_${variante}.pdf`
+    : `devis-${devisId}-${variante}.pdf`
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(blobUrl)
+}
+
 export { D }
+

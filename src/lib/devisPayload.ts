@@ -35,7 +35,7 @@ const isEmpty = {
 
 // ============ Mappers (payload frontend → data Prisma) ============
 
-export function mapPassager(p: any, devisId?: string) {
+export function mapPassager(p: any, devisId?: string): any {
   return {
     ...(devisId ? { devisId } : {}),
     categorie: p.categorie || 'adulte',
@@ -47,7 +47,7 @@ export function mapPassager(p: any, devisId?: string) {
   }
 }
 
-export function mapSegmentVol(s: any, devisId?: string, ordre = 0) {
+export function mapSegmentVol(s: any, devisId?: string, ordre = 0): any {
   return {
     ...(devisId ? { devisId } : {}),
     ordre,
@@ -55,6 +55,10 @@ export function mapSegmentVol(s: any, devisId?: string, ordre = 0) {
     destination: s.destination || '',
     dateVol: safeDate(s.dateVol) ?? new Date(),
     classe: s.classe ?? 'economique',
+    origineRetour: s.origineRetour || null,
+    destinationRetour: s.destinationRetour || null,
+    dateVolRetour: safeDate(s.dateVolRetour),
+    classeRetour: s.classeRetour ?? 'economique',
     compagnieId: s.compagnieId || null,
     prixAdulte: String(s.prixAdulte ?? '0'),
     prixEnfant: String(s.prixEnfant ?? '0'),
@@ -63,7 +67,7 @@ export function mapSegmentVol(s: any, devisId?: string, ordre = 0) {
   }
 }
 
-export function mapHebergement(h: any, devisId?: string) {
+export function mapHebergement(h: any, devisId?: string): any {
   const ci = safeDate(h.dateCheckin) ?? new Date()
   const co = safeDate(h.dateCheckout) ?? new Date()
   const nbNuit = Math.max(0, differenceInCalendarDays(co, ci))
@@ -84,7 +88,7 @@ export function mapHebergement(h: any, devisId?: string) {
   }
 }
 
-export function mapTransfert(t: any, devisId?: string, ordre = 0) {
+export function mapTransfert(t: any, devisId?: string, ordre = 0): any {
   return {
     ...(devisId ? { devisId } : {}),
     ordre,
@@ -96,7 +100,7 @@ export function mapTransfert(t: any, devisId?: string, ordre = 0) {
   }
 }
 
-export function mapTrain(t: any, devisId?: string) {
+export function mapTrain(t: any, devisId?: string): any {
   return {
     ...(devisId ? { devisId } : {}),
     trajet: t.trajet,
@@ -108,7 +112,7 @@ export function mapTrain(t: any, devisId?: string) {
   }
 }
 
-export function mapPrestation(p: any, devisId?: string) {
+export function mapPrestation(p: any, devisId?: string): any {
   return {
     ...(devisId ? { devisId } : {}),
     type: p.type ?? 'autre',
@@ -159,6 +163,8 @@ export async function buildDevisCreateData(body: any) {
     visaDevise: body.visaDevise ?? 'SAR',
     assurancePrixUnit: String(body.assurancePrixUnit ?? '0'),
     assuranceDevise: body.assuranceDevise ?? 'SAR',
+    fraisOnpoPrixUnit: String(body.fraisOnpoPrixUnit ?? '5000'),
+    fraisOnpoDevise: body.fraisOnpoDevise ?? 'DZD',
     margeType: body.margeType ?? 'pourcentage',
     margeValeur: String(body.margeValeur ?? '15'),
     statut: body.statut ?? 'brouillon',
@@ -187,11 +193,13 @@ export function buildDevisUpdateData(body: any): any {
   setIf('visaType')
   setIf('visaDevise')
   setIf('assuranceDevise')
+  setIf('fraisOnpoDevise')
   setIf('dateDepart', (v) => safeDate(v) ?? undefined)
   setIf('dateRetour', (v) => safeDate(v) ?? undefined)
   setIf('margeValeur', (v) => String(v))
   setIf('visaPrixUnit', (v) => String(v))
   setIf('assurancePrixUnit', (v) => String(v))
+  setIf('fraisOnpoPrixUnit', (v) => String(v))
   setIf('tauxSarDzd', (v) => String(v))
   setIf('tauxUsdDzd', (v) => String(v))
   setIf('tauxEurDzd', (v) => String(v))

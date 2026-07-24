@@ -5,9 +5,11 @@
 import Decimal from 'decimal.js'
 import { db } from '@/lib/db'
 import {
-  D, convertirEnDzd, round2, calculerPrixVente, type Money,
+  D, convertirEnDzd, round2, type Money,
 } from '@/lib/money'
-import { calculerNbNuitees } from '@/lib/business'
+import {
+  calculerNbNuitees, TYPES_CHAMBRE, FORMULES_REPAS, VUES_HOTEL,
+} from '@/lib/business'
 
 export interface LigneCout {
   poste: string
@@ -77,27 +79,46 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
       .plus(D(seg.prixEnfant).mul(nbEnfants))
       .plus(D(seg.prixBebe).mul(nbBebes))
     const montantDzd = convertirEnDzd(montantSource.toString(), seg.devise, taux)
+
+    const labClasse = (c: string) => {
+      if (c === 'affaires') return 'Affaires'
+      if (c === 'premiere') return 'Première'
+      return 'Économique'
+    }
+
+    let desc = `${seg.origine} → ${seg.destination} (${labClasse(seg.classe)})`
+    if (seg.origineRetour && seg.destinationRetour) {
+      desc += ` / ${seg.origineRetour} → ${seg.destinationRetour} (${labClasse(seg.classeRetour || seg.classe)})`
+    }
+
     lignes.push({
-      poste: 'Vol',
-      description: `${seg.origine} → ${seg.destination} (${seg.classe})`,
+      poste: 'Billet',
+      description: desc,
       montantSource: round2(montantSource),
       deviseSource: seg.devise,
       montantDzd: round2(montantDzd),
+      prixVenteDzd: round2(montantDzd),
     })
   }
 
   // 2. Hébergements — prixNuitChambre × nbNuitées × nbChambres
   for (const heb of devis.hebergements) {
-    // recalcul sécurisé des nuitées (le nb stocké est la source de vérité côté DB, mais on recompute pour vérifier)
     const nbNuit = heb.nbNuitees || calculerNbNuitees(heb.dateCheckin, heb.dateCheckout)
     const montantSource = D(heb.prixNuitChambre).mul(nbNuit).mul(heb.nbChambres)
     const montantDzd = convertirEnDzd(montantSource.toString(), heb.devise, taux)
+    
+    const poste = heb.ville === 'Medine' || heb.ville === 'Médine' ? 'Hébergement Médine' : 'Hébergement Makkah'
+    const typeChambreLabel = TYPES_CHAMBRE[heb.typeChambre as keyof typeof TYPES_CHAMBRE]?.label ?? heb.typeChambre
+    const formuleLabel = FORMULES_REPAS[heb.formuleRepas as keyof typeof FORMULES_REPAS]?.label ?? heb.formuleRepas
+    const vueLabel = VUES_HOTEL[heb.vue as keyof typeof VUES_HOTEL]?.label ?? heb.vue
+
     lignes.push({
-      poste: 'Hébergement',
-      description: `${heb.hotelNom} (${heb.ville}) — ${heb.typeChambre} × ${nbNuit} nuits × ${heb.nbChambres} ch.`,
+      poste,
+      description: `${heb.hotelNom} — ${typeChambreLabel} — ${formuleLabel} — ${vueLabel}`,
       montantSource: round2(montantSource),
       deviseSource: heb.devise,
       montantDzd: round2(montantDzd),
+      prixVenteDzd: round2(montantDzd),
     })
   }
 
@@ -110,6 +131,7 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
       montantSource: tr.prix,
       deviseSource: tr.devise,
       montantDzd: round2(montantDzd),
+      prixVenteDzd: round2(montantDzd),
     })
   }
 
@@ -125,6 +147,7 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
       montantSource: round2(montantSource),
       deviseSource: tr.devise,
       montantDzd: round2(montantDzd),
+      prixVenteDzd: round2(montantDzd),
     })
   }
 
@@ -137,6 +160,7 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
       montantSource: p.prix,
       deviseSource: p.devise,
       montantDzd: round2(montantDzd),
+      prixVenteDzd: round2(montantDzd),
     })
   }
 
@@ -151,19 +175,23 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
       montantSource: round2(montantSource),
       deviseSource: devis.visaDevise,
       montantDzd: round2(montantDzd),
+      prixVenteDzd: round2(montantDzd),
     })
   }
 
-  // 7. Assurance médicale — prix unitaire × total passagers
-  if (totalPassagers > 0 && D(devis.assurancePrixUnit).gt(0)) {
-    const montantSource = D(devis.assurancePrixUnit).mul(totalPassagers)
-    const montantDzd = convertirEnDzd(montantSource.toString(), devis.assuranceDevise, taux)
+  // 7. Frais ONPO — prix unitaire × total passagers
+  const fraisOnpoPrixUnit = (devis as any).fraisOnpoPrixUnit ?? devis.assurancePrixUnit ?? '5000'
+  const fraisOnpoDevise = (devis as any).fraisOnpoDevise ?? devis.assuranceDevise ?? 'DZD'
+  if (totalPassagers > 0 && D(fraisOnpoPrixUnit).gt(0)) {
+    const montantSource = D(fraisOnpoPrixUnit).mul(totalPassagers)
+    const montantDzd = convertirEnDzd(montantSource.toString(), fraisOnpoDevise, taux)
     lignes.push({
-      poste: 'Assurance médicale',
-      description: `Assurance × ${totalPassagers} passager(s)`,
+      poste: 'Frais ONPO',
+      description: `Frais ONPO × ${totalPassagers} passager(s)`,
       montantSource: round2(montantSource),
-      deviseSource: devis.assuranceDevise,
+      deviseSource: fraisOnpoDevise,
       montantDzd: round2(montantDzd),
+      prixVenteDzd: round2(montantDzd),
     })
   }
 
@@ -171,28 +199,38 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
   const coutNet = lignes.reduce<Decimal>((acc, l) => acc.plus(D(l.montantDzd)), new Decimal(0))
   const coutNetStr = round2(coutNet)
 
-  // Marge + prix de vente global
-  const { prixVente, margeMontant } = calculerPrixVente(
-    coutNetStr,
-    devis.margeType as 'pourcentage' | 'montant_fixe',
-    devis.margeValeur,
-  )
-
-  // Applique la marge à chaque ligne pour que la somme des prix de vente par ligne = prix de vente total
-  // Pour une marge en pourcentage : prixVente_ligne = montantDzd * (1 + marge/100)
-  // Pour une marge en montant fixe : on distribue proportionnellement au coût net
   const margeType = devis.margeType as 'pourcentage' | 'montant_fixe'
   const margeVal = D(devis.margeValeur)
+
+  // Somme des coûts nets des lignes commissionables (toutes sauf 'Frais ONPO')
+  const coutNetCommissionable = lignes
+    .filter((l) => l.poste !== 'Frais ONPO')
+    .reduce<Decimal>((acc, l) => acc.plus(D(l.montantDzd)), new Decimal(0))
+
+  let margeMontant: Decimal
+  if (margeType === 'pourcentage') {
+    margeMontant = coutNetCommissionable.mul(margeVal.div(100))
+  } else {
+    margeMontant = margeVal
+  }
+
+  const prixVente = coutNet.plus(margeMontant)
+
+  // Calcule le prix de vente par ligne
   for (const l of lignes) {
     let pvLigne: Decimal
-    if (margeType === 'pourcentage') {
-      pvLigne = D(l.montantDzd).mul(new Decimal(1).plus(margeVal.div(100)))
+    if (l.poste === 'Frais ONPO') {
+      // Frais ONPO est NON commissionable : prix de vente = coût net
+      pvLigne = D(l.montantDzd)
     } else {
-      // montant_fixe : distribution proportionnelle
-      if (coutNet.gt(0)) {
-        pvLigne = D(l.montantDzd).plus(margeMontant.mul(D(l.montantDzd)).div(coutNet))
+      if (margeType === 'pourcentage') {
+        pvLigne = D(l.montantDzd).mul(new Decimal(1).plus(margeVal.div(100)))
       } else {
-        pvLigne = D(l.montantDzd)
+        if (coutNetCommissionable.gt(0)) {
+          pvLigne = D(l.montantDzd).plus(margeMontant.mul(D(l.montantDzd)).div(coutNetCommissionable))
+        } else {
+          pvLigne = D(l.montantDzd)
+        }
       }
     }
     l.prixVenteDzd = round2(pvLigne)

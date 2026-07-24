@@ -55,7 +55,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   } as DevisForPdf
 
   const element = createElement(DevisDocument, { devis: devisForPdf, variante })
-  const pdfBuffer = await renderToBuffer(element)
+  const pdfBuffer = await renderToBuffer(element as any)
 
   const filename = `${devis.numero}_${variante === 'client' ? 'client' : 'interne'}.pdf`
   return new NextResponse(pdfBuffer as any, {

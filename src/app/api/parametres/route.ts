@@ -29,7 +29,7 @@ export async function PUT(req: NextRequest) {
       },
       create: {
         id: 'default',
-        nomFr: p.nomFr ?? 'El Mouhssinouen Tours',
+        nomFr: p.nomFr ?? 'El Mouhssinoune Tours',
         nomAr: p.nomAr ?? 'المحسنون للسياحة',
         sloganFr: p.sloganFr ?? null,
         sloganAr: p.sloganAr ?? null,

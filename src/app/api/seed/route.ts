@@ -20,7 +20,7 @@ export async function POST(_req: NextRequest) {
   await db.parametresAgence.upsert({
     where: { id: 'default' },
     update: {
-      nomFr: 'El Mouhssinouen Tours',
+      nomFr: 'El Mouhssinoune Tours',
       nomAr: 'المحسنون للسياحة',
       sloganFr: 'Pèlerinage VIP — Hajj & Omra',
       sloganAr: 'حج وعمرة VIP',
@@ -34,7 +34,7 @@ export async function POST(_req: NextRequest) {
     },
     create: {
       id: 'default',
-      nomFr: 'El Mouhssinouen Tours',
+      nomFr: 'El Mouhssinoune Tours',
       nomAr: 'المحسنون للسياحة',
       sloganFr: 'Pèlerinage VIP — Hajj & Omra',
       sloganAr: 'حج وعمرة VIP',
@@ -62,29 +62,49 @@ export async function POST(_req: NextRequest) {
     })
   }
 
-  // 3. Compagnies aériennes
+  // 3. Compagnies aériennes (qui exercent depuis l'Algérie vers l'Arabie Saoudite)
   const compagnies = [
-    { nom: 'Saudi Arabian Airlines', codeIata: 'SV' },
     { nom: 'Air Algérie', codeIata: 'AH' },
+    { nom: 'Saudi Arabian Airlines (Saudia)', codeIata: 'SV' },
+    { nom: 'Flynas', codeIata: 'XY' },
     { nom: 'Turkish Airlines', codeIata: 'TK' },
     { nom: 'Qatar Airways', codeIata: 'QR' },
     { nom: 'Emirates', codeIata: 'EK' },
+    { nom: 'EgyptAir', codeIata: 'MS' },
+    { nom: 'Royal Jordanian', codeIata: 'RJ' },
+    { nom: 'Tunisair', codeIata: 'TU' },
+    { nom: 'Flydubai', codeIata: 'FZ' },
+    { nom: 'Air Arabia', codeIata: 'G9' },
   ]
   for (const c of compagnies) {
     await db.catalogueCompagnie.create({ data: c })
   }
 
-  // 4. Hôtels
+  // 4. Hôtels (20 Hôtels 4* et 5* à Makkah et Médine)
   const hotels = [
-    // Makkah
+    // --- MAKKAH (10 Hôtels 4* et 5*) ---
     { ville: 'Makkah', nom: 'Swissôtel Al Maqam', nomAr: 'سويس أوتيل المقام', etoiles: 5, distanceHaram: 50, prixSingleSar: '1200', prixDoubleSar: '850', prixTripleSar: '750', prixQuadrupleSar: '700' },
     { ville: 'Makkah', nom: 'Fairmont Clock Tower', nomAr: 'فيرمونت برج الساعة', etoiles: 5, distanceHaram: 30, prixSingleSar: '2500', prixDoubleSar: '1800', prixTripleSar: '1500', prixQuadrupleSar: '1300' },
     { ville: 'Makkah', nom: 'Hilton Suites Makkah', nomAr: 'هيلتون سويتس مكة', etoiles: 5, distanceHaram: 100, prixSingleSar: '1400', prixDoubleSar: '950', prixTripleSar: '820', prixQuadrupleSar: '760' },
-    { ville: 'Makkah', nom: 'Le Meridien Towers', nomAr: 'لو ميريديان تاورز', etoiles: 5, distanceHaram: 250, prixSingleSar: '900', prixDoubleSar: '650', prixTripleSar: '580', prixQuadrupleSar: '540' },
-    // Medine
+    { ville: 'Makkah', nom: 'Raffles Makkah Palace', nomAr: 'رافلز قصر مكة', etoiles: 5, distanceHaram: 20, prixSingleSar: '2800', prixDoubleSar: '2000', prixTripleSar: '1700', prixQuadrupleSar: '1500' },
+    { ville: 'Makkah', nom: 'Pullman Zamzam Makkah', nomAr: 'بولمان زمزم مكة', etoiles: 5, distanceHaram: 50, prixSingleSar: '1300', prixDoubleSar: '900', prixTripleSar: '780', prixQuadrupleSar: '720' },
+    { ville: 'Makkah', nom: 'Makkah Hotel & Towers', nomAr: 'فندق وأبراج مكة', etoiles: 5, distanceHaram: 60, prixSingleSar: '1150', prixDoubleSar: '800', prixTripleSar: '700', prixQuadrupleSar: '650' },
+    { ville: 'Makkah', nom: 'Jumeirah Jabal Omar Makkah', nomAr: 'جميرا جبل عمر مكة', etoiles: 5, distanceHaram: 150, prixSingleSar: '1600', prixDoubleSar: '1100', prixTripleSar: '950', prixQuadrupleSar: '850' },
+    { ville: 'Makkah', nom: 'Le Méridien Towers Makkah', nomAr: 'لو ميريديان تاورز مكة', etoiles: 5, distanceHaram: 250, prixSingleSar: '900', prixDoubleSar: '650', prixTripleSar: '580', prixQuadrupleSar: '540' },
+    { ville: 'Makkah', nom: 'Voco Makkah (IHG Hotel)', nomAr: 'فوكو مكة', etoiles: 4, distanceHaram: 900, prixSingleSar: '550', prixDoubleSar: '400', prixTripleSar: '350', prixQuadrupleSar: '310' },
+    { ville: 'Makkah', nom: 'Park Inn by Radisson Makkah Al Naseem', nomAr: 'بارك إن باي راديسون مكة النسيم', etoiles: 4, distanceHaram: 800, prixSingleSar: '480', prixDoubleSar: '360', prixTripleSar: '310', prixQuadrupleSar: '280' },
+
+    // --- MEDINE (10 Hôtels 4* et 5*) ---
     { ville: 'Medine', nom: 'The Oberoi Madina', nomAr: 'أوبروي المدينة', etoiles: 5, distanceHaram: 80, prixSingleSar: '1800', prixDoubleSar: '1300', prixTripleSar: '1100', prixQuadrupleSar: '980' },
     { ville: 'Medine', nom: 'Anwar Al Madinah Mövenpick', nomAr: 'أنوار المدينة موفنبيك', etoiles: 5, distanceHaram: 50, prixSingleSar: '1100', prixDoubleSar: '780', prixTripleSar: '680', prixQuadrupleSar: '620' },
     { ville: 'Medine', nom: 'Dar Al Taqwa Hotel', nomAr: 'دار التقوى', etoiles: 5, distanceHaram: 30, prixSingleSar: '1500', prixDoubleSar: '1050', prixTripleSar: '900', prixQuadrupleSar: '820' },
+    { ville: 'Medine', nom: 'Pullman Zamzam Madina', nomAr: 'بولمان زمزم المدينة', etoiles: 5, distanceHaram: 150, prixSingleSar: '1000', prixDoubleSar: '720', prixTripleSar: '620', prixQuadrupleSar: '560' },
+    { ville: 'Medine', nom: 'Shaza Madinah', nomAr: 'شذا المدينة', etoiles: 5, distanceHaram: 120, prixSingleSar: '1250', prixDoubleSar: '880', prixTripleSar: '760', prixQuadrupleSar: '690' },
+    { ville: 'Medine', nom: 'Madinah Hilton', nomAr: 'هيلتون المدينة', etoiles: 5, distanceHaram: 100, prixSingleSar: '1150', prixDoubleSar: '820', prixTripleSar: '710', prixQuadrupleSar: '640' },
+    { ville: 'Medine', nom: 'Crowne Plaza Madinah', nomAr: 'كراون بلازا المدينة', etoiles: 5, distanceHaram: 200, prixSingleSar: '950', prixDoubleSar: '680', prixTripleSar: '590', prixQuadrupleSar: '530' },
+    { ville: 'Medine', nom: 'Frontel Al Harithia Hotel', nomAr: 'فرونتل الحارثية', etoiles: 5, distanceHaram: 150, prixSingleSar: '880', prixDoubleSar: '620', prixTripleSar: '540', prixQuadrupleSar: '490' },
+    { ville: 'Medine', nom: 'Taiba Front Hotel', nomAr: 'واجهة طيبة', etoiles: 4, distanceHaram: 100, prixSingleSar: '650', prixDoubleSar: '480', prixTripleSar: '420', prixQuadrupleSar: '380' },
+    { ville: 'Medine', nom: 'Saja Al Madinah', nomAr: 'سجى المدينة', etoiles: 4, distanceHaram: 400, prixSingleSar: '500', prixDoubleSar: '380', prixTripleSar: '330', prixQuadrupleSar: '290' },
   ]
   for (const h of hotels) {
     await db.catalogueHotel.create({ data: { ...h, devise: 'SAR' } })

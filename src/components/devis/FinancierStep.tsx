@@ -25,9 +25,9 @@ export function FinancierStep({ devis, setDevis, resultatCalcul }: Props) {
   return (
     <div className="space-y-6">
       <div className="grid lg:grid-cols-2 gap-6">
-        {/* Colonne gauche — Visa & Assurance */}
+        {/* Colonne gauche — Visa & Frais ONPO */}
         <div className="space-y-4">
-          <h3 className="font-semibold text-sm border-b border-border pb-2">Visa & Assurance</h3>
+          <h3 className="font-semibold text-sm border-b border-border pb-2">Visa & Frais ONPO</h3>
 
           <div className="space-y-2">
             <Label>Type de visa</Label>
@@ -61,13 +61,13 @@ export function FinancierStep({ devis, setDevis, resultatCalcul }: Props) {
           </div>
           <p className="text-xs text-muted-foreground">Sous-total visa: <strong>{visaTotal} {devis.visaDevise}</strong></p>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-3 pt-2 border-t border-border/50">
             <div className="space-y-2">
-              <Label>Prix unit. assurance ({nbPassagers} pax)</Label>
+              <Label>Prix unit. Frais ONPO ({nbPassagers} pax)</Label>
               <Input type="number" step="0.01" value={devis.assurancePrixUnit} onChange={(e) => update('assurancePrixUnit', e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Devise assurance</Label>
+              <Label>Devise Frais ONPO</Label>
               <Select value={devis.assuranceDevise} onValueChange={(v) => update('assuranceDevise', v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -79,7 +79,10 @@ export function FinancierStep({ devis, setDevis, resultatCalcul }: Props) {
               </Select>
             </div>
           </div>
-          <p className="text-xs text-muted-foreground">Sous-total assurance: <strong>{assuranceTotal} {devis.assuranceDevise}</strong></p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs text-muted-foreground">Sous-total Frais ONPO: <strong>{assuranceTotal} {devis.assuranceDevise}</strong></p>
+            <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium">Non commissionable</span>
+          </div>
         </div>
 
         {/* Colonne droite — Marge */}
