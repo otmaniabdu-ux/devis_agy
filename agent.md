@@ -21,7 +21,7 @@ L'application **El Mouhssinoune Tours — OmraVIP Quotes** (`devis-agy`) est une
 - **Styling** : Tailwind CSS v4 + Radix UI + Lucide React + Framer Motion + `sonner` (toasts).
 - **ORMs & Base de Données** : Prisma 6 + SQLite (`file:./db/custom.db`).
 - **Calcul Financier** : `decimal.js` (Précision 28 décimales, arrondi `ROUND_HALF_UP`).
-- **Génération PDF** : `@react-pdf/renderer` avec polices embarquées DejaVu Sans & DejaVu Serif.
+- **Génération PDF** : `@react-pdf/renderer` avec polices embarquées DejaVu Sans & DejaVu Serif + helper `downloadPdf` (Blob fetch + lien `<a>` invisible compatible WebView2 / Tauri v2).
 - **Runtime / Executable** : Bun (supporté avec scripts fallback Node/npm).
 - **Application Desktop Native** : Tauri v2 (pour un mode fenêtre native et ergonomie logicielle de bureau).
 - **Reverse Proxy / Server** : Caddy (configuration port 81).
@@ -35,16 +35,21 @@ L'application **El Mouhssinoune Tours — OmraVIP Quotes** (`devis-agy`) est une
 1. **ZÉRO `number` JS pour les montants monétaires** : Tous les prix, sous-totaux, coûts nets, marges et taux de change sont stockés sous forme de `String` (decimal TEXT) et manipulés exclusivement avec l'objet `Decimal` de `decimal.js`.
 2. **Arrondi Standard** : Utilisation de `Decimal.ROUND_HALF_UP` à 2 décimales pour l'affichage (`round2`, `formatMoney`).
 3. **Verrouillage des Taux de Change** : Lors de la création d'un devis (`Devis`), les taux de change actuels (`tauxSarDzd`, `tauxUsdDzd`, `tauxEurDzd`) sont copiés dans le record `Devis`. Ils ne doivent **jamais** être recalculés avec les taux globaux postérieurs pour préserver l'historique financier exact.
+4. **Frais ONPO (Non Commissionables)** : Les frais ONPO (`fraisOnpoPrixUnit`, par défaut 5000 DZD par passager) ne subissent aucune marge agence (`pvLigne = montantDzd`). La marge (en % ou montant fixe) est répartie exclusivement sur les lignes de prestations commissionables.
 
 ### B. Numérotation des Devis
 - Format strict : `DEVIS-YYYY-MM-NNN` (ex: `DEVIS-2026-07-001`).
 - La fonction `attribuerNumeroDevis` dans `src/lib/calculDevis.ts` gère l'incrémentation atomique avec la table `CompteurNumerotation` et effectue des boucles de sécurité anti-collision.
 
-### C. Gestion des Passagers et Tarification Vol / Train / Visa
+### C. Gestion des Passagers et Tarification Vol / Train / ONPO
 - Les passagers sont catégorisés : `adulte`, `enfant_avec_lit`, `enfant_sans_lit`, `bebe`.
-- **Vols** : Saisie unifiée sous forme de billet "Aller/Retour" global pour plus de rapidité de tarification.
-- Le Visa et l'Assurance Médicale s'appliquent à tous les passagers de la réservation.
+- **Vols / Billet** : Saisie complète du billet Aller/Retour avec champs distincts pour le vol Aller (`origine`, `destination`, `dateVol`, `classe`) et le vol Retour (`origineRetour`, `destinationRetour`, `dateVolRetour`, `classeRetour`), partageant la même compagnie et tarification globale.
+- **Frais ONPO** : Remplacent l'assurance médicale standard, 5000 DZD/passager par défaut.
 - La marge agence peut être appliquée en **pourcentage** (`pourcentage`) ou en **montant fixe DZD** (`montant_fixe`).
+
+### D. Génération & Téléchargement PDF sous Tauri
+- Les boutons d'exportation PDF utilisent la fonction `downloadPdf(devisId, variante, devisNumero)` de `src/lib/client-utils.ts`.
+- Cette fonction effectue un `fetch` du flux PDF `/api/pdf/[id]?variante=...`, génère une URL Blob `URL.createObjectURL(blob)`, et simule un clic sur un lien `<a>` invisible avec attribut `download`. Cette méthode élimine les blocages de fenêtres popups sous Tauri (WebView2).
 
 ---
 
@@ -58,12 +63,12 @@ Le schéma se trouve dans `prisma/schema.prisma`. Voici les modèles clés :
 | `TauxChange` | Taux de change globaux par défaut (SAR, USD, EUR en DZD). |
 | `CompteurNumerotation` | Clé mensuelle (`DEVIS-YYYY-MM`) pour l'attribution atomique des numéros. |
 | `Client` | Fiche client (particulier ou société, coordonnées). |
-| `Devis` | En-tête du devis avec dates, taux de change verrouillés, type de visa, marge, totaux DZD. |
+| `Devis` | En-tête du devis avec dates, taux de change verrouillés, type de visa, frais ONPO, marge, totaux DZD. |
 | `Passager` | Passager rattaché au devis avec catégorie d'âge et infos passeport. |
-| `SegmentVol` | Segment aérien avec compagnies, villes départ/arrivée et tarifs par tranche. |
-| `Hebergement` | Séjour hôtel (Makkah / Médine), type de chambre, formule repas, prix nuitée. |
+| `SegmentVol` | Segment aérien avec origines/destinations Aller et Retour, dates, classes et tarifs par tranche. |
+| `Hebergement` | Séjour hôtel (Makkah / Médine), type de chambre, formule repas, vue (Kaaba/Haram/City), nuitées. |
 | `Transfert` | Transfert terrestre (GMC Yukon, Bus VIP, etc.) et trajet. |
-| `TrainHaramain` | Trajet en train à grande vitesse Haramain (Économique / Business). |
+| `TrainHaramain` | Trajet en train à grande vitesse Haramain (Économique / Business) avec date et heure. |
 | `PrestationVIP` | Services sur-mesure (Ziyarate, Lounge VIP, Fast-Track, Zamzam, etc.). |
 | `CatalogueHotel` | Catalogue d'hôtels préenregistrés avec tarifs indicatifs SAR. |
 | `CatalogueCompagnie` | Catalogue des compagnies aériennes partenaires (Air Algérie, Saudia, etc.). |
@@ -84,8 +89,9 @@ src/
 │   ├── ui/                 # Composants UI Radix/Shadcn (Button, Dialog, Input, Select, Table, Card, etc.)
 │   └── views/              # Vues principales de l'application (DashboardView, ListeDevisView, etc.)
 └── lib/
-    ├── business.ts         # Métier Omra (libellés, calcul des nuitées, catégories)
-    ├── calculDevis.ts      # Moteur financier complet & recalculs décimaux
+    ├── business.ts         # Métier Omra (libellés, calcul des nuitées, vues d'hôtel, catégories)
+    ├── calculDevis.ts      # Moteur financier complet, frais ONPO non commissionables & recalculs décimaux
+    ├── client-utils.ts     # Helper downloadPdf Blob compatible Tauri & utilitaires formatage
     ├── db.ts               # Instance Prisma Client singleton
     ├── money.ts            # Utilitaires financiers strict Decimal.js
     └── pdfDocument.tsx     # Template PDF React-PDF professionnel 1 page compacte
@@ -100,7 +106,8 @@ src/
 - `GET /api/devis/[id]` : Récupère un devis spécifique par ID.
 - `PUT /api/devis/[id]` : Met à jour un devis.
 - `DELETE /api/devis/[id]` : Supprime un devis.
-- `GET /api/pdf/[id]?mode=client|interne` : Génère et renvoie le flux PDF du devis.
+- `POST /api/devis/[id]/calcul` : Recalcule et persiste les totaux d'un devis.
+- `GET /api/pdf/[id]?variante=client|interne` : Génère et renvoie le flux PDF du devis.
 - `GET /POST /api/seed` : Initialise la base de données avec les données de démonstration OmraVIP.
 - `GET /PUT /api/parametres` : Récupère/Met à jour les paramètres de l'agence et les taux de change.
 - `GET /POST /PUT /DELETE /api/clients` : Gestion du répertoire client.
@@ -128,15 +135,10 @@ bun run build
 bun run start
 ```
 
-### Scripts Shell Automatisés (`.zscripts/`)
-- `.zscripts/dev.sh` : Lance l'environnement de dev local.
-- `.zscripts/build.sh` : Prépare l'application autonome Next.js standalone.
-- `.zscripts/start.sh` : Démarre le serveur de production.
-
 ---
 
 ## 8. Directives aux Agents de Développement
 
 1. **Ne modifiez jamais la précision financière** : Conservez toujours le pattern `D(valeur)` et le retour `String` pour les montants.
-2. **Testez le PDF après toute modification des modèles** : Vérifiez que `pdfDocument.tsx` gère correctement tous les champs optionnels ou nouvelles propriétés.
+2. **Utilisez `downloadPdf` pour les téléchargements PDF** : Ne rétablissez pas `window.open` direct pour l'exportation PDF afin de préserver la compatibilité Tauri WebView2.
 3. **Respectez l'esthétique de la marque** : Les couleurs de marque sont `#CC1A1A` (Rouge royal/bordeaux), `#C4A152` (Or métallisé) et `#0A1628` (Bleu nuit d'Orient).
