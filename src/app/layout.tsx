@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Lato, Amiri } from "next/font/google";
+import { Playfair_Display, Inter, Amiri } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -9,10 +9,10 @@ const playfair = Playfair_Display({
   weight: ["400", "600", "700"],
 });
 
-const lato = Lato({
-  variable: "--font-lato",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["300", "400", "700"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const amiri = Amiri({
@@ -37,7 +37,7 @@ export default function RootLayout({
   return (
     <html lang="fr" suppressHydrationWarning>
       <body
-        className={`${playfair.variable} ${lato.variable} ${amiri.variable} font-sans antialiased bg-background text-foreground`}
+        className={`${playfair.variable} ${inter.variable} ${amiri.variable} font-sans antialiased bg-background text-foreground`}
       >
         {children}
         <Toaster position="top-right" richColors />

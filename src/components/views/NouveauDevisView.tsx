@@ -297,7 +297,7 @@ export function NouveauDevisView({
   if (loading || !devis) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-10 h-10 border-2 border-brand-or border-t-transparent rounded-full animate-spin" />
+        <div className="w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -318,7 +318,7 @@ export function NouveauDevisView({
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       {/* Stepper */}
-      <Card className="p-4">
+      <Card className="p-4 glass-card border-0">
         <div className="flex items-center justify-between gap-1 overflow-x-auto scrollbar-thin">
           {STEPS.map((s, i) => {
             const active = s.id === step
@@ -328,11 +328,11 @@ export function NouveauDevisView({
                 key={s.id}
                 onClick={() => goto(s.id)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
-                  active ? 'bg-brand-rouge text-white' : done ? 'text-brand-bleu-nuit' : 'text-muted-foreground'
+                  active ? 'bg-primary text-primary-foreground' : done ? 'text-foreground' : 'text-muted-foreground'
                 }`}
               >
                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                  active ? 'bg-white text-brand-rouge' : done ? 'bg-brand-or text-white' : 'bg-muted'
+                  active ? 'bg-primary text-primary-foreground' : done ? 'bg-accent text-accent-foreground' : 'bg-muted'
                 }`}>
                   {done ? <Check className="w-3 h-3" /> : i + 1}
                 </span>
@@ -359,7 +359,7 @@ export function NouveauDevisView({
       )}
 
       {/* Content */}
-      <Card className="p-6 min-h-[400px]">
+      <Card className="p-6 min-h-[400px] glass-card border-0">
         {step === 'passagers' && (
           <PassagersStep
             devis={devis}
@@ -422,20 +422,20 @@ export function NouveauDevisView({
                 onClick={() => downloadPdf(devis.id!, 'client', devis.numero).catch((e) => toast.error(e.message))}
                 className="gap-2"
               >
-                <FileDown className="w-4 h-4 text-brand-bleu-royal" /> PDF client
+                <FileDown className="w-4 h-4 text-primary" /> PDF client
               </Button>
               <Button
                 variant="outline"
                 onClick={() => downloadPdf(devis.id!, 'interne', devis.numero).catch((e) => toast.error(e.message))}
                 className="gap-2"
               >
-                <FileText className="w-4 h-4 text-brand-or" /> PDF interne
+                <FileText className="w-4 h-4 text-accent" /> PDF interne
               </Button>
             </>
           )}
         </div>
         {canNext ? (
-          <Button onClick={next} className="gap-2 bg-brand-rouge hover:bg-brand-rouge/90">
+          <Button onClick={next} className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground">
             Suivant <ChevronRight className="w-4 h-4" />
           </Button>
         ) : (
