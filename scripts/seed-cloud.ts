@@ -117,7 +117,7 @@ async function seedCloud() {
     { type: 'societe', nom: '—', raisonSociale: 'SARL Voyage El Baraka', telephone: '+213 21 55 66 77', email: 'contact@elbaraka.dz', adresse: 'Constantine' },
     { type: 'particulier', nom: 'Haddad', prenom: 'Mohamed', telephone: '+213 555 99 88 77', email: 'm.haddad@example.dz', adresse: 'Sétif' },
   ]
-  const createdClients = []
+  const createdClients: any[] = []
   for (const c of clients) {
     createdClients.push(await db.client.create({ data: c as any }))
   }
