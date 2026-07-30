@@ -59,7 +59,7 @@ export default function Home() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="inline-block w-10 h-10 border-2 border-brand-or border-t-transparent rounded-full animate-spin mb-3" />
+          <div className="inline-block w-10 h-10 border-2 border-accent border-t-transparent rounded-full animate-spin mb-3" />
           <p className="text-sm text-muted-foreground">Initialisation de l'application…</p>
         </div>
       </div>
@@ -90,14 +90,14 @@ export default function Home() {
         {/* Brand */}
         <div className="px-5 py-4 border-b border-sidebar-border bg-sidebar-accent/30">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white/90 p-1 flex items-center justify-center shadow-md border border-brand-or/30 shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-white/90 p-1 flex items-center justify-center shadow-md border border-accent/30 shrink-0">
               <img src="/Logo_S.png" alt="Logo El Mouhssinoune" className="w-full h-full object-contain" />
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-sm font-extrabold text-sidebar-foreground truncate tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
+              <h1 className="text-sm font-extrabold text-sidebar-foreground truncate tracking-wide font-serif">
                 El Mouhssinoune
               </h1>
-              <p className="text-[11px] font-medium text-brand-or truncate" dir="rtl">المحسنون للسياحة</p>
+              <p className="text-[11px] font-medium text-accent truncate" dir="rtl">المحسنون للسياحة</p>
             </div>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function Home() {
         {/* Footer */}
         <div className="p-4 border-t border-sidebar-border">
           <p className="text-[10px] text-sidebar-foreground/50 leading-relaxed">
-            <span className="text-brand-or">●</span> Application locale — 100% hors-ligne<br />
+            <span className="text-accent">●</span> Application Vercel / Cloud<br />
             Données stockées sur ce poste
           </p>
         </div>
@@ -156,7 +156,7 @@ export default function Home() {
                 <Menu className="w-5 h-5" />
               </button>
               <div>
-                <h2 className="text-lg font-bold text-foreground" style={{ fontFamily: 'Georgia, serif' }}>
+                <h2 className="text-lg font-bold text-foreground font-serif">
                   {NAV.find((n) => n.id === view)?.label ?? 'Tableau de bord'}
                 </h2>
                 <p className="text-[11px] text-muted-foreground">
@@ -172,7 +172,7 @@ export default function Home() {
             {view !== 'nouveau-devis' && (
               <Button
                 onClick={() => navigate('nouveau-devis')}
-                className="bg-brand-rouge hover:bg-brand-rouge/90 text-white gap-2"
+                className="bg-accent hover:bg-accent/90 text-accent-foreground gap-2"
               >
                 <Plus className="w-4 h-4" />
                 <span className="hidden sm:inline">Nouveau devis</span>

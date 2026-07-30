@@ -90,7 +90,7 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
   return (
     <div className="space-y-4 max-w-7xl mx-auto">
       {/* Filtres */}
-      <Card className="p-4">
+      <Card className="p-4 glass-card border-0">
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -121,14 +121,14 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
             <AlertTriangle className="w-4 h-4" />
             Alertes passeport
           </Button>
-          <Button onClick={() => onNavigate('nouveau-devis')} className="gap-2 bg-brand-rouge hover:bg-brand-rouge/90 ml-auto">
+          <Button onClick={() => onNavigate('nouveau-devis')} className="gap-2 bg-accent hover:bg-accent/90 text-accent-foreground ml-auto">
             <FilePlus className="w-4 h-4" /> Nouveau
           </Button>
         </div>
       </Card>
 
       {/* Table */}
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden glass-card border-0">
         {loading ? (
           <div className="p-8 space-y-3">
             {[1, 2, 3, 4].map((i) => <div key={i} className="h-16 bg-muted animate-pulse rounded-md" />)}
@@ -205,14 +205,14 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
                             onClick={() => openPdf(d.id, 'client', d.numero)}
                             title="PDF client"
                           >
-                            <FileDown className="w-3.5 h-3.5 text-brand-bleu-royal" />
+                            <FileDown className="w-3.5 h-3.5 text-primary" />
                           </Button>
                           <Button
                             size="icon" variant="ghost" className="h-8 w-8"
                             onClick={() => openPdf(d.id, 'interne', d.numero)}
                             title="PDF interne"
                           >
-                            <FileText className="w-3.5 h-3.5 text-brand-or" />
+                            <FileText className="w-3.5 h-3.5 text-accent" />
                           </Button>
                           <Button
                             size="icon" variant="ghost" className="h-8 w-8 hover:text-red-600"
