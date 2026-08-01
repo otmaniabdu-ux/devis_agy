@@ -72,7 +72,7 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
 
   // 1. Segments de vol — prix par tranche d'âge × nombre de passagers de la tranche
   for (const seg of devis.segmentsVol) {
-    const nbAdultes = passagersCounts.adulte + passagersCounts.enfant_avec_lit + passagersCounts.enfant_sans_lit
+    const nbAdultes = passagersCounts.adulte
     const nbEnfants = passagersCounts.enfant_avec_lit + passagersCounts.enfant_sans_lit
     const nbBebes = passagersCounts.bebe
     const montantSource = D(seg.prixAdulte).mul(nbAdultes)
@@ -137,7 +137,7 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
 
   // 4. Trains Haramain — prix par tranche × passagers
   for (const tr of devis.trainsHaramain) {
-    const nbAdultes = passagersCounts.adulte + passagersCounts.enfant_avec_lit + passagersCounts.enfant_sans_lit
+    const nbAdultes = passagersCounts.adulte
     const nbEnfants = passagersCounts.enfant_avec_lit + passagersCounts.enfant_sans_lit
     const montantSource = D(tr.prixAdulte).mul(nbAdultes).plus(D(tr.prixEnfant).mul(nbEnfants))
     const montantDzd = convertirEnDzd(montantSource.toString(), tr.devise, taux)

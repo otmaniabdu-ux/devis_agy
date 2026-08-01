@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { recalculerDevis, persisterTotaux } from '@/lib/calculDevis'
 import { verifierAlertePasseport } from '@/lib/business'
 import { buildDevisUpdateData, buildChildLines } from '@/lib/devisPayload'
+import { invalidatePdfCache } from '@/lib/pdfRenderer'
 
 const FULL_INCLUDE = {
   client: true,
@@ -90,6 +91,9 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
   const resultat = await recalculerDevis(id)
   await persisterTotaux(id, resultat)
 
+  // Invalide le cache PDF associé
+  invalidatePdfCache(id)
+
   return NextResponse.json({ ok: true, resultat })
 }
 
@@ -97,5 +101,6 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   await db.devis.delete({ where: { id } })
+  invalidatePdfCache(id)
   return NextResponse.json({ ok: true })
 }

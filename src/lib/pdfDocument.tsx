@@ -181,7 +181,7 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Watermark logo en fond de page (transparence filigrane) */}
-        <Image src={LOGO_PATH} style={styles.watermarkLogo} fixed alt="" />
+        <Image src={LOGO_PATH} style={styles.watermarkLogo} fixed />
 
         {/* Header */}
         <View style={styles.headerRow}>

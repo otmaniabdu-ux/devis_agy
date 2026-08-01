@@ -1,4 +1,4 @@
-# AGENT.MD — Guide & Directives pour l'Agent AI (El Mouhssinoune Tours — OmraVIP Quotes)
+# AGENTS.MD — Guide & Directives pour l'Agent AI (El Mouhssinoune Tours — OmraVIP Quotes)
 
 Ce document définit l'architecture, les conventions, les règles de développement inviolables et la structure métier de l'application **El Mouhssinoune Tours — OmraVIP Quotes**. Tout agent AI ou développeur intervenant sur ce projet **MUST** respecter strictement ces instructions.
 
@@ -6,11 +6,11 @@ Ce document définit l'architecture, les conventions, les règles de développem
 
 ## 1. Vue d'Ensemble & Mission
 
-L'application **El Mouhssinoune Tours — OmraVIP Quotes** (`devis-agy`) est une solution web locale et autonome (100% hors-ligne) conçue pour la création, le calcul financier précis, la gestion et la génération de devis PDF professionnels pour des séjours d'Omra VIP et sur-mesure.
+L'application **El Mouhssinoune Tours — OmraVIP Quotes** (`devis-agy`) est une solution web et desktop complète conçue pour la création, le calcul financier précis, la gestion et la génération de devis PDF professionnels pour des séjours d'Omra VIP et sur-mesure.
 
 - **Client Cible / Marque** : El Mouhssinoune Tours (المحسنون للسياحة) - Agence de Voyages & Tourisme.
 - **Monnaie Principale de Vente** : Dinar Algérien (**DZD**).
-- **Devises Source d'Achat** : Ryal Saoudien (**SAR**), Dollar Américain (**USD**), Euro (**EUR**).
+- **Devises Source d'Achat** : Riyal Saoudien (**SAR**), Dollar Américain (**USD**), Euro (**EUR**).
 
 ---
 
@@ -19,13 +19,14 @@ L'application **El Mouhssinoune Tours — OmraVIP Quotes** (`devis-agy`) est une
 - **Framework Web** : Next.js 16 (App Router) + React 19.
 - **Langage** : TypeScript strict.
 - **Styling** : Tailwind CSS v4 + Radix UI + Lucide React + Framer Motion + `sonner` (toasts).
-- **ORMs & Base de Données** : Prisma 6 + SQLite (`file:./db/custom.db`).
+- **ORMs & Base de Données** : Prisma 6 + PostgreSQL (Supabase / Cloud DB).
+- **Catalogue Hôtels** : 74 hôtels réels (3★, 4★, 5★) à Makkah et Médine extraits de Booking.com avec noms en Arabe, distances exactes au Haram et grille tarifaire complète en SAR (Single, Double, Triple, Quadruple).
 - **Calcul Financier** : `decimal.js` (Précision 28 décimales, arrondi `ROUND_HALF_UP`).
-- **Génération PDF** : `@react-pdf/renderer` avec polices embarquées DejaVu Sans & DejaVu Serif + helper `downloadPdf` (Blob fetch + lien `<a>` invisible compatible WebView2 / Tauri v2).
+- **Génération PDF** : `@react-pdf/renderer` avec rendu serveur optimisé (`src/lib/pdfRenderer.ts`), polices embarquées (DejaVu / Helvetica) et téléchargement Blob (`downloadPdf`) compatible WebView2 / Tauri v2.
 - **Runtime / Executable** : Bun (supporté avec scripts fallback Node/npm).
 - **Application Desktop Native** : Tauri v2 (pour un mode fenêtre native et ergonomie logicielle de bureau).
 - **Reverse Proxy / Server** : Caddy (configuration port 81).
-- **Scripts d'Automatisation** : Dossier `.zscripts/` (`dev.sh`, `build.sh`, `start.sh`).
+- **Scripts d'Automatisation** : Dossier `.zscripts/` (`dev.sh`, `build.sh`, `start.sh`) et `scripts/` (`seed-cloud.ts`, `populate-hotels-booking.ts`).
 
 ---
 
@@ -38,7 +39,7 @@ L'application **El Mouhssinoune Tours — OmraVIP Quotes** (`devis-agy`) est une
 4. **Frais ONPO (Non Commissionables)** : Les frais ONPO (`fraisOnpoPrixUnit`, par défaut 5000 DZD par passager) ne subissent aucune marge agence (`pvLigne = montantDzd`). La marge (en % ou montant fixe) est répartie exclusivement sur les lignes de prestations commissionables.
 
 ### B. Numérotation des Devis
-- Format strict : `DEVIS-YYYY-MM-NNN` (ex: `DEVIS-2026-07-001`).
+- Format strict : `DEVIS-YYYY-MM-NNN` (ex: `DEVIS-2026-08-001`).
 - La fonction `attribuerNumeroDevis` dans `src/lib/calculDevis.ts` gère l'incrémentation atomique avec la table `CompteurNumerotation` et effectue des boucles de sécurité anti-collision.
 
 ### C. Gestion des Passagers et Tarification Vol / Train / ONPO
@@ -55,14 +56,14 @@ L'application **El Mouhssinoune Tours — OmraVIP Quotes** (`devis-agy`) est une
 
 ## 4. Schéma de Base de Données (Prisma)
 
-Le schéma se trouve dans `prisma/schema.prisma`. Voici les modèles clés :
+Le schéma se trouve dans `prisma/schema.prisma`. Modèles clés :
 
 | Modèle | Description |
 | :--- | :--- |
 | `ParametresAgence` | Configuration singleton de l'agence (Noms FR/AR, coordonnées, couleurs de marque, logo). |
 | `TauxChange` | Taux de change globaux par défaut (SAR, USD, EUR en DZD). |
 | `CompteurNumerotation` | Clé mensuelle (`DEVIS-YYYY-MM`) pour l'attribution atomique des numéros. |
-| `Client` | Fiche client (particulier ou société, coordonnées). |
+| `Client` | Fiche client (particulier ou société, coordonnées, alertes passeport). |
 | `Devis` | En-tête du devis avec dates, taux de change verrouillés, type de visa, frais ONPO, marge, totaux DZD. |
 | `Passager` | Passager rattaché au devis avec catégorie d'âge et infos passeport. |
 | `SegmentVol` | Segment aérien avec origines/destinations Aller et Retour, dates, classes et tarifs par tranche. |
@@ -70,8 +71,8 @@ Le schéma se trouve dans `prisma/schema.prisma`. Voici les modèles clés :
 | `Transfert` | Transfert terrestre (GMC Yukon, Bus VIP, etc.) et trajet. |
 | `TrainHaramain` | Trajet en train à grande vitesse Haramain (Économique / Business) avec date et heure. |
 | `PrestationVIP` | Services sur-mesure (Ziyarate, Lounge VIP, Fast-Track, Zamzam, etc.). |
-| `CatalogueHotel` | Catalogue d'hôtels préenregistrés avec tarifs indicatifs SAR. |
-| `CatalogueCompagnie` | Catalogue des compagnies aériennes partenaires (Air Algérie, Saudia, etc.). |
+| `CatalogueHotel` | Catalogue des 74 hôtels Booking.com (3*, 4*, 5*) à Makkah et Médine avec tarifs SAR. |
+| `CatalogueCompagnie` | Catalogue des compagnies aériennes partenaires (Air Algérie, Saudia, Flynas, etc.). |
 
 ---
 
@@ -83,18 +84,21 @@ src/
 │   ├── api/                # Endpoints Next.js API (devis, clients, catalogues, parametres, pdf, seed)
 │   ├── globals.css         # Thème Tailwind v4 & Variables CSS (brand-rouge, brand-or, etc.)
 │   ├── layout.tsx          # Layout racine avec polices et métadonnées
-│   └── page.tsx            # Navigation globale SPA (Tableau de bord, Devis, Clients, Catalogues, Settings)
+│   └── page.tsx            # Navigation SPA (Dashboard, Devis, Clients, Catalogues, Paramètres)
 ├── components/
-│   ├── devis/              # Assistant création devis (7 étapes : Passagers, Vols, Hebergement, etc.)
+│   ├── devis/              # Assistant création devis (7 étapes : Passagers, Vols, Hébergements, etc.)
 │   ├── ui/                 # Composants UI Radix/Shadcn (Button, Dialog, Input, Select, Table, Card, etc.)
-│   └── views/              # Vues principales de l'application (DashboardView, ListeDevisView, etc.)
+│   └── views/              # Vues principales (DashboardView, ListeDevisView, CataloguesView, etc.)
 └── lib/
     ├── business.ts         # Métier Omra (libellés, calcul des nuitées, vues d'hôtel, catégories)
-    ├── calculDevis.ts      # Moteur financier complet, frais ONPO non commissionables & recalculs décimaux
+    ├── calculDevis.ts      # Moteur financier complet, frais ONPO non commissionables & recalculs
     ├── client-utils.ts     # Helper downloadPdf Blob compatible Tauri & utilitaires formatage
-    ├── db.ts               # Instance Prisma Client singleton
+    ├── data/
+    │   └── booking-hotels.ts # Dataset des 74 hôtels 3*, 4*, 5* de Booking.com
+    ├── db.ts               # Instance Prisma Client singleton (PostgreSQL Supabase)
     ├── money.ts            # Utilitaires financiers strict Decimal.js
-    └── pdfDocument.tsx     # Template PDF React-PDF professionnel 1 page compacte
+    ├── pdfDocument.tsx     # Template PDF React-PDF professionnel 1 page compacte
+    └── pdfRenderer.ts      # Moteur d'encapsulation de rendu PDF serveur
 ```
 
 ---
@@ -108,14 +112,14 @@ src/
 - `DELETE /api/devis/[id]` : Supprime un devis.
 - `POST /api/devis/[id]/calcul` : Recalcule et persiste les totaux d'un devis.
 - `GET /api/pdf/[id]?variante=client|interne` : Génère et renvoie le flux PDF du devis.
-- `GET /POST /api/seed` : Initialise la base de données avec les données de démonstration OmraVIP.
+- `GET /POST /api/seed` : Réinitialise et remplit la base avec les données complètes (74 hôtels Booking.com inclus).
 - `GET /PUT /api/parametres` : Récupère/Met à jour les paramètres de l'agence et les taux de change.
 - `GET /POST /PUT /DELETE /api/clients` : Gestion du répertoire client.
 - `GET /POST /PUT /DELETE /api/catalogues` : Gestion des hôtels et compagnies aériennes.
 
 ---
 
-## 7. Commandes de Développement & Scripts
+## 7. Commandes Utiles & Scripts
 
 ```bash
 # Lancement en mode développement web
@@ -124,7 +128,13 @@ bun run dev
 # Lancement en mode Desktop (Fenêtre Native Tauri v2)
 bun run tauri dev
 
-# Génération et synchronisation de la base SQLite avec Prisma
+# Peupler la base avec les hôtels Booking.com (74 hôtels 3*, 4*, 5*)
+bun scripts/populate-hotels-booking.ts
+
+# Réinitialiser toutes les tables avec les données de démonstration
+bun scripts/seed-cloud.ts
+
+# Synchronisation du schéma Prisma avec PostgreSQL
 bun run db:push
 bun run db:generate
 

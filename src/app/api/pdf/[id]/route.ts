@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { renderToBuffer } from '@react-pdf/renderer'
-import { createElement } from 'react'
-import { DevisDocument, type DevisForPdf } from '@/lib/pdfDocument'
+import { type DevisForPdf } from '@/lib/pdfDocument'
 import { recalculerDevis, persisterTotaux } from '@/lib/calculDevis'
+import { generateOptimizedPdf } from '@/lib/pdfRenderer'
+
+export const dynamic = 'force-dynamic'
 
 // GET /api/pdf/[id]?variante=client|interne
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -13,15 +14,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   const devis = await db.devis.findUnique({
     where: { id },
-    include: {
-      client: true,
-      passagers: true,
-      segmentsVol: { include: { compagnie: true } },
-      hebergements: { include: { hotel: true } },
-      transferts: true,
-      trainsHaramain: true,
-      prestationsVip: true,
-    },
+    select: { id: true, numero: true },
   })
   if (!devis) return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 })
 
@@ -29,22 +22,24 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const resultat = await recalculerDevis(id)
   await persisterTotaux(id, resultat)
 
-  // Re-fetch le devis avec les totaux à jour
-  const devisUpdated = await db.devis.findUnique({
-    where: { id },
-    include: {
-      client: true,
-      passagers: true,
-      segmentsVol: { include: { compagnie: true } },
-      hebergements: { include: { hotel: true } },
-      transferts: true,
-      trainsHaramain: true,
-      prestationsVip: true,
-    },
-  })
-  if (!devisUpdated) return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 })
+  // Re-fetch le devis avec les totaux à jour et les paramètres
+  const [devisUpdated, parametres] = await Promise.all([
+    db.devis.findUnique({
+      where: { id },
+      include: {
+        client: true,
+        passagers: true,
+        segmentsVol: { include: { compagnie: true } },
+        hebergements: { include: { hotel: true } },
+        transferts: true,
+        trainsHaramain: true,
+        prestationsVip: true,
+      },
+    }),
+    db.parametresAgence.findUnique({ where: { id: 'default' } }),
+  ])
 
-  const parametres = await db.parametresAgence.findUnique({ where: { id: 'default' } })
+  if (!devisUpdated) return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 })
 
   const devisForPdf: DevisForPdf = {
     ...devisUpdated,
@@ -54,14 +49,25 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     _resultatCalcul: resultat,
   } as DevisForPdf
 
-  const element = createElement(DevisDocument, { devis: devisForPdf, variante })
-  const pdfBuffer = await renderToBuffer(element as any)
+  // Clé de cache composite unique (devisId + variante + timestamps)
+  const devisTs = devisUpdated.updatedAt?.getTime() ?? Date.now()
+  const paramTs = parametres?.updatedAt?.getTime() ?? 0
+  const cacheKey = `${id}:${variante}:${devisTs}:${paramTs}`
 
-  const filename = `${devis.numero}_${variante === 'client' ? 'client' : 'interne'}.pdf`
-  return new NextResponse(pdfBuffer as any, {
-    headers: {
-      'Content-Type': 'application/pdf',
-      'Content-Disposition': `inline; filename="${filename}"`,
-    },
-  })
+  try {
+    const pdfBuffer = await generateOptimizedPdf(devisForPdf, variante, cacheKey)
+    const filename = `${devis.numero}_${variante === 'client' ? 'client' : 'interne'}.pdf`
+
+    return new NextResponse(pdfBuffer as any, {
+      headers: {
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `inline; filename="${filename}"`,
+        'Cache-Control': 'private, no-transform, max-age=60',
+      },
+    })
+  } catch (err: any) {
+    console.error('Erreur génération PDF:', err)
+    return NextResponse.json({ error: 'Erreur lors de la génération du PDF' }, { status: 500 })
+  }
 }
+
