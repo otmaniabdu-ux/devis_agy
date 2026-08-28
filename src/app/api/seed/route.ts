@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { bookingHotels } from '@/lib/data/booking-hotels'
+import { compagniesAeriennes } from '@/lib/data/airlines'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -76,24 +77,11 @@ async function seedDatabase() {
     }
 
     // 3. Compagnies aériennes
-    const compagnies = [
-      { nom: 'Air Algérie', codeIata: 'AH' },
-      { nom: 'Saudi Arabian Airlines (Saudia)', codeIata: 'SV' },
-      { nom: 'Flynas', codeIata: 'XY' },
-      { nom: 'Turkish Airlines', codeIata: 'TK' },
-      { nom: 'Qatar Airways', codeIata: 'QR' },
-      { nom: 'Emirates', codeIata: 'EK' },
-      { nom: 'EgyptAir', codeIata: 'MS' },
-      { nom: 'Royal Jordanian', codeIata: 'RJ' },
-      { nom: 'Tunisair', codeIata: 'TU' },
-      { nom: 'Flydubai', codeIata: 'FZ' },
-      { nom: 'Air Arabia', codeIata: 'G9' },
-    ]
-    for (const c of compagnies) {
+    for (const c of compagniesAeriennes) {
       await db.catalogueCompagnie.create({ data: c })
     }
 
-    // 4. Hôtels (74 Hôtels 3*, 4* et 5* à Makkah et Médine depuis Booking.com)
+    // 4. Hôtels (110+ Hôtels 3*, 4* et 5* à Makkah et Médine depuis Booking.com)
     await db.catalogueHotel.createMany({
       data: bookingHotels,
     })
