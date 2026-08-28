@@ -1,15 +1,16 @@
-# 🕌 El Mouhssinoune Tours — OmraVIP Quotes
+# 🕋 El Mouhssinoune Tours — Omra & Hadj VIP Quotes
 
-> **Système de Gestion & Générateur de Devis Sur-Mesure & VIP pour Séjours d'Omra**  
-> *Application web & desktop — El Mouhssinoune Tours (المحسنون للسياحة)*
+> **Système de Gestion Financière & Générateur de Devis/Programmes Sur-Mesure pour Séjours d'Omra & Hadj VIP**  
+> *Application Web & Desktop Native — El Mouhssinoune Tours (المحسنون للسياحة)*
 
-![Version](https://img.shields.io/badge/version-0.3.0-gold.svg)
-![Next.js](https://img.shields.io/badge/Next.js-16.1-black.svg)
-![React](https://img.shields.io/badge/React-19-blue.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue.svg)
-![Prisma](https://img.shields.io/badge/Prisma-6.11-indigo.svg)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-green.svg)
-![Tauri](https://img.shields.io/badge/Tauri-v2-blue.svg)
+![Version](https://img.shields.io/badge/version-0.4.0-gold.svg)
+![Next.js](https://img.shields.io/badge/Next.js-16.3-black.svg)
+![React](https://img.shields.io/badge/React-19.2-blue.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)
+![Prisma](https://img.shields.io/badge/Prisma-6.19-indigo.svg)
+![SQLite](https://img.shields.io/badge/SQLite-Local_100%25_Hors--Ligne-blue.svg)
+![Tauri](https://img.shields.io/badge/Tauri-v2_Desktop-blue.svg)
+![Design](https://img.shields.io/badge/Design-Liquid_Glass_VIP-d97706.svg)
 
 ---
 
@@ -17,9 +18,10 @@
 
 - [À Propos](#-à-propos)
 - [Fonctionnalités Principales](#-fonctionnalités-principales)
-- [Catalogue d'Hôtels Booking.com (3★, 4★, 5★)](#-catalogue-dhôtels-bookingcom-3-4-5)
-- [Moteur Financier Multi-Devises](#-moteur-financier-multi-devises)
-- [Génération PDF Professionnelle & Compatible Tauri](#-génération-pdf-professionnelle--compatible-tauri)
+- [Module Spécial Hadj VIP](#-module-spécial-hadj-vip)
+- [Catalogues Intégrés (118 Hôtels & 25 Compagnies)](#-catalogues-intégrés-118-hôtels--25-compagnies)
+- [Moteur Financier Multi-Devises Strict](#-moteur-financier-multi-devises-strict)
+- [Exports PDF Professionnels (3 Variantes)](#-exports-pdf-professionnels-3-variantes)
 - [Stack Technique](#-stack-technique)
 - [Installation & Démarrage](#-installation--démarrage)
 - [Arborescence du Projet](#-arborescence-du-projet)
@@ -30,115 +32,116 @@
 
 ## 🌟 À Propos
 
-**OmraVIP Quotes** est une solution informatique sur-mesure développée pour l'agence de voyages **El Mouhssinoune Tours** (المحسنون للسياحة). Elle permet aux agents et responsables de tarification de composer rapidement des packages d'Omra personnalisés (Vols Aller/Retour, Hébergements à Makkah et Médine, Transferts VIP, Train Haramain, Visites & Services libres) et de calculer instantanément le prix de vente exact en Dinars Algériens (**DZD**), tout en générant un devis PDF élégant et conforme à l'image de marque VIP.
+**El Mouhssinoune Tours — Omra & Hadj VIP Quotes** (`devis-agy`) est une solution logicielle métier complète conçue pour l'agence de voyages **El Mouhssinoune Tours** (المحسنون للسياحة). 
 
-L'application fonctionne sous navigateur web ou en application desktop native avec **Tauri v2**, adossée à une base de données cloud PostgreSQL (Supabase).
+Elle permet aux agents et responsables de tarification de concevoir rapidement des séjours de pèlerinage VIP et sur-mesure (Billets d'avion A/R, Hébergements de luxe à Makkah et Médine, Transferts privés, Train rapide Haramain, Camps VIP Mina/Arafat, Transport Mashair et Prestations personnalisées) avec un calcul financier d'une précision absolue en Dinars Algériens (**DZD**) et l'exportation instantanée de devis et programmes de voyage en PDF de haute qualité.
+
+L'application fonctionne en mode **100% autonome et hors-ligne** grâce à sa base de données locale **SQLite** (`db/custom.db`), disponible aussi bien dans le navigateur qu'en application de bureau native via **Tauri v2**.
 
 ---
 
 ## ✨ Fonctionnalités Principales
 
-### 📊 1. Tableau de Bord (Dashboard)
-- Suivi analytique global en temps réel : Chiffre d'affaires total, marge brute réalisée, nombre de devis créés, devis acceptés, taux de conversion.
-- Liste et raccourcis d'accès rapide aux derniers devis récents.
+### 📊 1. Tableau de Bord Analytique (Dashboard)
+- Indicateurs clés en temps réel : Chiffre d'affaires total TTC, Marge nette réalisée, Devis émis, Devis validés, Taux de transformation.
+- Liste interactive des devis récents avec accès direct aux exports PDF et à l'édition.
 
-### 📝 2. Assistant de Création de Devis Multi-Étapes (Wizard)
-- **Étape 1 : Client & Dates** — Sélection du client (particulier ou entreprise), saisie des dates de voyage.
-- **Étape 2 : Passagers** — Ajout des passagers par tranche d'âge (*Adultes, Enfants avec lit, Enfants sans lit, Bébés*) et coordonnées de passeport.
-- **Étape 3 : Vols (Aller / Retour)** — Saisie complète du billet d'avion avec détails distincts pour le vol Aller (Origine, Destination, Date/Heure, Classe) et le vol Retour (Origine, Destination, Date/Heure, Classe), partageant la même compagnie aérienne.
-- **Étape 4 : Hébergement** — Choix des hôtels à **Makkah** et **Médine** parmi le catalogue (type de chambre, formule repas : demi-pension, pension complète, vue Kaaba/Haram/City, durée en nuitées).
-- **Étape 5 : Transferts** — Choix des véhicules terrestres VIP (GMC Yukon, Mercedes Classe E, Bus VIP privé) et trajets.
-- **Étape 6 : Train Haramain & Prestations VIP** — Billets de train à grande vitesse avec date et heure précise, ainsi que services personnalisés (*Ziyarate, Salons VIP, Fast-Track, Bagagerie, Zamzam*).
-- **Étape 7 : Financier & Validation** — Frais ONPO (5 000 DZD/passager par défaut, non commissionables), application de la marge agence (en % ou montant fixe DZD), calcul instantané du coût net et du prix de vente, attribution du numéro unique `DEVIS-YYYY-MM-NNN`.
-
-### 📄 3. Génération & Export PDF Natif (Compatible Tauri)
-- Export PDF instantané basé sur un flux serveur optimisé et un chargement Blob (`fetch` + URL Blob + déclencheur `download`), garantissant un fonctionnement parfait dans le navigateur et dans la fenêtre desktop **Tauri**.
-- Deux modes de vue PDF disponibles :
-  - **Vue Client** : Titre "Récapitulatif des Prix", colonne "Prestation", intitulé "Billet", "Hébergement Makkah", "Hébergement Médine", vue des chambres et horaire des trains.
-  - **Vue Interne / Agence** : Document complet avec décomposition du coût net d'achat, de la marge agence et des prix de vente ligne par ligne.
-
-### 👥 4. Gestion des Clients & Catalogues
-- **Répertoire Clients** : Fiches clients avec coordonnées, historique des devis et alerte d'expiration de passeport (< 6 mois).
-- **Catalogues Hôtels & Compagnies** : Base de données de 74 hôtels réels Booking.com et compagnies aériennes majeures.
+### 📝 2. Assistant de Création de Devis (Wizard Intuitif)
+- **Étape 1 : Passagers** — Catégorisation par tranche d'âge (*Adultes, Enfants avec lit, Enfants sans lit, Bébés*) et gestion des alertes d'expiration de passeport (< 6 mois).
+- **Étape 2 : Billets d'avion** — Saisie complète du billet Aller/Retour avec champs distincts pour le vol Aller et le vol Retour (Origine, Destination, Date/Heure, Classe Éco/Affaires/Première).
+- **Étape 3 : Hébergements** — Sélection parmi 118 hôtels à Makkah et Médine (Formules repas, Type de chambre, Vue Kaaba/Haram/Ville, calcul automatique du nombre de nuitées).
+- **Étape 4 : Transferts & Train Haramain** — Flotte de véhicules VIP (GMC Yukon, Mercedes Classe E, Bus VIP) et réservations de train à grande vitesse avec horaires précis.
+- **Étape 5 : Hadj VIP** — Module dédié aux camps de luxe Mina/Arafat et aux circuits internes de transport du Mashair.
+- **Étape 6 : Prestations VIP & Visites** — Services sur-mesure (*Ziyarate privées avec Moutawif, Salons VIP aéroport, Fast-Track, Prise en charge bagages, Eau Zamzam*).
+- **Étape 7 : Paramétrage Financier & ONPO** — Saisie libre des frais ONPO (5 000 DZD/passager par défaut, non commissionables), choix du type de marge (% ou montant fixe DZD), verrouillage des taux de change (SAR, USD, EUR) et numérotation automatique atomique `DEVIS-YYYY-MM-NNN`.
 
 ---
 
-## 🏨 Catalogue d'Hôtels Booking.com (3★, 4★, 5★)
+## 🏕️ Module Spécial Hadj VIP
 
-La base de données contient **74 hôtels réels** issus de Booking.com avec leurs noms officiels en arabe, distances réelles au Haram et grilles tarifaires indicatives en SAR :
-
-| Catégorie | Makkah (La Mecque) | Médine (Al Madinah) | Total Catégorie |
-| :--- | :---: | :---: | :---: |
-| **5 Étoiles (5★)** | 18 hôtels *(Fairmont, Swissôtel, Raffles, Jabal Omar, InterContinental...)* | 12 hôtels *(Oberoi, Sofitel Shahd, Dar Al Taqwa, Anwar Mövenpick...)* | **30 hôtels** |
-| **4 Étoiles (4★)** | 12 hôtels *(Mövenpick Hajar, Hilton Suites, DoubleTree, Voco, Park Inn...)* | 10 hôtels *(Makarem Burj, Diyar Ajwa, Taiba Front, Elaf Taiba...)* | **22 hôtels** |
-| **3 Étoiles (3★)** | 10 hôtels *(Le Méridien Makkah, Al Massa, Elaf Al Mashaer, Retaj...)* | 12 hôtels *(Bosphorus, Golden Tulip, Tulip Inn, Mysk Al Balad...)* | **22 hôtels** |
-| **Total Général** | **40 hôtels** | **34 hôtels** | **74 hôtels** |
+L'application intègre des fonctionnalités dédiées au grand pèlerinage VIP :
+- **Camps & Tentes VIP (Mina / Arafat)** : Gestion des *Maktabs VIP A* avec literie améliorée (*Sofa-beds climatisés*), formules de restauration buffet 24/7, sanitaires privés et tarification distincte par adulte et par enfant en SAR.
+- **Transport Mashair** : Prise en charge des déplacements internes durant les jours du Hajj (La Mecque ↔ Mina ↔ Arafat ↔ Muzdalifah) en bus exécutifs ou SUV avec tarification au forfait véhicule ou par pèlerin.
 
 ---
 
-## 💰 Moteur Financier Multi-Devises
+## 🏨 Catalogues Intégrés (118 Hôtels & 25 Compagnies)
 
-Pour garantir une précision comptable absolue :
-1. **Zéro Erreur d'Arrondi Float** : Tous les calculs financiers reposent sur la bibliothèque `decimal.js` avec une précision de 28 chiffres et un arrondi réglementaire `ROUND_HALF_UP`.
-2. **Verrouillage des Taux de Change** : Lors de la création d'un devis, les taux de change du jour sont copiés et verrouillés dans le devis.
-3. **Gestion des Frais Non Commissionables (ONPO)** : Les frais d'organisation ONPO (5 000 DZD/passager) sont exemptés de marge agence (`prixVente = coûtNet`).
+### 🕋 Catalogue des Hôtels Booking.com (118 Hôtels Réels)
+Grille tarifaire complète en SAR pour les chambres Single, Double, Triple et Quadruple, noms officiels en arabe et distances métriques au Haram :
+
+| Ville | 5 Étoiles (5★) | 4 Étoiles (4★) | 3 Étoiles (3★) | Total par Ville |
+| :--- | :---: | :---: | :---: | :---: |
+| **La Mecque (Makkah)** | 24 hôtels *(Fairmont, Raffles, Dar Al Tawhid, Swissôtel, Jabal Omar...)* | 20 hôtels *(Mövenpick Hajar, Hilton Suites, Makarem Ajyad, Voco...)* | 20 hôtels *(Le Méridien, Al Safwa Orchid, Elaf Al Mashaer...)* | **64 hôtels** |
+| **Médine (Al Madinah)** | 17 hôtels *(The Oberoi, Dar Al Taqwa, Dar Al Iman, Sofitel Shahd, Mövenpick...)* | 15 hôtels *(Taiba Front, Makarem Burj, Elaf Taiba, Saja...)* | 22 hôtels *(Al Rawda Royal, Bosphorus, Golden Tulip, Emaar...)* | **54 hôtels** |
+| **Total Général** | **41 hôtels** | **35 hôtels** | **42 hôtels** | **118 hôtels** |
+
+### ✈️ 25 Compagnies Aériennes Partenaires
+Catalogue complet des compagnies opérant au départ de l'Algérie (Alger, Oran, Constantine, Annaba, etc.) et en transit Hajj/Omra :
+*Air Algérie, Saudia, Flynas, Flyadeal, Tassili Airlines, Turkish Airlines, Qatar Airways, Emirates, EgyptAir, Royal Jordanian, Tunisair, Flydubai, Air Arabia, Gulf Air, Oman Air, Kuwait Airways, Jazeera Airways, Nouvelair, Air Cairo, Nesma Airlines, Middle East Airlines (MEA), ITA Airways, Royal Air Maroc, Pegasus Airlines.*
 
 ---
 
-## 🖨️ Génération PDF Professionnelle
+## 💰 Moteur Financier Multi-Devises Strict
 
-Le moteur PDF s'appuie sur `@react-pdf/renderer` avec encapsulation serveur (`src/lib/pdfRenderer.ts`) :
-- **Typographie Officielle embarquée** : *DejaVu Serif* pour les en-têtes élégants et *DejaVu Sans* pour le corps de texte.
-- **Watermark Discret** : Filigrane avec le logo de l'agence El Mouhssinoune Tours.
-- **Layout Compact 1 Page** : Mise en page condensée et haut de gamme.
+- **Précision 28 Décimales** : Aucun calcul monétaire n'utilise les `number` natifs de JavaScript. Toutes les opérations s'appuient sur `decimal.js` avec la méthode d'arrondi comptable `ROUND_HALF_UP`.
+- **Verrouillage Historique des Devises** : Les taux de change du jour (`SAR`, `USD`, `EUR` vers `DZD`) sont copiés et scellés dans chaque devis créé.
+- **Gestion des Frais Non Commissionables (ONPO)** : Les frais ONPO sont obligatoirement répercutés à prix coûtant sans marge agence (`pvLigne = montantDzd`). La marge (en % ou fixe) s'applique exclusivement aux prestations commissionables.
+
+---
+
+## 🖨️ Exports PDF Professionnels (3 Variantes)
+
+Génération serveur optimisée via `@react-pdf/renderer` avec polices embarquées (*DejaVu Sans / DejaVu Serif*) et téléchargement Blob sécurisé (`downloadPdf`) compatible WebView2 / Tauri :
+
+1. **📄 Variante Client** : Devis détaillé avec description complète des prestations, des vols et des hébergements, avec prix de vente TTC par poste et montant total en DZD.
+2. **📑 Variante Interne / Agence** : Décomposition financière exhaustive affichant les devises sources d'achat, les coûts nets, le montant de la marge agence et le taux de rentabilité.
+3. **📋 Variante Programme (Sans Prix)** : Document d'itinéraire complet reprenant l'ensemble du voyage (hôtels, vols, transferts, horaires de train, services Hadj et VIP) **sans afficher aucun prix ni total** (idéal pour le partage avec les pèlerins).
 
 ---
 
 ## 🛠️ Stack Technique
 
-- **Frontend & App Framework** : [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.dev/)
-- **Langage** : [TypeScript](https://www.typescriptlang.org/)
-- **Design & Interface** : [Tailwind CSS v4](https://tailwindcss.com/), Composants [Radix UI](https://www.radix-ui.com/), [Lucide React](https://lucide.dev/), [Framer Motion](https://www.framer.com/motion/)
-- **Base de Données & ORM** : [PostgreSQL](https://www.postgresql.org/) (Supabase Cloud), [Prisma ORM 6](https://www.prisma.io/)
-- **Moteur Financier** : [Decimal.js](https://mikemcl.github.io/decimal.js/)
-- **Génération PDF** : [@react-pdf/renderer](https://react-pdf.org/)
-- **Application Desktop Native** : [Tauri v2](https://v2.tauri.app/) (Fenêtre native en Rust)
-- **Environnement d'exécution** : [Bun](https://bun.sh/) (ou Node.js)
-- **Serveur Web / Reverse Proxy** : [Caddy](https://caddyserver.com/) (Port 81)
+- **Framework & UI** : [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [Tailwind CSS v4](https://tailwindcss.com/) (Thème Liquid Glass Noir/Or), [Radix UI](https://www.radix-ui.com/), [Lucide React](https://lucide.dev/), [Framer Motion](https://www.framer.com/motion/), [Sonner](https://sonner.emilkowal.ski/).
+- **Langage** : [TypeScript 5.9](https://www.typescriptlang.org/) (Mode strict).
+- **Base de Données & ORM** : [SQLite](https://www.sqlite.org/) (Local 100% hors-ligne `db/custom.db`), [Prisma ORM 6](https://www.prisma.io/).
+- **Moteur Financier** : [Decimal.js](https://mikemcl.github.io/decimal.js/).
+- **Génération PDF** : [@react-pdf/renderer](https://react-pdf.org/).
+- **Application Desktop Native** : [Tauri v2](https://v2.tauri.app/) (Fenêtre native de bureau).
+- **Runtime** : [Bun](https://bun.sh/) (avec support fallback Node.js).
 
 ---
 
 ## 🚀 Installation & Démarrage
 
 ### Prérequis
-- [Bun](https://bun.sh/) (recommandé) ou Node.js (v18+)
+- [Bun](https://bun.sh/) (fortement recommandé) ou Node.js (v18+)
 
 ### 1. Installation des dépendances
 ```bash
 bun install
 ```
 
-### 2. Configuration de la base de données
-Configurez votre variable `DATABASE_URL` / `POSTGRES_PRISMA_URL` dans le fichier `.env`, puis :
+### 2. Initialisation de la base SQLite locale
 ```bash
 bun run db:push
 bun run db:generate
 ```
 
-### 3. Peuplement du catalogue d'hôtels Booking.com (74 hôtels)
+### 3. Peupler les catalogues (118 Hôtels & 25 Compagnies)
 ```bash
 bun scripts/populate-hotels-booking.ts
 ```
 
-### 4. Lancement du serveur de développement web
+### 4. Lancement du serveur Web de développement
 ```bash
 bun run dev
 ```
-L'application sera disponible sur `http://localhost:3000`.
+Accédez à l'application sur : **`http://localhost:3000`**
 
-### 5. Lancement en mode Application Desktop (Tauri)
+### 5. Lancement en Mode Desktop Natif (Tauri v2)
 ```bash
-bun run tauri dev
+bun x tauri dev
 ```
 
 ---
@@ -149,17 +152,17 @@ Dans le fichier `package.json` :
 
 | Commande | Action |
 | :--- | :--- |
-| `bun run dev` | Lance l'application Next.js en mode développement sur le port 3000. |
+| `bun run dev` | Lance l'application web Next.js en mode développement sur le port 3000. |
 | `bun run build` | Compile l'application pour la production. |
-| `bun run start` | Démarre le serveur de production standalone. |
-| `bun scripts/populate-hotels-booking.ts` | Remplit le catalogue d'hôtels avec les données Booking.com (74 hôtels 3*, 4*, 5*). |
-| `bun scripts/seed-cloud.ts` | Réinitialise la base PostgreSQL avec tous les paramètres, taux et données de démonstration. |
-| `bun run db:push` | Synchronise le schéma Prisma directement avec PostgreSQL. |
-| `bun run db:generate` | Régénère le client Prisma TypeScript. |
+| `bun run start` | Démarre le serveur en mode production. |
+| `bun scripts/populate-hotels-booking.ts` | Met à jour le catalogue avec les 118 hôtels et 25 compagnies aériennes. |
+| `bun scripts/seed-cloud.ts` | Réinitialise la base SQLite locale avec les paramètres, taux et devis de démonstration. |
+| `bun run db:push` | Synchronise le schéma Prisma avec le fichier SQLite `db/custom.db`. |
+| `bun run db:generate` | Régénère le client TypeScript Prisma. |
 
 ---
 
 ## 🏢 Licence & Crédits
 
 Droits réservés © **El Mouhssinoune Tours** (المحسنون للسياحة).  
-Conçu et développé pour la gestion professionnelle des devis d'Omra VIP.
+Conçu et développé pour la gestion et la tarification professionnelle de séjours d'Omra & Hadj VIP sur-mesure.
