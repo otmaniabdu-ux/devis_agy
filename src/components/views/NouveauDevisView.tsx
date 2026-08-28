@@ -431,6 +431,13 @@ export function NouveauDevisView({
               >
                 <FileText className="w-4 h-4 text-accent" /> PDF interne
               </Button>
+              <Button
+                variant="outline"
+                onClick={() => downloadPdf(devis.id!, 'programme', devis.numero).catch((e) => toast.error(e.message))}
+                className="gap-2"
+              >
+                <FileText className="w-4 h-4 text-emerald-600" /> PDF programme
+              </Button>
             </>
           )}
         </div>

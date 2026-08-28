@@ -79,7 +79,7 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
     }
   }
 
-  const openPdf = async (id: string, variante: 'client' | 'interne', numero?: string) => {
+  const openPdf = async (id: string, variante: 'client' | 'interne' | 'programme', numero?: string) => {
     try {
       await downloadPdf(id, variante, numero)
     } catch (e: any) {
@@ -213,6 +213,13 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
                             title="PDF interne"
                           >
                             <FileText className="w-3.5 h-3.5 text-accent" />
+                          </Button>
+                          <Button
+                            size="icon" variant="ghost" className="h-8 w-8"
+                            onClick={() => openPdf(d.id, 'programme', d.numero)}
+                            title="PDF programme"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-emerald-600" />
                           </Button>
                           <Button
                             size="icon" variant="ghost" className="h-8 w-8 hover:text-red-600"

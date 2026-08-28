@@ -180,9 +180,9 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
   }
 
   // 7. Frais ONPO — prix unitaire × total passagers
-  const fraisOnpoPrixUnit = (devis as any).fraisOnpoPrixUnit ?? devis.assurancePrixUnit ?? '5000'
-  const fraisOnpoDevise = (devis as any).fraisOnpoDevise ?? devis.assuranceDevise ?? 'DZD'
-  if (totalPassagers > 0 && D(fraisOnpoPrixUnit).gt(0)) {
+  const fraisOnpoPrixUnit = devis.fraisOnpoPrixUnit ?? devis.assurancePrixUnit ?? '5000'
+  const fraisOnpoDevise = devis.fraisOnpoDevise ?? devis.assuranceDevise ?? 'DZD'
+  if (totalPassagers > 0) {
     const montantSource = D(fraisOnpoPrixUnit).mul(totalPassagers)
     const montantDzd = convertirEnDzd(montantSource.toString(), fraisOnpoDevise, taux)
     lignes.push({

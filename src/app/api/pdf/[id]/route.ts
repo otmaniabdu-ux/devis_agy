@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const { searchParams } = new URL(req.url)
-  const variante = (searchParams.get('variante') ?? 'client') as 'client' | 'interne'
+  const variante = (searchParams.get('variante') ?? 'client') as 'client' | 'interne' | 'programme'
 
   const devis = await db.devis.findUnique({
     where: { id },
@@ -56,7 +56,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
   try {
     const pdfBuffer = await generateOptimizedPdf(devisForPdf, variante, cacheKey)
-    const filename = `${devis.numero}_${variante === 'client' ? 'client' : 'interne'}.pdf`
+    const filename = `${devis.numero}_${variante}.pdf`
 
     return new NextResponse(pdfBuffer as any, {
       headers: {

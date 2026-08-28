@@ -77,7 +77,7 @@ export function invalidatePdfCache(devisId: string): void {
  */
 export async function generateOptimizedPdf(
   devisForPdf: DevisForPdf,
-  variante: 'client' | 'interne',
+  variante: 'client' | 'interne' | 'programme',
   cacheKey: string
 ): Promise<Buffer> {
   // 1. Vérification du cache mémoire rapide (0ms / 0 CPU)

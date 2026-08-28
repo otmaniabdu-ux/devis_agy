@@ -35,7 +35,7 @@ export async function api<T = any>(
   return r.json()
 }
 
-export async function downloadPdf(devisId: string, variante: 'client' | 'interne', devisNumero?: string): Promise<void> {
+export async function downloadPdf(devisId: string, variante: 'client' | 'interne' | 'programme', devisNumero?: string): Promise<void> {
   const url = `/api/pdf/${devisId}?variante=${variante}`
   const response = await fetch(url)
   if (!response.ok) {

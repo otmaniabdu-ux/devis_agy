@@ -147,13 +147,14 @@ function fmtPdfMoney(value: string, devise = 'DZD'): string {
 
 interface DevisDocumentProps {
   devis: DevisForPdf
-  variante: 'client' | 'interne'
+  variante: 'client' | 'interne' | 'programme'
 }
 
 function DevisDocument({ devis, variante }: DevisDocumentProps) {
   const p = devis.parametres
   const resultat = devis._resultatCalcul
   const isClient = variante === 'client'
+  const isProgramme = variante === 'programme'
   const dureeVoyage = nbJours(devis.dateDepart, devis.dateRetour)
 
   // Sépare les contacts pour affichage compact
@@ -189,7 +190,7 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
             {headerBrandChildren}
           </View>
           <View style={styles.devisBox}>
-            <Text style={styles.devisTitleFr}>DEVIS</Text>
+            <Text style={styles.devisTitleFr}>{isProgramme ? 'PROGRAMME' : 'DEVIS'}</Text>
             <Text style={styles.devisNumber}>{devis.numero}</Text>
             <Text style={styles.devisDate}>Émis le {formatDate(new Date())}</Text>
           </View>
@@ -316,36 +317,40 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
           </View>
         ) : null}
 
-        {/* Récapitulatif financier — prix de vente par ligne (marge incluse) */}
-        <Text style={styles.sectionTitle}>Récapitulatif des Prix</Text>
-        <View style={styles.tableHeader}>
-          <Text style={[styles.tableHeaderCell, { flex: 3 }]}>Prestation</Text>
-          <Text style={[styles.tableHeaderCell, { flex: 6 }]}>Description</Text>
-          {(!isClient) && <Text style={[styles.tableHeaderCell, { flex: 2.5 }]}>Devise source</Text>}
-          <Text style={[styles.tableHeaderCell, { flex: 3, textAlign: 'right' }]}>Prix vente DZD</Text>
-        </View>
-        {resultat ? resultat.lignes.map((l, i) => {
-          const posteDisplay = l.poste === 'Vol' ? 'Billet' : (l.poste === 'Assurance médicale' ? 'Frais ONPO' : l.poste)
-          return (
-            <View key={`l${i}`} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt} wrap={false}>
-              <Text style={[styles.tableCell, { flex: 3 }]}>{posteDisplay}</Text>
-              <Text style={[styles.tableCell, { flex: 6 }]}>{l.description}</Text>
-              {(!isClient) && <Text style={[styles.tableCell, { flex: 2.5 }]}>{fmtPdfMontant(l.montantSource)} {l.deviseSource}</Text>}
-              <Text style={[styles.tableCell, { flex: 3, textAlign: 'right' }]}>{fmtPdfMontant(l.prixVenteDzd)}</Text>
+        {/* Récapitulatif financier et Total — masqués pour programme */}
+        {!isProgramme ? (
+          <>
+            <Text style={styles.sectionTitle}>Récapitulatif des Prix</Text>
+            <View style={styles.tableHeader}>
+              <Text style={[styles.tableHeaderCell, { flex: 3 }]}>Prestation</Text>
+              <Text style={[styles.tableHeaderCell, { flex: 6 }]}>Description</Text>
+              {(!isClient) && <Text style={[styles.tableHeaderCell, { flex: 2.5 }]}>Devise source</Text>}
+              <Text style={[styles.tableHeaderCell, { flex: 3, textAlign: 'right' }]}>Prix vente DZD</Text>
             </View>
-          )
-        }) : null}
+            {resultat ? resultat.lignes.map((l, i) => {
+              const posteDisplay = l.poste === 'Vol' ? 'Billet' : (l.poste === 'Assurance médicale' ? 'Frais ONPO' : l.poste)
+              return (
+                <View key={`l${i}`} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt} wrap={false}>
+                  <Text style={[styles.tableCell, { flex: 3 }]}>{posteDisplay}</Text>
+                  <Text style={[styles.tableCell, { flex: 6 }]}>{l.description}</Text>
+                  {(!isClient) && <Text style={[styles.tableCell, { flex: 2.5 }]}>{fmtPdfMontant(l.montantSource)} {l.deviseSource}</Text>}
+                  <Text style={[styles.tableCell, { flex: 3, textAlign: 'right' }]}>{fmtPdfMontant(l.prixVenteDzd)}</Text>
+                </View>
+              )
+            }) : null}
 
-        {/* Total */}
-        <View style={styles.totalRow}>
-          <View style={{ flex: 9 }}>
-            <Text style={styles.totalLabel}>PRIX DE VENTE TOTAL</Text>
-          </View>
-          <Text style={[styles.totalValue, { flex: 3, textAlign: 'right' }]}>{fmtPdfMoney(devis.prixVenteDzd)}</Text>
-        </View>
+            {/* Total */}
+            <View style={styles.totalRow}>
+              <View style={{ flex: 9 }}>
+                <Text style={styles.totalLabel}>PRIX DE VENTE TOTAL</Text>
+              </View>
+              <Text style={[styles.totalValue, { flex: 3, textAlign: 'right' }]}>{fmtPdfMoney(devis.prixVenteDzd)}</Text>
+            </View>
+          </>
+        ) : null}
 
         {/* Bloc interne (vue interne uniquement) */}
-        {!isClient ? (
+        {variante === 'interne' ? (
           <View style={styles.internalBox}>
             <Text style={styles.internalTitle}>USAGE INTERNE — NE PAS TRANSMETTRE AU CLIENT</Text>
             <View style={styles.internalRow}>
@@ -374,16 +379,18 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
           </View>
         ) : null}
 
-        <View style={styles.tauxBox}>
-          <Text style={styles.tauxText}>
-            Devis en DZD. Taux: 1 SAR = {devis.tauxSarDzd} • 1 USD = {devis.tauxUsdDzd} • 1 EUR = {devis.tauxEurDzd} DZD. Valable 30 jours.
-          </Text>
-        </View>
+        {!isProgramme ? (
+          <View style={styles.tauxBox}>
+            <Text style={styles.tauxText}>
+              Devis en DZD. Taux: 1 SAR = {devis.tauxSarDzd} • 1 USD = {devis.tauxUsdDzd} • 1 EUR = {devis.tauxEurDzd} DZD. Valable 30 jours.
+            </Text>
+          </View>
+        ) : null}
 
         {/* Footer */}
         <View style={styles.footer} fixed>
           <Text>{p?.nomFr ?? 'El Mouhssinoune Tours'}</Text>
-          <Text>{devis.numero} — {isClient ? 'Client' : 'INTERNE'}</Text>
+          <Text>{devis.numero} — {isProgramme ? 'Programme' : (isClient ? 'Client' : 'INTERNE')}</Text>
         </View>
       </Page>
     </Document>
