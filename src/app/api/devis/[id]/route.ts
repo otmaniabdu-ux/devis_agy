@@ -13,6 +13,8 @@ const FULL_INCLUDE = {
   transferts: true,
   trainsHaramain: true,
   prestationsVip: true,
+  campsMashair: true,
+  transportsMashair: true,
 }
 
 // GET /api/devis/[id]
@@ -84,6 +86,18 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     await db.prestationVIP.deleteMany({ where: { devisId: id } })
     if (children.prestationsVip.length > 0) {
       await db.prestationVIP.createMany({ data: children.prestationsVip })
+    }
+  }
+  if (children.campsMashair !== null) {
+    await db.campMashair.deleteMany({ where: { devisId: id } })
+    if (children.campsMashair.length > 0) {
+      await db.campMashair.createMany({ data: children.campsMashair })
+    }
+  }
+  if (children.transportsMashair !== null) {
+    await db.transportMashair.deleteMany({ where: { devisId: id } })
+    if (children.transportsMashair.length > 0) {
+      await db.transportMashair.createMany({ data: children.transportsMashair })
     }
   }
 

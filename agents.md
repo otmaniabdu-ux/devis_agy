@@ -152,3 +152,13 @@ bun run start
 1. **Ne modifiez jamais la précision financière** : Conservez toujours le pattern `D(valeur)` et le retour `String` pour les montants.
 2. **Utilisez `downloadPdf` pour les téléchargements PDF** : Ne rétablissez pas `window.open` direct pour l'exportation PDF afin de préserver la compatibilité Tauri WebView2.
 3. **Respectez l'esthétique de la marque** : Les couleurs de marque sont `#CC1A1A` (Rouge royal/bordeaux), `#C4A152` (Or métallisé) et `#0A1628` (Bleu nuit d'Orient).
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

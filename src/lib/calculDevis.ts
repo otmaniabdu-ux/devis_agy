@@ -57,6 +57,8 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
       transferts: true,
       trainsHaramain: true,
       prestationsVip: true,
+      campsMashair: true,
+      transportsMashair: true,
     },
   })
   if (!devis) throw new Error('Devis introuvable')
@@ -159,6 +161,40 @@ export async function recalculerDevis(devisId: string): Promise<ResultatCalculDe
       description: p.descriptionFr,
       montantSource: p.prix,
       deviseSource: p.devise,
+      montantDzd: round2(montantDzd),
+      prixVenteDzd: round2(montantDzd),
+    })
+  }
+
+  // Hadj VIP: Camps Mashair
+  for (const camp of devis.campsMashair) {
+    const nbAdultes = passagersCounts.adulte
+    const nbEnfants = passagersCounts.enfant_avec_lit + passagersCounts.enfant_sans_lit
+    const montantSource = D(camp.prixAdulte).mul(nbAdultes).plus(D(camp.prixEnfant).mul(nbEnfants))
+    const montantDzd = convertirEnDzd(montantSource.toString(), camp.devise, taux)
+    lignes.push({
+      poste: 'Camp Hadj',
+      description: `${camp.nomCamp} — ${camp.typeTente} — ${camp.restauration}`,
+      montantSource: round2(montantSource),
+      deviseSource: camp.devise,
+      montantDzd: round2(montantDzd),
+      prixVenteDzd: round2(montantDzd),
+    })
+  }
+
+  // Hadj VIP: Transport Mashair
+  for (const t of devis.transportsMashair) {
+    let montantSource = D(t.prix)
+    if (t.typePrix === 'par_passager') {
+      const totalPassagers = devis.passagers.length
+      montantSource = montantSource.mul(totalPassagers)
+    }
+    const montantDzd = convertirEnDzd(montantSource.toString(), t.devise, taux)
+    lignes.push({
+      poste: 'Transport Mashair',
+      description: `${t.trajet} (${t.typeVehicule})`,
+      montantSource: round2(montantSource),
+      deviseSource: t.devise,
       montantDzd: round2(montantDzd),
       prixVenteDzd: round2(montantDzd),
     })

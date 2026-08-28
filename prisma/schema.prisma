@@ -121,6 +121,9 @@ model Devis {
   trainsHaramain  TrainHaramain[]
   prestationsVip  PrestationVIP[]
 
+  campsMashair    CampMashair[]
+  transportsMashair TransportMashair[]
+
   @@index([clientId])
   @@index([numero])
   @@index([statut])
@@ -261,3 +264,33 @@ model CatalogueCompagnie {
   updatedAt       DateTime @updatedAt
   segments        SegmentVol[]
 }
+
+// --- Camps Mashair (Hadj VIP) ---
+model CampMashair {
+  id              String   @id @default(cuid())
+  devisId         String
+  devis           Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  nomCamp         String
+  typeTente       String
+  restauration    String
+  prixAdulte      String   @default("0")
+  prixEnfant      String   @default("0")
+  devise          String   @default("SAR")
+  createdAt       DateTime @default(now())
+  @@index([devisId])
+}
+
+// --- Transports Mashair (Hadj VIP) ---
+model TransportMashair {
+  id              String   @id @default(cuid())
+  devisId         String
+  devis           Devis    @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  typeVehicule    String
+  trajet          String
+  prix            String   @default("0")
+  typePrix        String   @default("forfait") // forfait ou par_passager
+  devise          String   @default("SAR")
+  createdAt       DateTime @default(now())
+  @@index([devisId])
+}
+

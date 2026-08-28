@@ -34,6 +34,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
         transferts: true,
         trainsHaramain: true,
         prestationsVip: true,
+        campsMashair: true,
+        transportsMashair: true,
       },
     }),
     db.parametresAgence.findUnique({ where: { id: 'default' } }),

@@ -25,12 +25,14 @@ import { TransfertsStep } from '@/components/devis/TransfertsStep'
 import { PrestationsVipStep } from '@/components/devis/PrestationsVipStep'
 import { FinancierStep } from '@/components/devis/FinancierStep'
 import { RecapitulatifStep } from '@/components/devis/RecapitulatifStep'
+import { HadjStep } from '@/components/devis/HadjStep'
 
 const STEPS = [
   { id: 'passagers', label: 'Passagers' },
   { id: 'vols', label: 'Vols' },
   { id: 'hebergement', label: 'Hébergement' },
   { id: 'transferts', label: 'Transferts' },
+  { id: 'hadj', label: 'Hadj VIP' },
   { id: 'vip', label: 'Prestations VIP' },
   { id: 'financier', label: 'Financier' },
   { id: 'recap', label: 'Récapitulatif' },
@@ -63,6 +65,8 @@ interface DevisData {
   transferts: any[]
   trainsHaramain: any[]
   prestationsVip: any[]
+  campsMashair: any[]
+  transportsMashair: any[]
 }
 
 export function NouveauDevisView({
@@ -136,6 +140,8 @@ export function NouveauDevisView({
             dateTrain: fmtDateInput(t.dateTrain) + 'T' + new Date(t.dateTrain).toTimeString().slice(0, 5),
           })),
           prestationsVip: d.prestationsVip,
+          campsMashair: d.campsMashair || [],
+          transportsMashair: d.transportsMashair || [],
         })
         setResultatCalcul(d._resultatCalcul)
       } else {
@@ -166,6 +172,8 @@ export function NouveauDevisView({
           transferts: [],
           trainsHaramain: [],
           prestationsVip: [],
+          campsMashair: [],
+          transportsMashair: [],
         })
       }
     } catch (e: any) {
@@ -266,6 +274,21 @@ export function NouveauDevisView({
           descriptionAr: p.descriptionAr,
           prix: p.prix,
           devise: p.devise,
+        })),
+        campsMashair: devis.campsMashair.map((c) => ({
+          nomCamp: c.nomCamp,
+          typeTente: c.typeTente,
+          restauration: c.restauration,
+          prixAdulte: c.prixAdulte,
+          prixEnfant: c.prixEnfant,
+          devise: c.devise,
+        })),
+        transportsMashair: devis.transportsMashair.map((t) => ({
+          typeVehicule: t.typeVehicule,
+          trajet: t.trajet,
+          prix: t.prix,
+          typePrix: t.typePrix,
+          devise: t.devise,
         })),
       }
 
@@ -375,6 +398,9 @@ export function NouveauDevisView({
         )}
         {step === 'transferts' && (
           <TransfertsStep devis={devis} setDevis={setDevis} />
+        )}
+        {step === 'hadj' && (
+          <HadjStep devis={devis} setDevis={setDevis} />
         )}
         {step === 'vip' && (
           <PrestationsVipStep devis={devis} setDevis={setDevis} />

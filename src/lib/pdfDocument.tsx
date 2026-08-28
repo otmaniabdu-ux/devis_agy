@@ -102,6 +102,8 @@ interface DevisForPdf {
   transferts: any[]
   trainsHaramain: any[]
   prestationsVip: any[]
+  campsMashair: any[]
+  transportsMashair: any[]
   _resultatCalcul?: ResultatCalculDevis
   parametres?: any
 }
@@ -312,6 +314,31 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
               <View key={`pr${i}`} style={styles.detailRow}>
                 <Text style={[styles.tableCell, { flex: 3 }]}>{labFr(TYPES_PRESTATION_VIP, pr.type)}</Text>
                 <Text style={[styles.tableCell, { flex: 7 }]}>{pr.descriptionFr}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {devis.campsMashair?.length > 0 ? (
+          <View style={{ marginBottom: 4 }}>
+            <Text style={styles.detailLabel}>Camps Mashair</Text>
+            {devis.campsMashair.map((c: any, i: number) => (
+              <View key={`c${i}`} style={styles.detailRow}>
+                <Text style={[styles.tableCell, { flex: 4 }]}>{c.nomCamp}</Text>
+                <Text style={[styles.tableCell, { flex: 3 }]}>{c.typeTente}</Text>
+                <Text style={[styles.tableCell, { flex: 3, textAlign: 'right' }]}>{c.restauration}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+
+        {devis.transportsMashair?.length > 0 ? (
+          <View style={{ marginBottom: 4 }}>
+            <Text style={styles.detailLabel}>Transport Mashair</Text>
+            {devis.transportsMashair.map((t: any, i: number) => (
+              <View key={`tm${i}`} style={styles.detailRow}>
+                <Text style={[styles.tableCell, { flex: 7 }]}>{t.trajet}</Text>
+                <Text style={[styles.tableCell, { flex: 3, textAlign: 'right' }]}>{t.typeVehicule}</Text>
               </View>
             ))}
           </View>

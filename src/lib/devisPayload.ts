@@ -31,6 +31,8 @@ const isEmpty = {
   transfert: (t: any) => !t.trajet,
   train: (t: any) => !t.trajet && !t.dateTrain,
   prestation: (p: any) => !p.descriptionFr && !p.type,
+  campMashair: (c: any) => !c.nomCamp && !c.typeTente,
+  transportMashair: (t: any) => !t.trajet && !t.typeVehicule,
 }
 
 // ============ Mappers (payload frontend → data Prisma) ============
@@ -123,6 +125,29 @@ export function mapPrestation(p: any, devisId?: string): any {
   }
 }
 
+export function mapCampMashair(c: any, devisId?: string): any {
+  return {
+    ...(devisId ? { devisId } : {}),
+    nomCamp: c.nomCamp || '',
+    typeTente: c.typeTente || '',
+    restauration: c.restauration || '',
+    prixAdulte: String(c.prixAdulte ?? '0'),
+    prixEnfant: String(c.prixEnfant ?? '0'),
+    devise: c.devise ?? 'SAR',
+  }
+}
+
+export function mapTransportMashair(t: any, devisId?: string): any {
+  return {
+    ...(devisId ? { devisId } : {}),
+    typeVehicule: t.typeVehicule || '',
+    trajet: t.trajet || '',
+    prix: String(t.prix ?? '0'),
+    typePrix: t.typePrix ?? 'forfait',
+    devise: t.devise ?? 'SAR',
+  }
+}
+
 // ============ Validation helpers ============
 
 /** Récupère les taux verrouillés : utilise ceux du body, sinon fallback sur la base. */
@@ -149,6 +174,8 @@ export async function buildDevisCreateData(body: any) {
   const transferts = (body.transferts ?? []).filter((t: any) => !isEmpty.transfert(t)).map((t: any, i: number) => mapTransfert(t, undefined, i))
   const trainsHaramain = (body.trainsHaramain ?? []).filter((t: any) => !isEmpty.train(t)).map((t: any) => mapTrain(t))
   const prestationsVip = (body.prestationsVip ?? []).filter((p: any) => !isEmpty.prestation(p)).map((p: any) => mapPrestation(p))
+  const campsMashair = (body.campsMashair ?? []).filter((c: any) => !isEmpty.campMashair(c)).map((c: any) => mapCampMashair(c))
+  const transportsMashair = (body.transportsMashair ?? []).filter((t: any) => !isEmpty.transportMashair(t)).map((t: any) => mapTransportMashair(t))
 
   return {
     numero,
@@ -176,6 +203,8 @@ export async function buildDevisCreateData(body: any) {
     transferts: { create: transferts },
     trainsHaramain: { create: trainsHaramain },
     prestationsVip: { create: prestationsVip },
+    campsMashair: { create: campsMashair },
+    transportsMashair: { create: transportsMashair },
   }
 }
 
@@ -229,6 +258,12 @@ export function buildChildLines(body: any, devisId: string) {
       : null,
     prestationsVip: body.prestationsVip !== undefined
       ? (body.prestationsVip as any[]).filter((p) => !isEmpty.prestation(p)).map((p) => mapPrestation(p, devisId))
+      : null,
+    campsMashair: body.campsMashair !== undefined
+      ? (body.campsMashair as any[]).filter((c) => !isEmpty.campMashair(c)).map((c) => mapCampMashair(c, devisId))
+      : null,
+    transportsMashair: body.transportsMashair !== undefined
+      ? (body.transportsMashair as any[]).filter((t) => !isEmpty.transportMashair(t)).map((t) => mapTransportMashair(t, devisId))
       : null,
   }
 }
