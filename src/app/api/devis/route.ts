@@ -4,6 +4,8 @@ import { recalculerDevis, persisterTotaux } from '@/lib/calculDevis'
 import { verifierAlertePasseport } from '@/lib/business'
 import { buildDevisCreateData } from '@/lib/devisPayload'
 
+import { CreateDevisSchema } from '@/lib/validation/devisSchemas'
+
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
@@ -24,20 +26,35 @@ export async function GET() {
 
 // POST /api/devis — crée un nouveau devis
 export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const data = await buildDevisCreateData(body)
-  const devis = await db.devis.create({ data })
+  try {
+    const body = await req.json()
 
-  // Recalcule et persiste les totaux
-  const resultat = await recalculerDevis(devis.id)
-  await persisterTotaux(devis.id, resultat)
+    // Validation Zod
+    const result = CreateDevisSchema.safeParse(body)
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Données invalides', details: result.error.format() },
+        { status: 400 }
+      )
+    }
 
-  const fullDevis = await db.devis.findUnique({
-    where: { id: devis.id },
-    include: {
-      client: true, passagers: true, segmentsVol: true,
-      hebergements: true, transferts: true, trainsHaramain: true, prestationsVip: true,
-    },
-  })
-  return NextResponse.json(fullDevis, { status: 201 })
+    const data = await buildDevisCreateData(body)
+    const devis = await db.devis.create({ data })
+
+    // Recalcule et persiste les totaux
+    const resultat = await recalculerDevis(devis.id)
+    await persisterTotaux(devis.id, resultat)
+
+    const fullDevis = await db.devis.findUnique({
+      where: { id: devis.id },
+      include: {
+        client: true, passagers: true, segmentsVol: true,
+        hebergements: true, transferts: true, trainsHaramain: true, prestationsVip: true,
+      },
+    })
+    return NextResponse.json(fullDevis, { status: 201 })
+  } catch (error) {
+    console.error('Erreur POST /devis:', error)
+    return NextResponse.json({ error: 'Erreur interne' }, { status: 500 })
+  }
 }

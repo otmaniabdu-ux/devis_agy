@@ -229,9 +229,8 @@ export function buildDevisUpdateData(body: any): any {
   setIf('visaPrixUnit', (v) => String(v))
   setIf('assurancePrixUnit', (v) => String(v))
   setIf('fraisOnpoPrixUnit', (v) => String(v))
-  setIf('tauxSarDzd', (v) => String(v))
-  setIf('tauxUsdDzd', (v) => String(v))
-  setIf('tauxEurDzd', (v) => String(v))
+  // Tâche 2.2 : Les taux de change (tauxSarDzd, tauxUsdDzd, tauxEurDzd) sont VERROUILLÉS 
+  // à la création du devis. On ne les extrait pas du body pour un PUT.
 
   // Supprime les undefined pour éviter d'écraser avec null
   Object.keys(data).forEach((k) => data[k] === undefined && delete data[k])
