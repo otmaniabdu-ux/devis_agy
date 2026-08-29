@@ -113,7 +113,7 @@ export function RecapitulatifStep({ onSaved }: Props) {
       {devis.id && (
         <div className="grid sm:grid-cols-3 gap-3">
           <Button
-            onClick={() => downloadPdf(devis.id, 'client', devis.numero ?? '').catch((e) => toast.error(e.message))}
+            onClick={() => downloadPdf(devis.id!, 'client', devis.numero ?? '').catch((e) => toast.error(e.message))}
             className="gap-2 bg-brand-bleu-royal hover:bg-brand-bleu-royal/90 h-12"
           >
             <FileDown className="w-5 h-5" />
@@ -123,7 +123,7 @@ export function RecapitulatifStep({ onSaved }: Props) {
             </div>
           </Button>
           <Button
-            onClick={() => downloadPdf(devis.id, 'interne', devis.numero ?? '').catch((e) => toast.error(e.message))}
+            onClick={() => downloadPdf(devis.id!, 'interne', devis.numero ?? '').catch((e) => toast.error(e.message))}
             className="gap-2 bg-brand-or hover:bg-brand-or/90 text-brand-bleu-nuit h-12"
           >
             <FileText className="w-5 h-5" />

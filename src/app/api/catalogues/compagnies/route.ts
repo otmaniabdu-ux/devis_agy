@@ -1,24 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { CompagnieUseCases } from '@/application/catalogues/CatalogueUseCases'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET() {
-  const compagnies = await db.catalogueCompagnie.findMany({
-    orderBy: { nom: 'asc' },
-  })
+  const compagnies = await CompagnieUseCases.list()
   return NextResponse.json(compagnies)
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const c = await db.catalogueCompagnie.create({
-    data: {
-      nom: body.nom,
-      codeIata: body.codeIata ?? null,
-      actif: body.actif ?? true,
-    },
-  })
+  const c = await CompagnieUseCases.create(body)
   return NextResponse.json(c, { status: 201 })
 }

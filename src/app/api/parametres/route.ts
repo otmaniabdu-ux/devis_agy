@@ -1,62 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
+import { ParametresUseCases } from '@/application/parametres/ParametresUseCases'
 
 export async function GET() {
-  const parametres = await db.parametresAgence.findUnique({ where: { id: 'default' } })
-  const taux = await db.tauxChange.findMany()
-  return NextResponse.json({ parametres, taux })
+  const result = await ParametresUseCases.get()
+  return NextResponse.json(result)
 }
 
 export async function PUT(req: NextRequest) {
   const body = await req.json()
-  // Update parametres agence
-  if (body.parametres) {
-    const p = body.parametres
-    await db.parametresAgence.upsert({
-      where: { id: 'default' },
-      update: {
-        nomFr: p.nomFr,
-        nomAr: p.nomAr,
-        sloganFr: p.sloganFr ?? null,
-        sloganAr: p.sloganAr ?? null,
-        adresse: p.adresse ?? null,
-        telephone: p.telephone ?? null,
-        email: p.email ?? null,
-        rc: p.rc ?? null,
-        if: p.if ?? null,
-        art: p.art ?? null,
-        capital: p.capital ?? null,
-      },
-      create: {
-        id: 'default',
-        nomFr: p.nomFr ?? 'El Mouhssinoune Tours',
-        nomAr: p.nomAr ?? 'المحسنون للسياحة',
-        sloganFr: p.sloganFr ?? null,
-        sloganAr: p.sloganAr ?? null,
-        adresse: p.adresse ?? null,
-        telephone: p.telephone ?? null,
-        email: p.email ?? null,
-        rc: p.rc ?? null,
-        if: p.if ?? null,
-        art: p.art ?? null,
-        capital: p.capital ?? null,
-      },
-    })
-  }
-  // Update taux de change
-  if (body.taux) {
-    for (const t of body.taux) {
-      await db.tauxChange.upsert({
-        where: { code: t.code },
-        update: { tauxDzd: String(t.tauxDzd) },
-        create: {
-          code: t.code,
-          libelleFr: t.libelleFr,
-          libelleAr: t.libelleAr,
-          tauxDzd: String(t.tauxDzd),
-        },
-      })
-    }
-  }
+  await ParametresUseCases.update(body)
   return NextResponse.json({ ok: true })
 }

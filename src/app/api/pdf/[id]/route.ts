@@ -1,64 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/db'
-import { type DevisForPdf } from '@/lib/pdfDocument'
-import { recalculerDevis, persisterTotaux } from '@/lib/calculDevis'
-import { generateOptimizedPdf } from '@/lib/pdfRenderer'
+import { GeneratePdfUseCase } from '@/application/pdf/GeneratePdfUseCase'
 
 export const dynamic = 'force-dynamic'
 
-// GET /api/pdf/[id]?variante=client|interne
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const { searchParams } = new URL(req.url)
-  const variante = (searchParams.get('variante') ?? 'client') as 'client' | 'interne' | 'programme'
-
-  const devis = await db.devis.findUnique({
-    where: { id },
-    select: { id: true, numero: true },
-  })
-  if (!devis) return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 })
-
-  // Recalcule et persiste les totaux avant génération
-  const resultat = await recalculerDevis(id)
-  await persisterTotaux(id, resultat)
-
-  // Re-fetch le devis avec les totaux à jour et les paramètres
-  const [devisUpdated, parametres] = await Promise.all([
-    db.devis.findUnique({
-      where: { id },
-      include: {
-        client: true,
-        passagers: true,
-        segmentsVol: { include: { compagnie: true } },
-        hebergements: { include: { hotel: true } },
-        transferts: true,
-        trainsHaramain: true,
-        prestationsVip: true,
-        campsMashair: true,
-        transportsMashair: true,
-      },
-    }),
-    db.parametresAgence.findUnique({ where: { id: 'default' } }),
-  ])
-
-  if (!devisUpdated) return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 })
-
-  const devisForPdf: DevisForPdf = {
-    ...devisUpdated,
-    dateDepart: devisUpdated.dateDepart.toISOString(),
-    dateRetour: devisUpdated.dateRetour.toISOString(),
-    parametres: parametres ?? undefined,
-    _resultatCalcul: resultat,
-  } as DevisForPdf
-
-  // Clé de cache composite unique (devisId + variante + timestamps)
-  const devisTs = devisUpdated.updatedAt?.getTime() ?? Date.now()
-  const paramTs = parametres?.updatedAt?.getTime() ?? 0
-  const cacheKey = `${id}:${variante}:${devisTs}:${paramTs}`
-
   try {
-    const pdfBuffer = await generateOptimizedPdf(devisForPdf, variante, cacheKey)
-    const filename = `${devis.numero}_${variante}.pdf`
+    const { id } = await params
+    const { searchParams } = new URL(req.url)
+    const variante = (searchParams.get('variante') ?? 'client') as 'client' | 'interne' | 'programme'
+
+    const { pdfBuffer, filename } = await GeneratePdfUseCase.execute(id, variante)
 
     return new NextResponse(pdfBuffer as any, {
       headers: {
@@ -68,6 +19,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       },
     })
   } catch (err: any) {
+    if (err.message === 'Devis introuvable') {
+      return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 })
+    }
     console.error('Erreur génération PDF:', err)
     return NextResponse.json({ error: 'Erreur lors de la génération du PDF' }, { status: 500 })
   }
