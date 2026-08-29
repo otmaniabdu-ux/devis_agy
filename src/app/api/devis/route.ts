@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { recalculerDevis, persisterTotaux } from '@/lib/calculDevis'
 import { verifierAlertePasseport } from '@/lib/business'
 import { buildDevisCreateData } from '@/lib/devisPayload'
-
 import { CreateDevisSchema } from '@/lib/validation/devisSchemas'
+import { RecalculerDevisUseCase } from '@/application/RecalculerDevisUseCase'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -41,9 +40,8 @@ export async function POST(req: NextRequest) {
     const data = await buildDevisCreateData(body)
     const devis = await db.devis.create({ data })
 
-    // Recalcule et persiste les totaux
-    const resultat = await recalculerDevis(devis.id)
-    await persisterTotaux(devis.id, resultat)
+    // Recalcule et persiste les totaux via le Use Case
+    await RecalculerDevisUseCase.execute(devis.id)
 
     const fullDevis = await db.devis.findUnique({
       where: { id: devis.id },

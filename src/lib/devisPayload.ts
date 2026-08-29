@@ -2,7 +2,7 @@
 // Utilisé par POST /api/devis et PUT /api/devis/[id] pour éviter la duplication.
 
 import { db } from '@/lib/db'
-import { attribuerNumeroDevis } from '@/lib/calculDevis'
+import { NumerotationService } from '@/domain/NumerotationService'
 import { differenceInCalendarDays } from 'date-fns'
 
 // ============ Helpers dates ============
@@ -165,7 +165,7 @@ export async function resolveTaux(body: any): Promise<{ sar: string; usd: string
 /** Construit l'objet data pour Prisma create (devis complet). */
 export async function buildDevisCreateData(body: any) {
   const taux = await resolveTaux(body)
-  const numero = await attribuerNumeroDevis(body.dateDepart ? safeDate(body.dateDepart) ?? new Date() : new Date())
+  const numero = await NumerotationService.attribuerNumero(body.dateDepart ? safeDate(body.dateDepart) ?? new Date() : new Date())
 
   // Filtre les lignes vides
   const passagers = (body.passagers ?? []).filter((p: any) => !isEmpty.passager(p)).map((p: any) => mapPassager(p))

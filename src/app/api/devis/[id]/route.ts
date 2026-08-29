@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
-import { recalculerDevis, persisterTotaux } from '@/lib/calculDevis'
 import { verifierAlertePasseport } from '@/lib/business'
 import { buildDevisUpdateData, buildChildLines } from '@/lib/devisPayload'
 import { invalidatePdfCache } from '@/lib/pdfRenderer'
 import { UpdateDevisSchema } from '@/lib/validation/devisSchemas'
+import { RecalculerDevisUseCase } from '@/application/RecalculerDevisUseCase'
 
 const FULL_INCLUDE = {
   client: true,
@@ -24,9 +24,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const devis = await db.devis.findUnique({ where: { id }, include: FULL_INCLUDE })
   if (!devis) return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 })
 
-  // Recalcule + persiste les totaux à la volée
-  const resultat = await recalculerDevis(devis.id)
-  await persisterTotaux(devis.id, resultat)
+  // Recalcule + persiste les totaux à la volée via le Use Case
+  const resultat = await RecalculerDevisUseCase.execute(devis.id)
 
   const fullDevis = await db.devis.findUnique({ where: { id }, include: FULL_INCLUDE })
   const passagersAvecAlerte = fullDevis!.passagers.map((p) => ({
@@ -108,12 +107,14 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
         await tx.transportMashair.deleteMany({ where: { devisId: id } })
         if (children.transportsMashair.length > 0) await tx.transportMashair.createMany({ data: children.transportsMashair })
       }
+      
+      // 3. Recalcule et persiste les totaux EN DIRECT dans la même transaction
+      // On passe "tx" au Use Case pour qu'il s'exécute de façon 100% ACID
+      await RecalculerDevisUseCase.execute(id, tx)
     })
 
-    // 3. Recalcule et persiste les totaux (hors transaction car calculDevis utilise l'instance db globale)
-    // Note : dans la Phase 3 (Use Cases), le calculateur prendra la transaction en paramètre
-    const resultat = await recalculerDevis(id)
-    await persisterTotaux(id, resultat)
+    // On récupère le résultat frais
+    const resultat = await RecalculerDevisUseCase.execute(id, db) // just to return it, already saved
 
     // Invalide le cache PDF associé
     invalidatePdfCache(id)
