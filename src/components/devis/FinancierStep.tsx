@@ -6,16 +6,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { fmt } from '@/lib/client-utils'
 import { D } from '@/lib/money'
+import { useDevisStore } from '@/store/useDevisStore'
 
-interface Props {
-  devis: any
-  setDevis: (updater: (d: any) => any) => void
-  resultatCalcul: any
-}
+export function FinancierStep() {
+  const { devis, updateDevis, resultatCalcul } = useDevisStore()
 
-export function FinancierStep({ devis, setDevis, resultatCalcul }: Props) {
+  if (!devis) return null
+
   const update = (field: string, value: any) => {
-    setDevis((d) => ({ ...d, [field]: value }))
+    updateDevis((d) => { d[field as keyof typeof d] = value as never })
   }
 
   const nbPassagers = devis.passagers.length

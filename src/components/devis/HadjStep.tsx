@@ -5,60 +5,62 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useDevisStore } from '@/store/useDevisStore'
 
-interface Props {
-  devis: any
-  setDevis: (updater: (d: any) => any) => void
-}
+export function HadjStep() {
+  const { devis, updateDevis } = useDevisStore()
 
-export function HadjStep({ devis, setDevis }: Props) {
+  if (!devis) return null
+
   const addCamp = () => {
-    setDevis((d: any) => ({
-      ...d,
-      campsMashair: [...(d.campsMashair || []), {
+    updateDevis((d) => {
+      d.campsMashair = d.campsMashair || []
+      d.campsMashair.push({
         nomCamp: 'Camp VIP A',
         typeTente: 'VIP Climatisee',
         restauration: 'Buffet ouvert',
         prixAdulte: '0',
         prixEnfant: '0',
         devise: 'SAR',
-      }],
-    }))
+      })
+    })
   }
 
   const updateCamp = (idx: number, field: string, value: any) => {
-    setDevis((d: any) => ({
-      ...d,
-      campsMashair: d.campsMashair.map((c: any, i: number) => i === idx ? { ...c, [field]: value } : c),
-    }))
+    updateDevis((d) => {
+      d.campsMashair[idx][field] = value
+    })
   }
 
   const removeCamp = (idx: number) => {
-    setDevis((d: any) => ({ ...d, campsMashair: d.campsMashair.filter((_: any, i: number) => i !== idx) }))
+    updateDevis((d) => {
+      d.campsMashair.splice(idx, 1)
+    })
   }
 
   const addTransport = () => {
-    setDevis((d: any) => ({
-      ...d,
-      transportsMashair: [...(d.transportsMashair || []), {
+    updateDevis((d) => {
+      d.transportsMashair = d.transportsMashair || []
+      d.transportsMashair.push({
         typeVehicule: 'Bus VIP',
         trajet: 'Mina - Arafat - Muzdalifah',
         prix: '0',
         typePrix: 'forfait',
         devise: 'SAR',
-      }],
-    }))
+      })
+    })
   }
 
   const updateTransport = (idx: number, field: string, value: any) => {
-    setDevis((d: any) => ({
-      ...d,
-      transportsMashair: d.transportsMashair.map((t: any, i: number) => i === idx ? { ...t, [field]: value } : t),
-    }))
+    updateDevis((d) => {
+      d.transportsMashair[idx][field] = value
+    })
   }
 
   const removeTransport = (idx: number) => {
-    setDevis((d: any) => ({ ...d, transportsMashair: d.transportsMashair.filter((_: any, i: number) => i !== idx) }))
+    updateDevis((d) => {
+      d.transportsMashair.splice(idx, 1)
+    })
   }
 
   return (

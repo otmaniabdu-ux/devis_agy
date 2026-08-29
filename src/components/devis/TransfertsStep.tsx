@@ -7,33 +7,35 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { TYPES_VEHICULE } from '@/lib/business'
+import { useDevisStore } from '@/store/useDevisStore'
 
-interface Props {
-  devis: any
-  setDevis: (updater: (d: any) => any) => void
-}
+export function TransfertsStep() {
+  const { devis, updateDevis } = useDevisStore()
 
-export function TransfertsStep({ devis, setDevis }: Props) {
+  if (!devis) return null
+
   const add = () => {
-    setDevis((d) => ({
-      ...d,
-      transferts: [...d.transferts, {
+    updateDevis((d) => {
+      d.transferts.push({
         trajet: '',
         typeVehicule: 'GMC_Yukon',
         prix: '0',
         devise: 'SAR',
         obligatoire: true,
-      }],
-    }))
+      })
+    })
   }
+
   const update = (idx: number, field: string, value: any) => {
-    setDevis((d) => ({
-      ...d,
-      transferts: d.transferts.map((t: any, i: number) => i === idx ? { ...t, [field]: value } : t),
-    }))
+    updateDevis((d) => {
+      d.transferts[idx][field] = value
+    })
   }
+  
   const remove = (idx: number) => {
-    setDevis((d) => ({ ...d, transferts: d.transferts.filter((_: any, i: number) => i !== idx) }))
+    updateDevis((d) => {
+      d.transferts.splice(idx, 1)
+    })
   }
 
   return (

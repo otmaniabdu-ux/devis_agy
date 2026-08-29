@@ -7,33 +7,35 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { TYPES_PRESTATION_VIP } from '@/lib/business'
+import { useDevisStore } from '@/store/useDevisStore'
 
-interface Props {
-  devis: any
-  setDevis: (updater: (d: any) => any) => void
-}
+export function PrestationsVipStep() {
+  const { devis, updateDevis } = useDevisStore()
 
-export function PrestationsVipStep({ devis, setDevis }: Props) {
+  if (!devis) return null
+
   const add = () => {
-    setDevis((d) => ({
-      ...d,
-      prestationsVip: [...d.prestationsVip, {
+    updateDevis((d) => {
+      d.prestationsVip.push({
         type: 'ziyarate',
         descriptionFr: '',
         descriptionAr: '',
         prix: '0',
         devise: 'SAR',
-      }],
-    }))
+      })
+    })
   }
+
   const update = (idx: number, field: string, value: any) => {
-    setDevis((d) => ({
-      ...d,
-      prestationsVip: d.prestationsVip.map((p: any, i: number) => i === idx ? { ...p, [field]: value } : p),
-    }))
+    updateDevis((d) => {
+      d.prestationsVip[idx][field] = value
+    })
   }
+  
   const remove = (idx: number) => {
-    setDevis((d) => ({ ...d, prestationsVip: d.prestationsVip.filter((_: any, i: number) => i !== idx) }))
+    updateDevis((d) => {
+      d.prestationsVip.splice(idx, 1)
+    })
   }
 
   return (

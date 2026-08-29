@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api } from '@/lib/client-utils'
+import { useDevisStore } from '@/store/useDevisStore'
 
 // Trajets pré-saisis du Train Haramain
 const TRAJETS_TRAIN_HARAMAIN = [
@@ -20,22 +21,19 @@ const TRAJETS_TRAIN_HARAMAIN = [
   'Médine → Aéroport Jeddah (via King Abdullah)',
 ] as const
 
-interface Props {
-  devis: any
-  setDevis: (updater: (d: any) => any) => void
-}
-
-export function VolsStep({ devis, setDevis }: Props) {
+export function VolsStep() {
+  const { devis, updateDevis } = useDevisStore()
   const [compagnies, setCompagnies] = useState<any[]>([])
 
   useEffect(() => {
     api('/api/catalogues/compagnies').then(setCompagnies)
   }, [])
 
+  if (!devis) return null
+
   const addVol = () => {
-    setDevis((d) => ({
-      ...d,
-      segmentsVol: [...d.segmentsVol, {
+    updateDevis((d) => {
+      d.segmentsVol.push({
         typeVol: 'aller_retour',
         origine: 'Alger (ALG)',
         destination: 'Djeddah (JED)',
@@ -48,18 +46,20 @@ export function VolsStep({ devis, setDevis }: Props) {
         compagnieId: '',
         prixAdulte: '0', prixEnfant: '0', prixBebe: '0',
         devise: 'DZD',
-      }],
-    }))
+      })
+    })
   }
 
   const update = (idx: number, field: string, value: any) => {
-    setDevis((d) => ({
-      ...d,
-      segmentsVol: d.segmentsVol.map((s: any, i: number) => i === idx ? { ...s, [field]: value } : s),
-    }))
+    updateDevis((d) => {
+      d.segmentsVol[idx][field] = value
+    })
   }
+  
   const remove = (idx: number) => {
-    setDevis((d) => ({ ...d, segmentsVol: d.segmentsVol.filter((_: any, i: number) => i !== idx) }))
+    updateDevis((d) => {
+      d.segmentsVol.splice(idx, 1)
+    })
   }
 
   return (
@@ -214,7 +214,7 @@ export function VolsStep({ devis, setDevis }: Props) {
             </h3>
             <p className="text-xs text-muted-foreground mt-1">Sélectionnez un trajet pré-défini</p>
           </div>
-          <Button size="sm" variant="outline" onClick={() => setDevis((d) => ({ ...d, trainsHaramain: [...d.trainsHaramain, { trajet: 'Makkah → Médine', classe: 'business', dateTrain: d.dateDepart + 'T10:00', prixAdulte: '120', prixEnfant: '60', devise: 'SAR' }] }))} className="gap-1">
+          <Button size="sm" variant="outline" onClick={() => updateDevis((d) => { d.trainsHaramain.push({ trajet: 'Makkah → Médine', classe: 'business', dateTrain: d.dateDepart + 'T10:00', prixAdulte: '120', prixEnfant: '60', devise: 'SAR' }) })} className="gap-1">
             <Plus className="w-3.5 h-3.5" /> Ajouter un train
           </Button>
         </div>
@@ -224,7 +224,7 @@ export function VolsStep({ devis, setDevis }: Props) {
               <div className="grid sm:grid-cols-12 gap-3 items-end">
                 <div className="sm:col-span-3 space-y-1.5">
                   <Label className="text-xs">Trajet</Label>
-                  <Select value={t.trajet} onValueChange={(v) => setDevis((d) => ({ ...d, trainsHaramain: d.trainsHaramain.map((x: any, j: number) => j === i ? { ...x, trajet: v } : x) }))}>
+                  <Select value={t.trajet} onValueChange={(v) => updateDevis((d) => { d.trainsHaramain[i].trajet = v })}>
                     <SelectTrigger className="h-9"><SelectValue placeholder="Sélectionner un trajet" /></SelectTrigger>
                     <SelectContent>
                       {TRAJETS_TRAIN_HARAMAIN.map((trajet) => (
@@ -235,7 +235,7 @@ export function VolsStep({ devis, setDevis }: Props) {
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-xs">Classe</Label>
-                  <Select value={t.classe} onValueChange={(v) => setDevis((d) => ({ ...d, trainsHaramain: d.trainsHaramain.map((x: any, j: number) => j === i ? { ...x, classe: v } : x) }))}>
+                  <Select value={t.classe} onValueChange={(v) => updateDevis((d) => { d.trainsHaramain[i].classe = v })}>
                     <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="economique">Économique</SelectItem>
@@ -245,18 +245,18 @@ export function VolsStep({ devis, setDevis }: Props) {
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-xs">Date / heure</Label>
-                  <Input type="datetime-local" value={t.dateTrain} onChange={(e) => setDevis((d) => ({ ...d, trainsHaramain: d.trainsHaramain.map((x: any, j: number) => j === i ? { ...x, dateTrain: e.target.value } : x) }))} className="h-9" />
+                  <Input type="datetime-local" value={t.dateTrain} onChange={(e) => updateDevis((d) => { d.trainsHaramain[i].dateTrain = e.target.value })} className="h-9" />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-xs">Prix adulte (SAR)</Label>
-                  <Input type="number" step="0.01" value={t.prixAdulte} onChange={(e) => setDevis((d) => ({ ...d, trainsHaramain: d.trainsHaramain.map((x: any, j: number) => j === i ? { ...x, prixAdulte: e.target.value } : x) }))} className="h-9" />
+                  <Input type="number" step="0.01" value={t.prixAdulte} onChange={(e) => updateDevis((d) => { d.trainsHaramain[i].prixAdulte = e.target.value })} className="h-9" />
                 </div>
                 <div className="sm:col-span-2 space-y-1.5">
                   <Label className="text-xs">Prix enfant (SAR)</Label>
-                  <Input type="number" step="0.01" value={t.prixEnfant} onChange={(e) => setDevis((d) => ({ ...d, trainsHaramain: d.trainsHaramain.map((x: any, j: number) => j === i ? { ...x, prixEnfant: e.target.value } : x) }))} className="h-9" />
+                  <Input type="number" step="0.01" value={t.prixEnfant} onChange={(e) => updateDevis((d) => { d.trainsHaramain[i].prixEnfant = e.target.value })} className="h-9" />
                 </div>
                 <div className="sm:col-span-1 flex justify-end">
-                  <Button size="icon" variant="ghost" className="h-9 w-9 text-red-600 hover:bg-red-50" onClick={() => setDevis((d) => ({ ...d, trainsHaramain: d.trainsHaramain.filter((_: any, j: number) => j !== i) }))}>
+                  <Button size="icon" variant="ghost" className="h-9 w-9 text-red-600 hover:bg-red-50" onClick={() => updateDevis((d) => { d.trainsHaramain.splice(i, 1) })}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>

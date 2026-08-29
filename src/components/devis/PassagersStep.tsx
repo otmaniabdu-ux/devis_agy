@@ -6,16 +6,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CATEGORIES_PASSAGER, verifierAlertePasseport } from '@/lib/business'
+import { useDevisStore } from '@/store/useDevisStore'
 
-interface Props {
-  devis: any
-  setDevis: (updater: (d: any) => any) => void
-  clients: any[]
-}
+export function PassagersStep() {
+  const { devis, updateDevis, clients } = useDevisStore()
 
-export function PassagersStep({ devis, setDevis, clients }: Props) {
+  if (!devis) return null
+
   const update = (field: string, value: any) => {
-    setDevis((d) => ({ ...d, [field]: value }))
+    updateDevis((d) => { d[field as keyof typeof d] = value as never })
   }
 
   // Compte les passagers par catégorie
@@ -26,38 +25,39 @@ export function PassagersStep({ devis, setDevis, clients }: Props) {
 
   // Ajoute un passager d'une catégorie donnée (sans info détaillée)
   const addByCategory = (categorie: string) => {
-    setDevis((d) => ({
-      ...d,
-      passagers: [...d.passagers, {
+    updateDevis((d) => {
+      d.passagers.push({
         categorie,
         nom: '',
         prenom: '',
         dateNaissance: '',
         passeportNumero: '',
         passeportExpiration: '',
-      }],
-    }))
+      })
+    })
   }
 
   // Retire le dernier passager d'une catégorie
   const removeByCategory = (categorie: string) => {
-    setDevis((d) => {
+    updateDevis((d) => {
       const idx = [...d.passagers].reverse().findIndex((p) => p.categorie === categorie)
-      if (idx === -1) return d
-      const realIdx = d.passagers.length - 1 - idx
-      return { ...d, passagers: d.passagers.filter((_: any, i: number) => i !== realIdx) }
+      if (idx !== -1) {
+        const realIdx = d.passagers.length - 1 - idx
+        d.passagers.splice(realIdx, 1)
+      }
     })
   }
 
   const updatePassager = (idx: number, field: string, value: any) => {
-    setDevis((d) => ({
-      ...d,
-      passagers: d.passagers.map((p: any, i: number) => i === idx ? { ...p, [field]: value } : p),
-    }))
+    updateDevis((d) => {
+      d.passagers[idx][field] = value
+    })
   }
 
   const removePassager = (idx: number) => {
-    setDevis((d) => ({ ...d, passagers: d.passagers.filter((_: any, i: number) => i !== idx) }))
+    updateDevis((d) => {
+      d.passagers.splice(idx, 1)
+    })
   }
 
   return (

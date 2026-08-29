@@ -5,14 +5,17 @@ import { Button } from '@/components/ui/button'
 import { fmt, fmtDate, downloadPdf } from '@/lib/client-utils'
 import { D } from '@/lib/money'
 import { toast } from 'sonner'
+import { useDevisStore } from '@/store/useDevisStore'
 
 interface Props {
-  devis: any
-  resultatCalcul: any
   onSaved: () => Promise<string | null>
 }
 
-export function RecapitulatifStep({ devis, resultatCalcul, onSaved }: Props) {
+export function RecapitulatifStep({ onSaved }: Props) {
+  const { devis, resultatCalcul } = useDevisStore()
+
+  if (!devis) return null
+
   const nbPassagers = devis.passagers.length
   const clientNom = devis.clientId ? 'Client sélectionné' : '—'
 
@@ -110,7 +113,7 @@ export function RecapitulatifStep({ devis, resultatCalcul, onSaved }: Props) {
       {devis.id && (
         <div className="grid sm:grid-cols-3 gap-3">
           <Button
-            onClick={() => downloadPdf(devis.id, 'client', devis.numero).catch((e) => toast.error(e.message))}
+            onClick={() => downloadPdf(devis.id, 'client', devis.numero ?? undefined).catch((e) => toast.error(e.message))}
             className="gap-2 bg-brand-bleu-royal hover:bg-brand-bleu-royal/90 h-12"
           >
             <FileDown className="w-5 h-5" />
@@ -120,7 +123,7 @@ export function RecapitulatifStep({ devis, resultatCalcul, onSaved }: Props) {
             </div>
           </Button>
           <Button
-            onClick={() => downloadPdf(devis.id, 'interne', devis.numero).catch((e) => toast.error(e.message))}
+            onClick={() => downloadPdf(devis.id, 'interne', devis.numero ?? undefined).catch((e) => toast.error(e.message))}
             className="gap-2 bg-brand-or hover:bg-brand-or/90 text-brand-bleu-nuit h-12"
           >
             <FileText className="w-5 h-5" />

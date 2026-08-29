@@ -18,6 +18,7 @@ import {
 } from '@/lib/business'
 import { D, formatMontant, formatMoney } from '@/lib/money'
 import { toast } from 'sonner'
+import { useDevisStore } from '@/store/useDevisStore'
 import { PassagersStep } from '@/components/devis/PassagersStep'
 import { VolsStep } from '@/components/devis/VolsStep'
 import { HebergementStep } from '@/components/devis/HebergementStep'
@@ -40,35 +41,6 @@ const STEPS = [
 
 type StepId = typeof STEPS[number]['id']
 
-interface DevisData {
-  id?: string
-  numero?: string
-  clientId: string
-  dateDepart: string
-  dateRetour: string
-  visaType: string
-  visaPrixUnit: string
-  visaDevise: string
-  assurancePrixUnit: string
-  assuranceDevise: string
-  margeType: 'pourcentage' | 'montant_fixe'
-  margeValeur: string
-  statut: string
-  notesClient: string
-  notesInternes: string
-  tauxSarDzd: string
-  tauxUsdDzd: string
-  tauxEurDzd: string
-  passagers: any[]
-  segmentsVol: any[]
-  hebergements: any[]
-  transferts: any[]
-  trainsHaramain: any[]
-  prestationsVip: any[]
-  campsMashair: any[]
-  transportsMashair: any[]
-}
-
 export function NouveauDevisView({
   editDevisId,
   onDone,
@@ -77,245 +49,13 @@ export function NouveauDevisView({
   onDone: () => void
 }) {
   const [step, setStep] = useState<StepId>('passagers')
-  const [clients, setClients] = useState<any[]>([])
-  const [devis, setDevis] = useState<DevisData | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [resultatCalcul, setResultatCalcul] = useState<any>(null)
+  
+  const { devis, loading, saving, resultatCalcul, load, save, reset } = useDevisStore()
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const cls = await api('/api/clients')
-      setClients(cls)
-      // Récupère les taux de change par défaut depuis les paramètres
-      const paramsRes = await api('/api/parametres')
-      const defaultTaux: Record<string, string> = {}
-      for (const t of paramsRes.taux ?? []) {
-        defaultTaux[t.code] = t.tauxDzd
-      }
-      if (editDevisId) {
-        const d = await api(`/api/devis/${editDevisId}`)
-        setDevis({
-          id: d.id,
-          numero: d.numero,
-          clientId: d.clientId,
-          dateDepart: fmtDateInput(d.dateDepart),
-          dateRetour: fmtDateInput(d.dateRetour),
-          visaType: d.visaType,
-          visaPrixUnit: d.visaPrixUnit,
-          visaDevise: d.visaDevise,
-          assurancePrixUnit: d.assurancePrixUnit,
-          assuranceDevise: d.assuranceDevise,
-          margeType: d.margeType,
-          margeValeur: d.margeValeur,
-          statut: d.statut,
-          notesClient: d.notesClient ?? '',
-          notesInternes: d.notesInternes ?? '',
-          tauxSarDzd: d.tauxSarDzd,
-          tauxUsdDzd: d.tauxUsdDzd,
-          tauxEurDzd: d.tauxEurDzd,
-          passagers: d.passagers.map((p: any) => ({
-            ...p,
-            dateNaissance: fmtDateInput(p.dateNaissance),
-            passeportExpiration: fmtDateInput(p.passeportExpiration),
-          })),
-          segmentsVol: d.segmentsVol.map((s: any, idx: number) => ({
-            ...s,
-            typeVol: s.typeVol || (idx === 0 ? 'aller' : 'retour'),
-            dateVol: fmtDateInput(s.dateVol) + 'T' + (s.dateVol ? new Date(s.dateVol).toTimeString().slice(0, 5) : '08:00'),
-            origineRetour: s.origineRetour ?? '',
-            destinationRetour: s.destinationRetour ?? '',
-            dateVolRetour: s.dateVolRetour ? (fmtDateInput(s.dateVolRetour) + 'T' + new Date(s.dateVolRetour).toTimeString().slice(0, 5)) : '',
-            classeRetour: s.classeRetour ?? s.classe ?? 'economique',
-          })),
-          hebergements: d.hebergements.map((h: any) => ({
-            ...h,
-            dateCheckin: fmtDateInput(h.dateCheckin),
-            dateCheckout: fmtDateInput(h.dateCheckout),
-          })),
-          transferts: d.transferts,
-          trainsHaramain: d.trainsHaramain.map((t: any) => ({
-            ...t,
-            dateTrain: fmtDateInput(t.dateTrain) + 'T' + new Date(t.dateTrain).toTimeString().slice(0, 5),
-          })),
-          prestationsVip: d.prestationsVip,
-          campsMashair: d.campsMashair || [],
-          transportsMashair: d.transportsMashair || [],
-        })
-        setResultatCalcul(d._resultatCalcul)
-      } else {
-        const today = new Date()
-        const future = new Date()
-        future.setDate(future.getDate() + 14)
-        setDevis({
-          clientId: cls[0]?.id ?? '',
-          dateDepart: fmtDateInput(today),
-          dateRetour: fmtDateInput(future),
-          visaType: 'omra_standard',
-          visaPrixUnit: '450',
-          visaDevise: 'SAR',
-          assurancePrixUnit: '5000',
-          assuranceDevise: 'DZD',
-          margeType: 'pourcentage',
-          margeValeur: '15',
-          statut: 'brouillon',
-          notesClient: '',
-          notesInternes: '',
-          // Taux par défaut depuis les paramètres — l'utilisateur peut les modifier dans l'étape Financier
-          tauxSarDzd: defaultTaux.SAR ?? '35.50',
-          tauxUsdDzd: defaultTaux.USD ?? '240.00',
-          tauxEurDzd: defaultTaux.EUR ?? '260.00',
-          passagers: [],
-          segmentsVol: [],
-          hebergements: [],
-          transferts: [],
-          trainsHaramain: [],
-          prestationsVip: [],
-          campsMashair: [],
-          transportsMashair: [],
-        })
-      }
-    } catch (e: any) {
-      toast.error(e.message)
-    } finally {
-      setLoading(false)
-    }
-  }, [editDevisId])
-
-  useEffect(() => { load() }, [load])
-
-  // Recalcule le résultat en temps réel via l'API (après save initiale)
-  const recalc = useCallback(async () => {
-    if (!devis?.id) return
-    try {
-      const r = await api(`/api/devis/${devis.id}/calcul`, { method: 'POST' })
-      setResultatCalcul(r)
-    } catch (e) {
-      // silent fail
-    }
-  }, [devis?.id])
-
-  const save = async (silent = false): Promise<string | null> => {
-    if (!devis) return null
-    setSaving(true)
-    try {
-      const payload = {
-        clientId: devis.clientId,
-        dateDepart: devis.dateDepart,
-        dateRetour: devis.dateRetour,
-        visaType: devis.visaType,
-        visaPrixUnit: devis.visaPrixUnit,
-        visaDevise: devis.visaDevise,
-        assurancePrixUnit: devis.assurancePrixUnit,
-        assuranceDevise: devis.assuranceDevise,
-        margeType: devis.margeType,
-        margeValeur: devis.margeValeur,
-        statut: devis.statut,
-        notesClient: devis.notesClient || null,
-        notesInternes: devis.notesInternes || null,
-        tauxSarDzd: devis.tauxSarDzd,
-        tauxUsdDzd: devis.tauxUsdDzd,
-        tauxEurDzd: devis.tauxEurDzd,
-        passagers: devis.passagers.map((p) => ({
-          categorie: p.categorie,
-          nom: p.nom,
-          prenom: p.prenom,
-          dateNaissance: p.dateNaissance || null,
-          passeportNumero: p.passeportNumero || null,
-          passeportExpiration: p.passeportExpiration || null,
-        })),
-        segmentsVol: devis.segmentsVol.map((s) => ({
-          origine: s.origine,
-          destination: s.destination,
-          dateVol: s.dateVol,
-          classe: s.classe,
-          origineRetour: s.origineRetour || null,
-          destinationRetour: s.destinationRetour || null,
-          dateVolRetour: s.dateVolRetour || null,
-          classeRetour: s.classeRetour || null,
-          compagnieId: s.compagnieId || null,
-          prixAdulte: s.prixAdulte,
-          prixEnfant: s.prixEnfant,
-          prixBebe: s.prixBebe,
-          devise: s.devise,
-        })),
-        hebergements: devis.hebergements.map((h) => ({
-          ville: h.ville,
-          hotelId: h.hotelId || null,
-          hotelNom: h.hotelNom,
-          typeChambre: h.typeChambre,
-          formuleRepas: h.formuleRepas,
-          vue: h.vue,
-          dateCheckin: h.dateCheckin,
-          dateCheckout: h.dateCheckout,
-          nbChambres: h.nbChambres,
-          prixNuitChambre: h.prixNuitChambre,
-          devise: h.devise,
-        })),
-        transferts: devis.transferts.map((t) => ({
-          trajet: t.trajet,
-          typeVehicule: t.typeVehicule,
-          prix: t.prix,
-          devise: t.devise,
-          obligatoire: t.obligatoire,
-        })),
-        trainsHaramain: devis.trainsHaramain.map((t) => ({
-          trajet: t.trajet,
-          classe: t.classe,
-          dateTrain: t.dateTrain,
-          prixAdulte: t.prixAdulte,
-          prixEnfant: t.prixEnfant,
-          devise: t.devise,
-        })),
-        prestationsVip: devis.prestationsVip.map((p) => ({
-          type: p.type,
-          descriptionFr: p.descriptionFr,
-          descriptionAr: p.descriptionAr,
-          prix: p.prix,
-          devise: p.devise,
-        })),
-        campsMashair: devis.campsMashair.map((c) => ({
-          nomCamp: c.nomCamp,
-          typeTente: c.typeTente,
-          restauration: c.restauration,
-          prixAdulte: c.prixAdulte,
-          prixEnfant: c.prixEnfant,
-          devise: c.devise,
-        })),
-        transportsMashair: devis.transportsMashair.map((t) => ({
-          typeVehicule: t.typeVehicule,
-          trajet: t.trajet,
-          prix: t.prix,
-          typePrix: t.typePrix,
-          devise: t.devise,
-        })),
-      }
-
-      let savedId: string
-      if (devis.id) {
-        await api(`/api/devis/${devis.id}`, { method: 'PUT', body: JSON.stringify(payload) })
-        savedId = devis.id
-        if (!silent) toast.success('Devis mis à jour')
-      } else {
-        const created = await api('/api/devis', { method: 'POST', body: JSON.stringify(payload) })
-        savedId = created.id
-        setDevis({ ...devis, id: created.id, numero: created.numero })
-        if (!silent) toast.success(`Devis ${created.numero} créé`)
-      }
-      // Recalcule après save
-      try {
-        const r = await api(`/api/devis/${savedId}/calcul`, { method: 'POST' })
-        setResultatCalcul(r)
-      } catch {}
-      return savedId
-    } catch (e: any) {
-      toast.error(e.message)
-      return null
-    } finally {
-      setSaving(false)
-    }
-  }
+  useEffect(() => {
+    load(editDevisId)
+    return () => reset()
+  }, [editDevisId, load, reset])
 
   if (loading || !devis) {
     return (
@@ -383,42 +123,14 @@ export function NouveauDevisView({
 
       {/* Content */}
       <Card className="p-6 min-h-[400px] glass-card border-0">
-        {step === 'passagers' && (
-          <PassagersStep
-            devis={devis}
-            setDevis={setDevis}
-            clients={clients}
-          />
-        )}
-        {step === 'vols' && (
-          <VolsStep devis={devis} setDevis={setDevis} />
-        )}
-        {step === 'hebergement' && (
-          <HebergementStep devis={devis} setDevis={setDevis} />
-        )}
-        {step === 'transferts' && (
-          <TransfertsStep devis={devis} setDevis={setDevis} />
-        )}
-        {step === 'hadj' && (
-          <HadjStep devis={devis} setDevis={setDevis} />
-        )}
-        {step === 'vip' && (
-          <PrestationsVipStep devis={devis} setDevis={setDevis} />
-        )}
-        {step === 'financier' && (
-          <FinancierStep
-            devis={devis}
-            setDevis={setDevis}
-            resultatCalcul={resultatCalcul}
-          />
-        )}
-        {step === 'recap' && (
-          <RecapitulatifStep
-            devis={devis}
-            resultatCalcul={resultatCalcul}
-            onSaved={save}
-          />
-        )}
+        {step === 'passagers' && <PassagersStep />}
+        {step === 'vols' && <VolsStep />}
+        {step === 'hebergement' && <HebergementStep />}
+        {step === 'transferts' && <TransfertsStep />}
+        {step === 'hadj' && <HadjStep />}
+        {step === 'vip' && <PrestationsVipStep />}
+        {step === 'financier' && <FinancierStep />}
+        {step === 'recap' && <RecapitulatifStep onSaved={save} />}
       </Card>
 
       {/* Footer navigation */}

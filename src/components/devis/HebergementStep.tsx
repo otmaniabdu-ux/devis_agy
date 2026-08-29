@@ -8,23 +8,21 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TYPES_CHAMBRE, FORMULES_REPAS, VUES_HOTEL } from '@/lib/business'
 import { api } from '@/lib/client-utils'
+import { useDevisStore } from '@/store/useDevisStore'
 
-interface Props {
-  devis: any
-  setDevis: (updater: (d: any) => any) => void
-}
-
-export function HebergementStep({ devis, setDevis }: Props) {
+export function HebergementStep() {
+  const { devis, updateDevis } = useDevisStore()
   const [hotels, setHotels] = useState<any[]>([])
 
   useEffect(() => {
     api('/api/catalogues/hotels').then(setHotels)
   }, [])
 
+  if (!devis) return null
+
   const add = () => {
-    setDevis((d) => ({
-      ...d,
-      hebergements: [...d.hebergements, {
+    updateDevis((d) => {
+      d.hebergements.push({
         ville: 'Makkah',
         hotelId: '',
         hotelNom: '',
@@ -36,43 +34,40 @@ export function HebergementStep({ devis, setDevis }: Props) {
         nbChambres: 1,
         prixNuitChambre: '0',
         devise: 'SAR',
-      }],
-    }))
+      })
+    })
   }
+
   const update = (idx: number, field: string, value: any) => {
-    setDevis((d) => ({
-      ...d,
-      hebergements: d.hebergements.map((h: any, i: number) => i === idx ? { ...h, [field]: value } : h),
-    }))
+    updateDevis((d) => {
+      d.hebergements[idx][field] = value
+    })
   }
+  
   const remove = (idx: number) => {
-    setDevis((d) => ({ ...d, hebergements: d.hebergements.filter((_: any, i: number) => i !== idx) }))
+    updateDevis((d) => {
+      d.hebergements.splice(idx, 1)
+    })
   }
 
   const selectHotel = (idx: number, hotelId: string) => {
     const hotel = hotels.find((h) => h.id === hotelId)
     if (!hotel) return
-    setDevis((d) => ({
-      ...d,
-      hebergements: d.hebergements.map((h: any, i: number) => {
-        if (i !== idx) return h
-        // pre-remplir le prix selon le type de chambre
-        const prixMap: Record<string, string> = {
-          single: hotel.prixSingleSar,
-          double: hotel.prixDoubleSar,
-          triple: hotel.prixTripleSar,
-          quadruple: hotel.prixQuadrupleSar,
-        }
-        return {
-          ...h,
-          hotelId: hotel.id,
-          hotelNom: hotel.nom,
-          ville: hotel.ville,
-          prixNuitChambre: prixMap[h.typeChambre] ?? hotel.prixDoubleSar,
-          devise: hotel.devise,
-        }
-      }),
-    }))
+    updateDevis((d) => {
+      const h = d.hebergements[idx]
+      // pre-remplir le prix selon le type de chambre
+      const prixMap: Record<string, string> = {
+        single: hotel.prixSingleSar,
+        double: hotel.prixDoubleSar,
+        triple: hotel.prixTripleSar,
+        quadruple: hotel.prixQuadrupleSar,
+      }
+      h.hotelId = hotel.id
+      h.hotelNom = hotel.nom
+      h.ville = hotel.ville
+      h.prixNuitChambre = prixMap[h.typeChambre] ?? hotel.prixDoubleSar
+      h.devise = hotel.devise
+    })
   }
 
   // quand on change le type de chambre, on re-remplit le prix depuis le catalogue
@@ -85,13 +80,10 @@ export function HebergementStep({ devis, setDevis }: Props) {
       triple: hotel.prixTripleSar,
       quadruple: hotel.prixQuadrupleSar,
     } : {}
-    setDevis((d) => ({
-      ...d,
-      hebergements: d.hebergements.map((h: any, i: number) => i === idx ? {
-        ...h, typeChambre: type,
-        prixNuitChambre: prixMap[type] ?? h.prixNuitChambre,
-      } : h),
-    }))
+    updateDevis((d) => {
+      d.hebergements[idx].typeChambre = type
+      d.hebergements[idx].prixNuitChambre = prixMap[type] ?? d.hebergements[idx].prixNuitChambre
+    })
   }
 
   const calcNuitees = (h: any) => {
