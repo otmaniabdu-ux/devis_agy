@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { LayoutDashboard, FileText, Users, Hotel, Plane, Settings, Plus, Menu, X } from 'lucide-react'
 import { DashboardView } from '@/components/views/DashboardView'
 import { ListeDevisView } from '@/components/views/ListeDevisView'
@@ -28,26 +28,10 @@ export default function Home() {
   const [editDevisId, setEditDevisId] = useState<string | null>(null)
   const [seeded, setSeeded] = useState<boolean | null>(null)
 
-  // Vérifie si la base a des données ; sinon seed automatiquement au premier lancement
-  const checkSeed = useCallback(async () => {
-    try {
-      const r = await fetch('/api/devis')
-      const d = await r.json()
-      if (Array.isArray(d) && d.length === 0) {
-        // pas de données → seed auto
-        await fetch('/api/seed', { method: 'POST' })
-        setSeeded(true)
-      } else {
-        setSeeded(true)
-      }
-    } catch {
-      setSeeded(false)
-    }
-  }, [])
-
+  // Initialisation de l'application — sans auto-seed (sécurité Phase 0)
   useEffect(() => {
-    checkSeed()
-  }, [checkSeed])
+    setSeeded(true)
+  }, [])
 
   const navigate = (v: View, devisId?: string) => {
     setEditDevisId(devisId ?? null)

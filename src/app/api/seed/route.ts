@@ -6,12 +6,35 @@ import { compagniesAeriennes } from '@/lib/data/airlines'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// GET/POST /api/seed — remplit la base avec des données de démonstration
-export async function GET(req: NextRequest) {
-  return seedDatabase()
+// ============================================================================
+// SÉCURITÉ : /api/seed est désactivé en production.
+// - GET supprimé (prévention CSRF via <img src="/api/seed">)
+// - POST protégé par NODE_ENV !== 'production'
+// ============================================================================
+
+/**
+ * GET /api/seed — DÉSACTIVÉ (prévention CSRF)
+ * Retourne systématiquement 405 Method Not Allowed.
+ */
+export async function GET() {
+  return NextResponse.json(
+    { error: 'GET method not allowed on seed endpoint. Use POST in development only.' },
+    { status: 405 }
+  )
 }
 
+/**
+ * POST /api/seed — Seed la base de données avec des données de démonstration.
+ * UNIQUEMENT disponible en mode développement (NODE_ENV !== 'production').
+ */
 export async function POST(_req: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    return NextResponse.json(
+      { error: 'Seed endpoint is disabled in production.' },
+      { status: 403 }
+    )
+  }
+
   return seedDatabase()
 }
 
@@ -86,16 +109,16 @@ async function seedDatabase() {
       data: bookingHotels,
     })
 
-    // 5. Clients
+    // 5. Clients (données fictives pour le développement)
     const clients = [
-      { type: 'particulier', nom: 'Benali', prenom: 'Karim', telephone: '+213 661 23 45 67', email: 'k.benali@example.dz', adresse: 'Hydra, Alger' },
-      { type: 'particulier', nom: 'Cherif', prenom: 'Amina', telephone: '+213 770 11 22 33', email: 'a.cherif@example.dz', adresse: 'Oran' },
-      { type: 'societe', nom: '—', raisonSociale: 'SARL Voyage El Baraka', telephone: '+213 21 55 66 77', email: 'contact@elbaraka.dz', adresse: 'Constantine' },
-      { type: 'particulier', nom: 'Haddad', prenom: 'Mohamed', telephone: '+213 555 99 88 77', email: 'm.haddad@example.dz', adresse: 'Sétif' },
+      { type: 'particulier' as const, nom: 'Benali', prenom: 'Karim', telephone: '+213 661 23 45 67', email: 'k.benali@example.dz', adresse: 'Hydra, Alger' },
+      { type: 'particulier' as const, nom: 'Cherif', prenom: 'Amina', telephone: '+213 770 11 22 33', email: 'a.cherif@example.dz', adresse: 'Oran' },
+      { type: 'societe' as const, nom: '—', raisonSociale: 'SARL Voyage El Baraka', telephone: '+213 21 55 66 77', email: 'contact@elbaraka.dz', adresse: 'Constantine' },
+      { type: 'particulier' as const, nom: 'Haddad', prenom: 'Mohamed', telephone: '+213 555 99 88 77', email: 'm.haddad@example.dz', adresse: 'Sétif' },
     ]
-    const createdClients: any[] = []
+    const createdClients: { id: string }[] = []
     for (const c of clients) {
-      createdClients.push(await db.client.create({ data: c as any }))
+      createdClients.push(await db.client.create({ data: c }))
     }
 
     // 6. Devis de démonstration
@@ -273,8 +296,9 @@ async function seedDatabase() {
     }
 
     return NextResponse.json({ success: true, message: 'Database seeded successfully', ok: true })
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err)
     console.error('Seed Error:', err)
-    return NextResponse.json({ success: false, error: err.message || String(err) }, { status: 500 })
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
   }
 }
