@@ -2,6 +2,7 @@ import { db } from '@/lib/db'
 import { type DevisForPdf } from '@/lib/pdfDocument'
 import { RecalculerDevisUseCase } from '@/application/RecalculerDevisUseCase'
 import { generateOptimizedPdf } from '@/lib/pdfRenderer'
+import { AuditUseCases } from '@/application/audit/AuditUseCases'
 
 export class GeneratePdfUseCase {
   static async execute(id: string, variante: 'client' | 'interne' | 'programme') {
@@ -50,6 +51,9 @@ export class GeneratePdfUseCase {
 
     const pdfBuffer = await generateOptimizedPdf(devisForPdf, variante, cacheKey)
     const filename = `${devis.numero}_${variante}.pdf`
+
+    // Log the event
+    await AuditUseCases.log('GENERATE_PDF', 'Devis', id, { variante })
 
     return { pdfBuffer, filename }
   }

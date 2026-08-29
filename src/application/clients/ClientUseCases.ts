@@ -1,6 +1,7 @@
 import { db } from '@/lib/db'
 import { z } from 'zod'
 import { CreateClientSchema, UpdateClientSchema } from '@/lib/validation/clientSchemas'
+import { AuditUseCases } from '@/application/audit/AuditUseCases'
 
 export class ClientUseCases {
   static async list() {
@@ -20,7 +21,7 @@ export class ClientUseCases {
   }
 
   static async create(data: z.infer<typeof CreateClientSchema>) {
-    return db.client.create({
+    const client = await db.client.create({
       data: {
         type: data.type,
         nom: data.nom,
@@ -32,10 +33,12 @@ export class ClientUseCases {
         notes: data.notes ?? null,
       },
     })
+    await AuditUseCases.log('CREATE_CLIENT', 'Client', client.id)
+    return client
   }
 
   static async update(id: string, data: z.infer<typeof UpdateClientSchema>) {
-    return db.client.update({
+    const client = await db.client.update({
       where: { id },
       data: {
         type: data.type,
@@ -48,10 +51,13 @@ export class ClientUseCases {
         notes: data.notes ?? null,
       },
     })
+    await AuditUseCases.log('UPDATE_CLIENT', 'Client', client.id)
+    return client
   }
 
   static async delete(id: string) {
     await db.client.delete({ where: { id } })
+    await AuditUseCases.log('DELETE_CLIENT', 'Client', id)
     return true
   }
 }

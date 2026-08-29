@@ -4,6 +4,7 @@ import { CreateDevisSchema, UpdateDevisSchema } from '@/lib/validation/devisSche
 import { buildDevisCreateData, buildDevisUpdateData, buildChildLines } from '@/lib/devisPayload'
 import { RecalculerDevisUseCase } from '@/application/RecalculerDevisUseCase'
 import { verifierAlertePasseport } from '@/lib/business'
+import { AuditUseCases } from '@/application/audit/AuditUseCases'
 
 export class DevisUseCases {
   static async list() {
@@ -61,6 +62,7 @@ export class DevisUseCases {
     const data = await buildDevisCreateData(body)
     const devis = await db.devis.create({ data })
     await RecalculerDevisUseCase.execute(devis.id)
+    await AuditUseCases.log('CREATE_DEVIS', 'Devis', devis.id)
     return this.getById(devis.id)
   }
 
@@ -127,12 +129,15 @@ export class DevisUseCases {
 
       resultat = await RecalculerDevisUseCase.execute(id, tx)
     })
+    
+    await AuditUseCases.log('UPDATE_DEVIS', 'Devis', id)
 
     return { ok: true, resultat }
   }
 
   static async delete(id: string) {
     await db.devis.delete({ where: { id } })
+    await AuditUseCases.log('DELETE_DEVIS', 'Devis', id)
     return true
   }
 }

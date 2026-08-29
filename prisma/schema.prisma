@@ -294,3 +294,13 @@ model TransportMashair {
   @@index([devisId])
 }
 
+
+// --- Journal d'Audit (Phase 5) ---
+model AuditEvent {
+  id        String   @id @default(cuid())
+  action    String   // ex: 'CREATE_DEVIS', 'UPDATE_DEVIS', 'GENERATE_PDF', 'DELETE_CLIENT'
+  entite    String   // 'Devis', 'Client', 'Parametres'
+  entiteId  String?  // ID de l'entité concernée
+  details   String?  // JSON avec l'ancien/nouveau state ou métadonnées
+  createdAt DateTime @default(now())
+}
