@@ -11,6 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { fmtDate, api } from '@/lib/client-utils'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
 } from '@/components/ui/dialog'
@@ -89,7 +90,7 @@ export function ClientsView() {
       }
       setDialogOpen(false)
       load()
-    } catch (e: any) { toast.error(e.message) }
+    } catch (e: unknown) { toast.error(getErrorMessage(e)) }
   }
 
   const remove = async () => {
@@ -99,7 +100,7 @@ export function ClientsView() {
       toast.success('Client supprimé')
       setToDelete(null)
       load()
-    } catch (e: any) { toast.error(e.message) }
+    } catch (e: unknown) { toast.error(getErrorMessage(e)) }
   }
 
   return (

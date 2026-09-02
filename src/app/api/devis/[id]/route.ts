@@ -2,16 +2,19 @@ import { NextRequest, NextResponse } from 'next/server'
 import { UpdateDevisSchema } from '@/lib/validation/devisSchemas'
 import { DevisUseCases } from '@/application/devis/DevisUseCases'
 import { invalidatePdfCache } from '@/lib/pdfRenderer'
+import { getErrorMessage } from '@/lib/errors'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const devis = await DevisUseCases.getById(id)
     return NextResponse.json(devis)
-  } catch (error: any) {
-    if (error.message === 'Devis introuvable') {
-      return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 })
+  } catch (error: unknown) {
+    const msg = getErrorMessage(error)
+    if (msg === 'Devis introuvable') {
+      return NextResponse.json({ error: msg }, { status: 404 })
     }
+    console.error('API Error:', error)
     return NextResponse.json({ error: 'Erreur interne' }, { status: 500 })
   }
 }
@@ -35,12 +38,13 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
     invalidatePdfCache(id)
 
     return NextResponse.json({ ok, resultat })
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const msg = getErrorMessage(error)
     console.error('Erreur lors du PUT devis:', error)
-    if (error.message.includes('modifié par un autre utilisateur')) {
-      return NextResponse.json({ error: error.message }, { status: 409 })
+    if (msg.includes('modifié par un autre utilisateur')) {
+      return NextResponse.json({ error: msg }, { status: 409 })
     }
-    if (error.message === 'Devis introuvable') {
+    if (msg === 'Devis introuvable') {
       return NextResponse.json({ error: 'Devis introuvable' }, { status: 404 })
     }
     return NextResponse.json({ error: 'Erreur lors de la mise à jour du devis' }, { status: 500 })

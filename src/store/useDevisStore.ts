@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { api } from '@/lib/client-utils'
 import { fmtDateInput } from '@/lib/client-utils'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
 
 export interface DevisData {
   id?: string
@@ -156,8 +157,8 @@ export const useDevisStore = create<DevisStore>((set, get) => ({
           loading: false,
         })
       }
-    } catch (e: any) {
-      toast.error(e.message)
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e))
       set({ loading: false })
     }
   },
@@ -233,8 +234,8 @@ export const useDevisStore = create<DevisStore>((set, get) => ({
       } catch {}
 
       return savedId
-    } catch (e: any) {
-      toast.error(e.message)
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e))
       return null
     } finally {
       set({ saving: false })

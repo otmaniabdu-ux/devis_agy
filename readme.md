@@ -140,9 +140,18 @@ bun run dev
 Accédez à l'application sur : **`http://localhost:3000`**
 
 ### 5. Lancement en Mode Desktop Natif (Tauri v2)
+**En développement :**
 ```bash
 bun x tauri dev
 ```
+
+**En production (Packaging Sidecar avec Bun) :**
+L'application embarque le serveur Next.js en arrière-plan via un Sidecar Tauri autonome.
+```bash
+bun run scripts/build-tauri.ts
+bunx @tauri-apps/cli build
+```
+Les installateurs natifs `.exe` et `.msi` seront générés dans `src-tauri/target/release/bundle/`.
 
 ---
 
@@ -153,12 +162,15 @@ Dans le fichier `package.json` :
 | Commande | Action |
 | :--- | :--- |
 | `bun run dev` | Lance l'application web Next.js en mode développement sur le port 3000. |
-| `bun run build` | Compile l'application pour la production. |
-| `bun run start` | Démarre le serveur en mode production. |
+| `bun run build` | Compile l'application Next.js en mode production (`standalone`). |
+| `bun run start` | Démarre le serveur Next.js en mode production. |
+| `bun run scripts/build-tauri.ts` | Prépare le build Tauri en empaquetant le serveur Next.js dans un Sidecar Bun local. |
+| `bunx @tauri-apps/cli build` | Compile l'application Desktop native de production (génère `.msi` et `.exe`). |
 | `bun scripts/populate-hotels-booking.ts` | Met à jour le catalogue avec les 118 hôtels et 25 compagnies aériennes. |
 | `bun scripts/seed-cloud.ts` | Réinitialise la base SQLite locale avec les paramètres, taux et devis de démonstration. |
 | `bun run db:push` | Synchronise le schéma Prisma avec le fichier SQLite `db/custom.db`. |
 | `bun run db:generate` | Régénère le client TypeScript Prisma. |
+| `bun run test` | Lance les tests unitaires (vitest) couvrant le typage strict et les règles métier (100% de succès). |
 
 ---
 

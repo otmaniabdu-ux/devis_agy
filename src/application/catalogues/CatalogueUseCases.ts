@@ -1,4 +1,10 @@
 import { db } from '@/lib/db'
+import {
+  CreateHotelInput,
+  UpdateHotelInput,
+  CreateCompagnieInput,
+  UpdateCompagnieInput,
+} from '@/lib/validation/catalogueSchemas'
 
 export class HotelUseCases {
   static async list(ville?: string | null) {
@@ -14,7 +20,7 @@ export class HotelUseCases {
     return hotel
   }
 
-  static async create(body: any) {
+  static async create(body: CreateHotelInput) {
     return db.catalogueHotel.create({
       data: {
         ville: body.ville,
@@ -32,7 +38,7 @@ export class HotelUseCases {
     })
   }
 
-  static async update(id: string, body: any) {
+  static async update(id: string, body: UpdateHotelInput) {
     return db.catalogueHotel.update({
       where: { id },
       data: {
@@ -70,7 +76,7 @@ export class CompagnieUseCases {
     return compagnie
   }
 
-  static async create(body: any) {
+  static async create(body: CreateCompagnieInput) {
     return db.catalogueCompagnie.create({
       data: {
         nom: body.nom,
@@ -80,7 +86,7 @@ export class CompagnieUseCases {
     })
   }
 
-  static async update(id: string, body: any) {
+  static async update(id: string, body: UpdateCompagnieInput) {
     return db.catalogueCompagnie.update({
       where: { id },
       data: {

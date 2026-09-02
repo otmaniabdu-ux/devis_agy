@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { z } from 'zod'
-import { CreateDevisSchema, UpdateDevisSchema } from '@/lib/validation/devisSchemas'
+import { CreateDevisSchema, UpdateDevisSchema, CreateDevisInput, UpdateDevisInput } from '@/lib/validation/devisSchemas'
 import { buildDevisCreateData, buildDevisUpdateData, buildChildLines } from '@/lib/devisPayload'
 import { RecalculerDevisUseCase } from '@/application/RecalculerDevisUseCase'
 import { verifierAlertePasseport } from '@/lib/business'
@@ -58,7 +58,7 @@ export class DevisUseCases {
     return { ...devis, passagers: passagersAvecAlerte, _resultatCalcul: resultat }
   }
 
-  static async create(body: any) {
+  static async create(body: CreateDevisInput) {
     const data = await buildDevisCreateData(body)
     const devis = await db.devis.create({ data })
     await RecalculerDevisUseCase.execute(devis.id)
@@ -66,7 +66,7 @@ export class DevisUseCases {
     return this.getById(devis.id)
   }
 
-  static async update(id: string, body: any) {
+  static async update(id: string, body: UpdateDevisInput) {
     // 1. Optimistic locking
     const existingDevis = await db.devis.findUnique({ where: { id }, select: { updatedAt: true } })
     if (!existingDevis) throw new Error('Devis introuvable')

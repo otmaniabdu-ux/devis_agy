@@ -2,8 +2,10 @@
 // Utilisé par POST /api/devis et PUT /api/devis/[id] pour éviter la duplication.
 
 import { db } from '@/lib/db'
+import { Prisma } from '@prisma/client'
 import { NumerotationService } from '@/domain/NumerotationService'
 import { differenceInCalendarDays } from 'date-fns'
+import { CreateDevisInput, UpdateDevisInput } from '@/lib/validation/devisSchemas'
 
 // ============ Helpers dates ============
 
@@ -37,7 +39,7 @@ const isEmpty = {
 
 // ============ Mappers (payload frontend → data Prisma) ============
 
-export function mapPassager(p: any, devisId?: string): any {
+export function mapPassager(p: any, devisId?: string): Prisma.PassagerCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     categorie: p.categorie || 'adulte',
@@ -46,10 +48,10 @@ export function mapPassager(p: any, devisId?: string): any {
     dateNaissance: safeDate(p.dateNaissance),
     passeportNumero: p.passeportNumero || null,
     passeportExpiration: safeDate(p.passeportExpiration),
-  }
+  } as Prisma.PassagerCreateManyInput
 }
 
-export function mapSegmentVol(s: any, devisId?: string, ordre = 0): any {
+export function mapSegmentVol(s: any, devisId?: string, ordre = 0): Prisma.SegmentVolCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     ordre,
@@ -66,10 +68,10 @@ export function mapSegmentVol(s: any, devisId?: string, ordre = 0): any {
     prixEnfant: String(s.prixEnfant ?? '0'),
     prixBebe: String(s.prixBebe ?? '0'),
     devise: s.devise ?? 'SAR',
-  }
+  } as Prisma.SegmentVolCreateManyInput
 }
 
-export function mapHebergement(h: any, devisId?: string): any {
+export function mapHebergement(h: any, devisId?: string): Prisma.HebergementCreateManyInput {
   const ci = safeDate(h.dateCheckin) ?? new Date()
   const co = safeDate(h.dateCheckout) ?? new Date()
   const nbNuit = Math.max(0, differenceInCalendarDays(co, ci))
@@ -87,34 +89,34 @@ export function mapHebergement(h: any, devisId?: string): any {
     nbChambres: h.nbChambres ?? 1,
     prixNuitChambre: String(h.prixNuitChambre ?? '0'),
     devise: h.devise ?? 'SAR',
-  }
+  } as Prisma.HebergementCreateManyInput
 }
 
-export function mapTransfert(t: any, devisId?: string, ordre = 0): any {
+export function mapTransfert(t: any, devisId?: string, ordre = 0): Prisma.TransfertCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     ordre,
-    trajet: t.trajet,
+    trajet: t.trajet || '',
     typeVehicule: t.typeVehicule ?? 'GMC_Yukon',
     prix: String(t.prix ?? '0'),
     devise: t.devise ?? 'SAR',
     obligatoire: t.obligatoire ?? true,
-  }
+  } as Prisma.TransfertCreateManyInput
 }
 
-export function mapTrain(t: any, devisId?: string): any {
+export function mapTrain(t: any, devisId?: string): Prisma.TrainHaramainCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
-    trajet: t.trajet,
+    trajet: t.trajet || '',
     classe: t.classe ?? 'economique',
     dateTrain: safeDate(t.dateTrain) ?? new Date(),
     prixAdulte: String(t.prixAdulte ?? '0'),
     prixEnfant: String(t.prixEnfant ?? '0'),
     devise: t.devise ?? 'SAR',
-  }
+  } as Prisma.TrainHaramainCreateManyInput
 }
 
-export function mapPrestation(p: any, devisId?: string): any {
+export function mapPrestation(p: any, devisId?: string): Prisma.PrestationVIPCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     type: p.type ?? 'autre',
@@ -122,10 +124,10 @@ export function mapPrestation(p: any, devisId?: string): any {
     descriptionAr: p.descriptionAr || null,
     prix: String(p.prix ?? '0'),
     devise: p.devise ?? 'SAR',
-  }
+  } as Prisma.PrestationVIPCreateManyInput
 }
 
-export function mapCampMashair(c: any, devisId?: string): any {
+export function mapCampMashair(c: any, devisId?: string): Prisma.CampMashairCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     nomCamp: c.nomCamp || '',
@@ -134,10 +136,10 @@ export function mapCampMashair(c: any, devisId?: string): any {
     prixAdulte: String(c.prixAdulte ?? '0'),
     prixEnfant: String(c.prixEnfant ?? '0'),
     devise: c.devise ?? 'SAR',
-  }
+  } as Prisma.CampMashairCreateManyInput
 }
 
-export function mapTransportMashair(t: any, devisId?: string): any {
+export function mapTransportMashair(t: any, devisId?: string): Prisma.TransportMashairCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     typeVehicule: t.typeVehicule || '',
@@ -145,13 +147,13 @@ export function mapTransportMashair(t: any, devisId?: string): any {
     prix: String(t.prix ?? '0'),
     typePrix: t.typePrix ?? 'forfait',
     devise: t.devise ?? 'SAR',
-  }
+  } as Prisma.TransportMashairCreateManyInput
 }
 
 // ============ Validation helpers ============
 
 /** Récupère les taux verrouillés : utilise ceux du body, sinon fallback sur la base. */
-export async function resolveTaux(body: any): Promise<{ sar: string; usd: string; eur: string }> {
+export async function resolveTaux(body: CreateDevisInput): Promise<{ sar: string; usd: string; eur: string }> {
   const taux = await db.tauxChange.findMany()
   const map: Record<string, string> = {}
   for (const t of taux) map[t.code] = t.tauxDzd
@@ -163,7 +165,7 @@ export async function resolveTaux(body: any): Promise<{ sar: string; usd: string
 }
 
 /** Construit l'objet data pour Prisma create (devis complet). */
-export async function buildDevisCreateData(body: any) {
+export async function buildDevisCreateData(body: CreateDevisInput) {
   const taux = await resolveTaux(body)
   const numero = await NumerotationService.attribuerNumero(body.dateDepart ? safeDate(body.dateDepart) ?? new Date() : new Date())
 
@@ -197,21 +199,21 @@ export async function buildDevisCreateData(body: any) {
     statut: body.statut ?? 'brouillon',
     notesInternes: body.notesInternes ?? null,
     notesClient: body.notesClient ?? null,
-    passagers: { create: passagers },
-    segmentsVol: { create: segmentsVol },
-    hebergements: { create: hebergements },
-    transferts: { create: transferts },
-    trainsHaramain: { create: trainsHaramain },
-    prestationsVip: { create: prestationsVip },
-    campsMashair: { create: campsMashair },
-    transportsMashair: { create: transportsMashair },
+    passagers: { create: passagers as Prisma.PassagerCreateWithoutDevisInput[] },
+    segmentsVol: { create: segmentsVol as Prisma.SegmentVolCreateWithoutDevisInput[] },
+    hebergements: { create: hebergements as Prisma.HebergementCreateWithoutDevisInput[] },
+    transferts: { create: transferts as Prisma.TransfertCreateWithoutDevisInput[] },
+    trainsHaramain: { create: trainsHaramain as Prisma.TrainHaramainCreateWithoutDevisInput[] },
+    prestationsVip: { create: prestationsVip as Prisma.PrestationVIPCreateWithoutDevisInput[] },
+    campsMashair: { create: campsMashair as Prisma.CampMashairCreateWithoutDevisInput[] },
+    transportsMashair: { create: transportsMashair as Prisma.TransportMashairCreateWithoutDevisInput[] },
   }
 }
 
 /** Extrait les champs scalaires modifiables d'un body PUT. */
-export function buildDevisUpdateData(body: any): any {
+export function buildDevisUpdateData(body: UpdateDevisInput): Prisma.DevisUpdateInput {
   const data: any = {}
-  const setIf = (field: string, transform: (v: any) => any = (v) => v) => {
+  const setIf = (field: keyof UpdateDevisInput, transform: (v: any) => any = (v) => v) => {
     if (body[field] !== undefined) data[field] = transform(body[field])
   }
 
@@ -238,7 +240,7 @@ export function buildDevisUpdateData(body: any): any {
 }
 
 /** Reconstruit les lignes enfants filtrées pour un update PUT. */
-export function buildChildLines(body: any, devisId: string) {
+export function buildChildLines(body: UpdateDevisInput, devisId: string) {
   return {
     passagers: body.passagers !== undefined
       ? (body.passagers as any[]).filter((p) => !isEmpty.passager(p)).map((p) => mapPassager(p, devisId))
@@ -266,3 +268,4 @@ export function buildChildLines(body: any, devisId: string) {
       : null,
   }
 }
+

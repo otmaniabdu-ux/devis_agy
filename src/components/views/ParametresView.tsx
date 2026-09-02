@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { api } from '@/lib/client-utils'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
 
 export function ParametresView() {
   const [parametres, setParametres] = useState<any>({
@@ -40,7 +41,7 @@ export function ParametresView() {
         body: JSON.stringify({ parametres, taux }),
       })
       toast.success('Paramètres enregistrés')
-    } catch (e: any) { toast.error(e.message) }
+    } catch (e: unknown) { toast.error(getErrorMessage(e)) }
     finally { setSaving(false) }
   }
 

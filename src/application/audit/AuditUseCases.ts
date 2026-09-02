@@ -1,7 +1,7 @@
 import { db } from '@/lib/db'
 
 export class AuditUseCases {
-  static async log(action: string, entite: string, entiteId?: string | null, details?: any) {
+  static async log(action: string, entite: string, entiteId?: string | null, details?: Record<string, unknown>) {
     try {
       await db.auditEvent.create({
         data: {

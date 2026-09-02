@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { RecalculerDevisUseCase } from '@/application/RecalculerDevisUseCase'
+import { getErrorMessage } from '@/lib/errors'
 
 // POST /api/devis/[id]/calcul — recalcule et renvoie le détail du calcul
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -7,7 +8,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   try {
     const resultat = await RecalculerDevisUseCase.execute(id)
     return NextResponse.json(resultat)
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 })
+  } catch (error: unknown) {
+    const msg = getErrorMessage(error)
+    return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

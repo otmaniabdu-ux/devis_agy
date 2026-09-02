@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { fmt, api } from '@/lib/client-utils'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
@@ -87,7 +88,7 @@ function HotelsTab() {
       }
       setDialogOpen(false)
       load()
-    } catch (e: any) { toast.error(e.message) }
+    } catch (e: unknown) { toast.error(getErrorMessage(e)) }
   }
 
   const remove = async () => {
@@ -97,7 +98,7 @@ function HotelsTab() {
       toast.success('Hôtel supprimé')
       setToDelete(null)
       load()
-    } catch (e: any) { toast.error(e.message) }
+    } catch (e: unknown) { toast.error(getErrorMessage(e)) }
   }
 
   return (
@@ -259,7 +260,7 @@ function CompagniesTab() {
       }
       setDialogOpen(false)
       load()
-    } catch (e: any) { toast.error(e.message) }
+    } catch (e: unknown) { toast.error(getErrorMessage(e)) }
   }
 
   const remove = async () => {
@@ -269,7 +270,7 @@ function CompagniesTab() {
       toast.success('Compagnie supprimée')
       setToDelete(null)
       load()
-    } catch (e: any) { toast.error(e.message) }
+    } catch (e: unknown) { toast.error(getErrorMessage(e)) }
   }
 
   return (

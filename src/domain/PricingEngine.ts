@@ -38,13 +38,87 @@ export function compterPassagers(passagers: { categorie: string }[]): Record<str
   return counts
 }
 
+export interface DevisCompletPourCalcul {
+  tauxSarDzd: string
+  tauxUsdDzd: string
+  tauxEurDzd: string
+  margeType: string
+  margeValeur: string
+  visaPrixUnit: string
+  visaDevise: string
+  visaType: string
+  fraisOnpoPrixUnit?: string | null
+  fraisOnpoDevise?: string | null
+  assurancePrixUnit?: string | null
+  assuranceDevise?: string | null
+  passagers: { categorie: string }[]
+  segmentsVol: {
+    prixAdulte: string
+    prixEnfant: string
+    prixBebe: string
+    devise: string
+    origine: string
+    destination: string
+    classe: string
+    origineRetour?: string | null
+    destinationRetour?: string | null
+    classeRetour?: string | null
+  }[]
+  hebergements: {
+    nbNuitees?: number | null
+    dateCheckin: Date
+    dateCheckout: Date
+    prixNuitChambre: string
+    nbChambres: number
+    devise: string
+    ville: string
+    typeChambre: string
+    formuleRepas: string
+    vue: string
+    hotelNom: string
+  }[]
+  transferts: {
+    prix: string
+    devise: string
+    trajet: string
+    typeVehicule: string
+  }[]
+  trainsHaramain: {
+    prixAdulte: string
+    prixEnfant: string
+    devise: string
+    trajet: string
+    classe: string
+  }[]
+  prestationsVip: {
+    prix: string
+    devise: string
+    descriptionFr: string
+  }[]
+  campsMashair: {
+    prixAdulte: string
+    prixEnfant: string
+    devise: string
+    nomCamp: string
+    typeTente: string
+    restauration: string
+  }[]
+  transportsMashair: {
+    prix: string
+    typePrix: string
+    devise: string
+    trajet: string
+    typeVehicule: string
+  }[]
+}
+
 /**
  * Moteur de calcul pur (Domain Driven Design).
  * Prend un état de devis complet en entrée (indépendant de l'ORM)
  * et retourne le détail du calcul financier.
  */
 export class PricingEngine {
-  static calculer(devis: any): ResultatCalculDevis {
+  static calculer(devis: DevisCompletPourCalcul): ResultatCalculDevis {
     const taux = {
       SAR: devis.tauxSarDzd,
       USD: devis.tauxUsdDzd,

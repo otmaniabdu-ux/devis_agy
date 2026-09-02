@@ -24,9 +24,10 @@ L'application **El Mouhssinoune Tours — Omra & Hadj VIP Quotes** (`devis-agy`)
 - **Catalogue Compagnies** : 25 compagnies aériennes actives au départ de l'Algérie et en transit Hajj/Omra.
 - **Calcul Financier** : `decimal.js` (Précision 28 décimales, arrondi `ROUND_HALF_UP`).
 - **Génération PDF** : `@react-pdf/renderer` avec rendu serveur optimisé (`src/lib/pdfRenderer.ts`), polices embarquées (DejaVu / Helvetica) et téléchargement Blob (`downloadPdf`) compatible WebView2 / Tauri v2 (Variantes: `client`, `interne`, `programme` sans prix).
-- **Runtime / Executable** : Bun (supporté avec scripts fallback Node/npm).
-- **Application Desktop Native** : Tauri v2 (pour un mode fenêtre native et ergonomie logicielle de bureau).
-- **Scripts d'Automatisation** : `scripts/populate-hotels-booking.ts`, `scripts/seed-cloud.ts`.
+- **Runtime / Executable** : Bun (utilisé pour les scripts et comme moteur d'exécution local).
+- **Application Desktop Native** : Tauri v2 (pour un mode fenêtre native). En production, un **Sidecar Bun** est embarqué pour faire tourner le serveur Next.js en tâche de fond.
+- **Tests** : Vitest (fichiers `*.test.ts` dans `src/domain/__tests__/`).
+- **Scripts d'Automatisation** : `scripts/populate-hotels-booking.ts`, `scripts/seed-cloud.ts`, `scripts/build-tauri.ts`.
 
 ---
 
@@ -54,6 +55,11 @@ L'application **El Mouhssinoune Tours — Omra & Hadj VIP Quotes** (`devis-agy`)
   - `client` : Devis complet avec prix de vente TTC par prestation.
   - `interne` : Devis avec coûts nets, marge agence et devises sources.
   - `programme` : Programme de voyage complet **sans aucun prix** (idéal pour partage d'itinéraire).
+
+### E. Typage Strict & Gestion des Erreurs
+1. **ZÉRO `any` autorisé** : Les Use Cases (`DevisUseCases`, `CatalogueUseCases`, etc.) et les routeurs API doivent utiliser des types explicites (souvent inférés depuis Zod, ex: `CreateDevisInput`).
+2. **Erreurs Typées** : Il est formellement interdit d'utiliser `catch (error: any)`. Utilisez `catch (error: unknown)` et passez l'erreur à la fonction utilitaire `getErrorMessage(error)` de `src/lib/errors.ts`.
+3. **Tests Unitaires** : Tout nouveau Use Case ou algorithme financier (ex: `PricingEngine.ts`) doit être couvert par un test Vitest (`bun run test`).
 
 ---
 
@@ -118,6 +124,16 @@ bun run dev
 # Lancement en mode Desktop (Fenêtre Native Tauri v2)
 bun x tauri dev
 
+# Lancer les tests unitaires
+bun run test
+
+# Build Web pour la production
+bun run build
+
+# Préparer et Builder l'exécutable Desktop Tauri (Production)
+bun run scripts/build-tauri.ts
+bunx @tauri-apps/cli build
+
 # Peupler la base avec les 118 hôtels et 25 compagnies
 bun scripts/populate-hotels-booking.ts
 
@@ -127,7 +143,14 @@ bun scripts/seed-cloud.ts
 # Synchronisation du schéma Prisma avec SQLite
 bun run db:push
 bun run db:generate
-
-# Build pour la production web
-bun run build
 ```
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

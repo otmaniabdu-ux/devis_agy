@@ -49,4 +49,7 @@ next-env.d.ts
 local-*
 .claude
 .z-ai-config
-/skills/
+/skills/playwright-report/
+test-results/
+src-tauri/bin/
+src-tauri/dist/

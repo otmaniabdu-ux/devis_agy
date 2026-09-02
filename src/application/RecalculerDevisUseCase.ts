@@ -1,12 +1,15 @@
 import { db } from '@/lib/db'
+import { PrismaClient } from '@prisma/client'
 import { PricingEngine, ResultatCalculDevis } from '@/domain/PricingEngine'
+
+type TransactionClient = Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>
 
 export class RecalculerDevisUseCase {
   /**
    * Recalcule un devis et sauvegarde les totaux en base.
    * Peut s'exécuter dans une transaction existante (fournie par Prisma).
    */
-  static async execute(devisId: string, txContext: any = db): Promise<ResultatCalculDevis> {
+  static async execute(devisId: string, txContext: TransactionClient = db): Promise<ResultatCalculDevis> {
     const devis = await txContext.devis.findUnique({
       where: { id: devisId },
       include: {

@@ -11,6 +11,7 @@ import { fmt, fmtDate, api, downloadPdf } from '@/lib/client-utils'
 import { STATUTS_DEVIS } from '@/lib/business'
 import { D } from '@/lib/money'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -74,16 +75,16 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
       toast.success(`Devis ${toDelete.numero} supprimé`)
       setToDelete(null)
       load()
-    } catch (e: any) {
-      toast.error(e.message)
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e))
     }
   }
 
   const openPdf = async (id: string, variante: 'client' | 'interne' | 'programme', numero?: string) => {
     try {
       await downloadPdf(id, variante, numero)
-    } catch (e: any) {
-      toast.error(e.message || 'Erreur lors du téléchargement du PDF')
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e) || 'Erreur lors du téléchargement du PDF')
     }
   }
 
