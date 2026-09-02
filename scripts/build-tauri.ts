@@ -17,9 +17,11 @@ const standalonePublicDir = join(standaloneDir, "public");
 await mkdir(standaloneStaticDir, { recursive: true });
 await mkdir(standalonePublicDir, { recursive: true });
 
-// Copie des assets statiques dans standalone
+// Copie des assets statiques et configurations dans standalone
 await $`xcopy /E /I /Y .next\\static .next\\standalone\\.next\\static`;
 await $`xcopy /E /I /Y public .next\\standalone\\public`;
+await $`xcopy /E /I /Y prisma .next\\standalone\\prisma`;
+await copyFile(".env", join(standaloneDir, ".env"));
 
 // 3. Préparation du Sidecar (Bun executable)
 console.log("⚙️  Création de l'exécutable Sidecar...");
