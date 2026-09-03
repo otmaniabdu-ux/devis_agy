@@ -25,7 +25,7 @@ L'application **El Mouhssinoune Tours — Omra & Hadj VIP Quotes** (`devis-agy`)
 - **Calcul Financier** : `decimal.js` (Précision 28 décimales, arrondi `ROUND_HALF_UP`).
 - **Génération PDF** : `@react-pdf/renderer` avec rendu serveur optimisé (`src/lib/pdfRenderer.ts`), polices embarquées (DejaVu / Helvetica) et téléchargement Blob (`downloadPdf`) compatible WebView2 / Tauri v2 (Variantes: `client`, `interne`, `programme` sans prix).
 - **Runtime / Executable** : Bun (utilisé pour les scripts et comme moteur d'exécution local).
-- **Application Desktop Native** : Tauri v2 (pour un mode fenêtre native). En production, un **Sidecar Bun** est embarqué pour faire tourner le serveur Next.js en tâche de fond.
+- **Application Desktop Native** : Tauri v2 (pour un mode fenêtre native). En production, un **Sidecar Bun** est embarqué pour faire tourner le serveur Next.js en tâche de fond, bindé exclusivement sur `127.0.0.1:14242`.
 - **Tests** : Vitest (fichiers `*.test.ts` dans `src/domain/__tests__/`).
 - **Scripts d'Automatisation** : `scripts/populate-hotels-booking.ts`, `scripts/seed-cloud.ts`, `scripts/build-tauri.ts`.
 
@@ -60,6 +60,7 @@ L'application **El Mouhssinoune Tours — Omra & Hadj VIP Quotes** (`devis-agy`)
 1. **ZÉRO `any` autorisé** : Les Use Cases (`DevisUseCases`, `CatalogueUseCases`, etc.) et les routeurs API doivent utiliser des types explicites (souvent inférés depuis Zod, ex: `CreateDevisInput`).
 2. **Erreurs Typées** : Il est formellement interdit d'utiliser `catch (error: any)`. Utilisez `catch (error: unknown)` et passez l'erreur à la fonction utilitaire `getErrorMessage(error)` de `src/lib/errors.ts`.
 3. **Tests Unitaires** : Tout nouveau Use Case ou algorithme financier (ex: `PricingEngine.ts`) doit être couvert par un test Vitest (`bun run test`).
+4. **Qualité Automatisée** : `bun run lint` doit rester à **0 erreur** (obligatoire) ; les `console.error` des routes API sont tolérés (journalisation serveur). Le hook de sécurité serveur est `src/proxy.ts` (convention Next.js 16, ex-`middleware.ts`).
 
 ---
 
@@ -92,14 +93,25 @@ Le schéma se trouve dans `prisma/schema.prisma`. Modèles clés :
 ```
 src/
 ├── app/
-│   ├── api/                # Endpoints Next.js API (devis, clients, catalogues, parametres, pdf, seed)
+│   ├── api/                # Endpoints Next.js API (devis, clients, catalogues, parametres, pdf, rgpd, seed)
 │   ├── globals.css         # Thème Tailwind v4 Liquid Glass & Variables CSS
 │   ├── layout.tsx          # Layout racine avec police Inter et métadonnées
-│   └── page.tsx            # Navigation SPA (Dashboard, Devis, Clients, Catalogues, Paramètres)
+│   ├── page.tsx            # Navigation SPA (Dashboard, Devis, Clients, Catalogues, Paramètres)
+│   └── proxy.ts            # Proxy sécurité Next.js 16 (fail-closed localhost/Tauri, headers — ex-middleware.ts)
+├── application/            # Couche Application (Use Cases, dépend de l'infrastructure)
+│   ├── numerotation/       # NumerotationService (numérotation atomique DEVIS-YYYY-MM-NNN)
+│   ├── audit/ catalogues/ clients/ devis/ parametres/ pdf/ rgpd/
+├── domain/                 # Couche Domaine (pure, zéro dépendance framework/DB)
+│   ├── PricingEngine.ts    # Moteur de calcul financier (ResultatCalculDevis, LigneCout)
+│   └── __tests__/          # Tests Vitest du domaine
 ├── components/
 │   ├── devis/              # Assistant création devis (Passagers, Vols, Hébergements, Transferts, Hadj, VIP, Financier, Récap)
-│   ├── ui/                 # Composants UI Radix/Shadcn (Button, Dialog, Input, Select, Table, Card, etc.)
+│   ├── ui/                 # Composants UI Radix/Shadcn (Button, Dialog, Input, Select, Card, etc.)
 │   └── views/              # Vues principales (DashboardView, ListeDevisView, CataloguesView, etc.)
+├── store/
+│   └── useDevisStore.ts    # État du wizard devis (Zustand) typé via src/types/devis-forms.ts
+├── types/
+│   └── devis-forms.ts      # Interfaces de formulaires UI (montants en strings décimales)
 └── lib/
     ├── business.ts         # Métier Omra/Hadj (libellés, calcul des nuitées, vues d'hôtel, catégories)
     ├── calculDevis.ts      # Moteur financier complet Decimal.js, frais ONPO & recalculs
@@ -110,7 +122,8 @@ src/
     ├── db.ts               # Instance Prisma Client singleton (SQLite local db/custom.db)
     ├── money.ts            # Utilitaires financiers strict Decimal.js
     ├── pdfDocument.tsx     # Template PDF React-PDF (variantes client, interne, programme)
-    └── pdfRenderer.ts      # Moteur d'encapsulation de rendu PDF serveur
+    ├── pdfRenderer.ts      # Moteur d'encapsulation de rendu PDF serveur (sémaphore + cache LRU)
+    └── validation/         # Schémas Zod (devisSchemas, clientSchemas, catalogueSchemas) + types de payload
 ```
 
 ---
@@ -126,6 +139,12 @@ bun x tauri dev
 
 # Lancer les tests unitaires
 bun run test
+
+# Vérification qualité (doit rester à 0 erreur)
+bun run lint
+
+# Vérification du typage strict
+bunx tsc --noEmit
 
 # Build Web pour la production
 bun run build

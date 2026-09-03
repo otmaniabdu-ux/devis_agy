@@ -22,6 +22,8 @@
 - [Catalogues Intégrés (118 Hôtels & 25 Compagnies)](#-catalogues-intégrés-118-hôtels--25-compagnies)
 - [Moteur Financier Multi-Devises Strict](#-moteur-financier-multi-devises-strict)
 - [Exports PDF Professionnels (3 Variantes)](#-exports-pdf-professionnels-3-variantes)
+- [Architecture & Qualité de Code](#-architecture--qualité-de-code)
+- [Sécurité (Desktop & Local)](#-sécurité-desktop--local)
 - [Stack Technique](#-stack-technique)
 - [Installation & Démarrage](#-installation--démarrage)
 - [Arborescence du Projet](#-arborescence-du-projet)
@@ -100,6 +102,39 @@ Génération serveur optimisée via `@react-pdf/renderer` avec polices embarqué
 
 ---
 
+## 🏛️ Architecture & Qualité de Code
+
+Le projet suit une **Clean Architecture** en couches strictement séparées :
+
+- **`src/domain/`** — Couche Domaine pure (aucune dépendance framework ni base de données) : moteur de calcul `PricingEngine`, types financiers (`ResultatCalculDevis`, `LigneCout`), couvert de tests Vitest.
+- **`src/application/`** — Couche Application (Use Cases par domaine : `devis`, `clients`, `catalogues`, `parametres`, `pdf`, `rgpd`, `audit`, `numerotation`) — seule couche autorisée à parler à Prisma.
+- **`src/app/api/`** — Routeurs API fins qui délèguent aux Use Cases et valident les entrées via des schémas **Zod** (`src/lib/validation/`).
+- **`src/store/` + `src/types/devis-forms.ts`** — État du wizard devis (Zustand) entièrement typé (zéro `any`).
+
+Garanties de qualité vérifiées en continu :
+
+| Vérification | Commande | État |
+| :--- | :--- | :---: |
+| Typage strict TypeScript | `bunx tsc --noEmit` | ✅ 0 erreur |
+| Lint ESLint | `bun run lint` | ✅ 0 erreur |
+| Tests unitaires (Vitest) | `bun run test` | ✅ 53/53 |
+| Build production Next + Rust (Tauri) | `bun run scripts/build-tauri.ts` | ✅ |
+
+**Zéro `any`** dans le code de production : les données de formulaires sont typées par interfaces dédiées, les payloads API par les schémas Zod et le template PDF par `Prisma.DevisGetPayload`.
+
+---
+
+## 🔒 Sécurité (Desktop & Local)
+
+- **Proxy de sécurité Next.js 16** (`src/proxy.ts`, ex-`middleware.ts`) : accès aux routes `/api/**` réservé à `localhost` / `127.0.0.1` / `::1` / WebView Tauri (fail-closed, 403 sinon) + headers de sécurité (`X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`).
+- **Sidecar Next.js bindé sur `127.0.0.1:14242` uniquement** — aucune exposition réseau externe ; base SQLite copiée dans `AppData` au premier lancement.
+- **CSP Tauri stricte** (`default-src 'self'`, `object-src 'none'`) et capabilities minimales (`core:default` seulement).
+- **Endpoint de seed désactivé en production** (403) et `GET` interdit (anti-CSRF).
+- **Conformité RGPD** : route `/api/rgpd` d'anonymisation des devis clients.
+- **Dépendances auditées** : vulnérabilités corrigées (`sharp ≥ 0.35`, `picomatch ≥ 2.3.2`, `brace-expansion`, `browserslist`, `@babel/core`) via `overrides` npm/bun.
+
+---
+
 ## 🛠️ Stack Technique
 
 - **Framework & UI** : [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [Tailwind CSS v4](https://tailwindcss.com/) (Thème Liquid Glass Noir/Or), [Radix UI](https://www.radix-ui.com/), [Lucide React](https://lucide.dev/), [Framer Motion](https://www.framer.com/motion/), [Sonner](https://sonner.emilkowal.ski/).
@@ -107,7 +142,8 @@ Génération serveur optimisée via `@react-pdf/renderer` avec polices embarqué
 - **Base de Données & ORM** : [SQLite](https://www.sqlite.org/) (Local 100% hors-ligne `db/custom.db`), [Prisma ORM 6](https://www.prisma.io/).
 - **Moteur Financier** : [Decimal.js](https://mikemcl.github.io/decimal.js/).
 - **Génération PDF** : [@react-pdf/renderer](https://react-pdf.org/).
-- **Application Desktop Native** : [Tauri v2](https://v2.tauri.app/) (Fenêtre native de bureau).
+- **Application Desktop Native** : [Tauri v2](https://v2.tauri.app/) (Fenêtre native de bureau, sidecar serveur sur `127.0.0.1:14242`).
+- **Tests & Qualité** : [Vitest](https://vitest.dev/) (53 tests unitaires), [ESLint 9](https://eslint.org/) (0 erreur), [Playwright](https://playwright.dev/) (tests E2E).
 - **Runtime** : [Bun](https://bun.sh/) (avec support fallback Node.js).
 
 ---
@@ -171,6 +207,8 @@ Dans le fichier `package.json` :
 | `bun run db:push` | Synchronise le schéma Prisma avec le fichier SQLite `db/custom.db`. |
 | `bun run db:generate` | Régénère le client TypeScript Prisma. |
 | `bun run test` | Lance les tests unitaires (vitest) couvrant le typage strict et les règles métier (100% de succès). |
+| `bun run lint` | Analyse statique ESLint de tout le projet (doit rester à 0 erreur). |
+| `bun run test:e2e` | Lance les tests de bout en bout Playwright (parcours devis + API). |
 
 ---
 
