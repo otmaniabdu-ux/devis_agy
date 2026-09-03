@@ -53,7 +53,7 @@ pub fn run() {
                 .expect("Failed to create sidecar command")
                 .arg(server_path_str)
                 .current_dir(server_dir_str)
-                .env("PORT", "3000")
+                .env("PORT", "14242")
                 .env("HOSTNAME", "127.0.0.1")
                 .env("NODE_ENV", "production")
                 .env("DATABASE_URL", db_url)
