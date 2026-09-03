@@ -74,17 +74,20 @@ const html = `
     <h2>Démarrage du moteur OmraVIP...</h2>
     <p>Veuillez patienter quelques instants.</p>
     <script>
+        // mode "no-cors" : le fetch aboutit dès que le serveur est joignable.
+        // Un fetch classique serait bloqué par la policy CORS du WebView
+        // (origin tauri.localhost → localhost:14242 sans en-têtes CORS).
         const checkServer = async () => {
             try {
-                const res = await fetch("http://localhost:14242/api/parametres");
-                if (res.ok) {
-                    window.location.href = "http://localhost:14242";
-                    return;
-                }
+                await fetch("http://localhost:14242/api/parametres", { mode: "no-cors" });
+                window.location.href = "http://localhost:14242";
+                return;
             } catch (e) { }
             setTimeout(checkServer, 1000);
         };
         setTimeout(checkServer, 1000);
+        // Filet de sécurité : navigation forcée si le serveur tarde à démarrer
+        setTimeout(() => { window.location.href = "http://localhost:14242"; }, 20000);
     </script>
 </body>
 </html>
