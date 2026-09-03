@@ -1,5 +1,5 @@
 import { $ } from "bun";
-import { copyFile, mkdir } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "path";
 
 console.log("🚀 Démarrage de la préparation du build Tauri...");
@@ -24,7 +24,6 @@ await $`xcopy /E /I /Y prisma .next\\standalone\\prisma`;
 await copyFile(".env", join(standaloneDir, ".env"));
 
 console.log("🛠️  Correction du bug de hachage Prisma (Next.js Turbopack)...");
-const fs = require("node:fs/promises");
 async function fixPrismaImports(dir: string) {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     for (const entry of entries) {
