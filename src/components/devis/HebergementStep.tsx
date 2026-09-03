@@ -9,10 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { TYPES_CHAMBRE, FORMULES_REPAS, VUES_HOTEL } from '@/lib/business'
 import { api } from '@/lib/client-utils'
 import { useDevisStore } from '@/store/useDevisStore'
+import type { HebergementForm, HotelCatalogueItem } from '@/types/devis-forms'
 
 export function HebergementStep() {
   const { devis, updateDevis } = useDevisStore()
-  const [hotels, setHotels] = useState<any[]>([])
+  const [hotels, setHotels] = useState<HotelCatalogueItem[]>([])
 
   useEffect(() => {
     api('/api/catalogues/hotels').then(setHotels)
@@ -38,9 +39,9 @@ export function HebergementStep() {
     })
   }
 
-  const update = (idx: number, field: string, value: any) => {
+  const update = (idx: number, field: keyof HebergementForm, value: string | number) => {
     updateDevis((d) => {
-      d.hebergements[idx][field] = value
+      ;(d.hebergements[idx] as unknown as Record<string, unknown>)[field] = value
     })
   }
   
@@ -86,7 +87,7 @@ export function HebergementStep() {
     })
   }
 
-  const calcNuitees = (h: any) => {
+  const calcNuitees = (h: HebergementForm) => {
     if (!h.dateCheckin || !h.dateCheckout) return 0
     const ci = new Date(h.dateCheckin)
     const co = new Date(h.dateCheckout)
@@ -114,7 +115,7 @@ export function HebergementStep() {
         </div>
       ) : (
         <div className="space-y-3">
-          {devis.hebergements.map((h: any, i: number) => {
+          {devis.hebergements.map((h, i: number) => {
             const nbNuits = calcNuitees(h)
             const total = (parseFloat(h.prixNuitChambre || '0') * nbNuits * h.nbChambres).toFixed(2)
             return (

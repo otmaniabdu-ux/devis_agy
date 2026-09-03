@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Hotel, Plane, Star } from 'lucide-react'
+import { Plus, Pencil, Trash2, Hotel, Plane } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { fmt, api } from '@/lib/client-utils'
+import type { CompagnieForm, CompagnieItem, HotelCatalogueItem, HotelForm } from '@/types/devis-forms'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
 import {
@@ -36,12 +37,12 @@ export function CataloguesView() {
 }
 
 function HotelsTab() {
-  const [hotels, setHotels] = useState<any[]>([])
+  const [hotels, setHotels] = useState<HotelCatalogueItem[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [toDelete, setToDelete] = useState<any | null>(null)
-  const [form, setForm] = useState<any>({
+  const [toDelete, setToDelete] = useState<HotelCatalogueItem | null>(null)
+  const [form, setForm] = useState<HotelForm>({
     ville: 'Makkah', nom: '', nomAr: '', etoiles: 4, distanceHaram: '',
     prixSingleSar: '0', prixDoubleSar: '0', prixTripleSar: '0', prixQuadrupleSar: '0',
   })
@@ -61,10 +62,10 @@ function HotelsTab() {
     setDialogOpen(true)
   }
 
-  const openEdit = (h: any) => {
+  const openEdit = (h: HotelCatalogueItem) => {
     setForm({
       ville: h.ville, nom: h.nom, nomAr: h.nomAr ?? '', etoiles: h.etoiles,
-      distanceHaram: h.distanceHaram ?? '',
+      distanceHaram: h.distanceHaram != null ? String(h.distanceHaram) : '',
       prixSingleSar: h.prixSingleSar, prixDoubleSar: h.prixDoubleSar,
       prixTripleSar: h.prixTripleSar, prixQuadrupleSar: h.prixQuadrupleSar,
     })
@@ -75,7 +76,7 @@ function HotelsTab() {
   const submit = async () => {
     const payload = {
       ...form,
-      etoiles: parseInt(form.etoiles),
+      etoiles: Number(form.etoiles),
       distanceHaram: form.distanceHaram ? parseInt(form.distanceHaram) : null,
     }
     try {
@@ -236,12 +237,12 @@ function HotelsTab() {
 }
 
 function CompagniesTab() {
-  const [compagnies, setCompagnies] = useState<any[]>([])
+  const [compagnies, setCompagnies] = useState<CompagnieItem[]>([])
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [toDelete, setToDelete] = useState<any | null>(null)
-  const [form, setForm] = useState<any>({ nom: '', codeIata: '' })
+  const [toDelete, setToDelete] = useState<CompagnieItem | null>(null)
+  const [form, setForm] = useState<CompagnieForm>({ nom: '', codeIata: '' })
 
   const load = () => {
     setLoading(true)

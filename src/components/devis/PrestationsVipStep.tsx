@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea'
 import { TYPES_PRESTATION_VIP } from '@/lib/business'
 import { useDevisStore } from '@/store/useDevisStore'
+import type { PrestationVipForm } from '@/types/devis-forms'
 
 export function PrestationsVipStep() {
   const { devis, updateDevis } = useDevisStore()
@@ -26,7 +27,7 @@ export function PrestationsVipStep() {
     })
   }
 
-  const update = (idx: number, field: string, value: any) => {
+  const update = (idx: number, field: keyof PrestationVipForm, value: string) => {
     updateDevis((d) => {
       d.prestationsVip[idx][field] = value
     })
@@ -59,7 +60,7 @@ export function PrestationsVipStep() {
         </div>
       ) : (
         <div className="space-y-3">
-          {devis.prestationsVip.map((p: any, i: number) => (
+          {devis.prestationsVip.map((p, i: number) => (
             <div key={i} className="border border-border rounded-lg p-4 bg-muted/20">
               <div className="grid sm:grid-cols-12 gap-3 items-end">
                 <div className="sm:col-span-2 space-y-1.5">

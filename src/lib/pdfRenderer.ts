@@ -97,7 +97,7 @@ export async function generateOptimizedPdf(
     await acquireRenderSlot()
     try {
       const element = createElement(DevisDocument, { devis: devisForPdf, variante })
-      const buffer = await renderToBuffer(element as any)
+      const buffer = await renderToBuffer(element as Parameters<typeof renderToBuffer>[0])
       const nodeBuffer = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer)
 
       pruneCache()

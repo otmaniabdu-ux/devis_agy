@@ -3,6 +3,12 @@ import { api } from '@/lib/client-utils'
 import { fmtDateInput } from '@/lib/client-utils'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
+import type { ResultatCalculDevis } from '@/domain/PricingEngine'
+import type {
+  PassagerForm, SegmentVolForm, HebergementForm, TransfertForm,
+  TrainHaramainForm, PrestationVipForm, CampMashairForm, TransportMashairForm,
+  ClientItem,
+} from '@/types/devis-forms'
 
 export interface DevisData {
   id?: string
@@ -23,23 +29,23 @@ export interface DevisData {
   tauxSarDzd: string
   tauxUsdDzd: string
   tauxEurDzd: string
-  passagers: any[]
-  segmentsVol: any[]
-  hebergements: any[]
-  transferts: any[]
-  trainsHaramain: any[]
-  prestationsVip: any[]
-  campsMashair: any[]
-  transportsMashair: any[]
+  passagers: PassagerForm[]
+  segmentsVol: SegmentVolForm[]
+  hebergements: HebergementForm[]
+  transferts: TransfertForm[]
+  trainsHaramain: TrainHaramainForm[]
+  prestationsVip: PrestationVipForm[]
+  campsMashair: CampMashairForm[]
+  transportsMashair: TransportMashairForm[]
 }
 
 interface DevisStore {
   // State
   devis: DevisData | null
-  clients: any[]
+  clients: ClientItem[]
   loading: boolean
   saving: boolean
-  resultatCalcul: any | null
+  resultatCalcul: ResultatCalculDevis | null
 
   // Actions
   load: (editDevisId: string | null) => Promise<void>
@@ -91,12 +97,12 @@ export const useDevisStore = create<DevisStore>((set, get) => ({
             tauxSarDzd: d.tauxSarDzd,
             tauxUsdDzd: d.tauxUsdDzd,
             tauxEurDzd: d.tauxEurDzd,
-            passagers: d.passagers.map((p: any) => ({
+            passagers: d.passagers.map((p: PassagerForm) => ({
               ...p,
               dateNaissance: fmtDateInput(p.dateNaissance),
               passeportExpiration: fmtDateInput(p.passeportExpiration),
             })),
-            segmentsVol: d.segmentsVol.map((s: any, idx: number) => ({
+            segmentsVol: d.segmentsVol.map((s: SegmentVolForm, idx: number) => ({
               ...s,
               typeVol: s.typeVol || (idx === 0 ? 'aller' : 'retour'),
               dateVol: fmtDateInput(s.dateVol) + 'T' + (s.dateVol ? new Date(s.dateVol).toTimeString().slice(0, 5) : '08:00'),
@@ -105,13 +111,13 @@ export const useDevisStore = create<DevisStore>((set, get) => ({
               dateVolRetour: s.dateVolRetour ? (fmtDateInput(s.dateVolRetour) + 'T' + new Date(s.dateVolRetour).toTimeString().slice(0, 5)) : '',
               classeRetour: s.classeRetour ?? s.classe ?? 'economique',
             })),
-            hebergements: d.hebergements.map((h: any) => ({
+            hebergements: d.hebergements.map((h: HebergementForm) => ({
               ...h,
               dateCheckin: fmtDateInput(h.dateCheckin),
               dateCheckout: fmtDateInput(h.dateCheckout),
             })),
             transferts: d.transferts,
-            trainsHaramain: d.trainsHaramain.map((t: any) => ({
+            trainsHaramain: d.trainsHaramain.map((t: TrainHaramainForm) => ({
               ...t,
               dateTrain: fmtDateInput(t.dateTrain) + 'T' + new Date(t.dateTrain).toTimeString().slice(0, 5),
             })),
@@ -182,8 +188,8 @@ export const useDevisStore = create<DevisStore>((set, get) => ({
     try {
       const r = await api(`/api/devis/${devis.id}/calcul`, { method: 'POST' })
       set({ resultatCalcul: r })
-    } catch (e) {
-      // silent fail
+    } catch {
+      // silent fail — le recalcul est relancé après la sauvegarde
     }
   },
 

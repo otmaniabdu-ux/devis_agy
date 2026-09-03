@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     const client = await ClientUseCases.create(result.data)
     return NextResponse.json(client, { status: 201 })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Erreur interne du serveur' }, { status: 500 })
   }
 }

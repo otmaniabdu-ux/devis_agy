@@ -1,22 +1,11 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Save, AlertTriangle, Check, X, Plus, Trash2, FileDown, FileText } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight, Save, AlertTriangle, Check, FileDown, FileText } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import { Switch } from '@/components/ui/switch'
-import { fmt, fmtDate, fmtDateInput, api, downloadPdf } from '@/lib/client-utils'
-import {
-  CATEGORIES_PASSAGER, TYPES_VISA, TYPES_VEHICULE, TYPES_CHAMBRE,
-  FORMULES_REPAS, VUES_HOTEL, TYPES_PRESTATION_VIP, STATUTS_DEVIS,
-  verifierAlertePasseport,
-} from '@/lib/business'
-import { D, formatMontant, formatMoney } from '@/lib/money'
+import { verifierAlertePasseport } from '@/lib/business'
+import { downloadPdf } from '@/lib/client-utils'
 import { toast } from 'sonner'
 import { useDevisStore } from '@/store/useDevisStore'
 import { PassagersStep } from '@/components/devis/PassagersStep'
@@ -50,7 +39,7 @@ export function NouveauDevisView({
 }) {
   const [step, setStep] = useState<StepId>('passagers')
   
-  const { devis, loading, saving, resultatCalcul, load, save, reset } = useDevisStore()
+  const { devis, loading, saving, load, save, reset } = useDevisStore()
 
   useEffect(() => {
     load(editDevisId)

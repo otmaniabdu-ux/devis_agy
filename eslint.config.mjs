@@ -51,6 +51,12 @@ const eslintConfig = [...nextCoreWebVitals, ...nextTypescript, {
     "no-useless-escape": "off",
   },
 }, {
+  // Scripts d'automatisation Bun : la journalisation console est volontaire (progression build/seed)
+  files: ["scripts/**"],
+  rules: {
+    "no-console": "off",
+  },
+}, {
   ignores: [
     "node_modules/**",
     ".next/**",

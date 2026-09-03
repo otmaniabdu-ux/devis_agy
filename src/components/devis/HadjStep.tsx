@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useDevisStore } from '@/store/useDevisStore'
+import type { CampMashairForm, TransportMashairForm } from '@/types/devis-forms'
 
 export function HadjStep() {
   const { devis, updateDevis } = useDevisStore()
@@ -26,7 +27,7 @@ export function HadjStep() {
     })
   }
 
-  const updateCamp = (idx: number, field: string, value: any) => {
+  const updateCamp = (idx: number, field: keyof CampMashairForm, value: string) => {
     updateDevis((d) => {
       d.campsMashair[idx][field] = value
     })
@@ -51,7 +52,7 @@ export function HadjStep() {
     })
   }
 
-  const updateTransport = (idx: number, field: string, value: any) => {
+  const updateTransport = (idx: number, field: keyof TransportMashairForm, value: string) => {
     updateDevis((d) => {
       d.transportsMashair[idx][field] = value
     })
@@ -85,7 +86,7 @@ export function HadjStep() {
           </div>
         ) : (
           <div className="space-y-3">
-            {devis.campsMashair.map((c: any, i: number) => (
+            {devis.campsMashair.map((c, i: number) => (
               <div key={i} className="border border-border rounded-lg p-4 bg-muted/20">
                 <div className="grid sm:grid-cols-12 gap-3 items-end">
                   <div className="sm:col-span-3 space-y-1.5">
@@ -152,7 +153,7 @@ export function HadjStep() {
           </div>
         ) : (
           <div className="space-y-3">
-            {devis.transportsMashair.map((t: any, i: number) => (
+            {devis.transportsMashair.map((t, i: number) => (
               <div key={i} className="border border-border rounded-lg p-4 bg-muted/20">
                 <div className="grid sm:grid-cols-12 gap-3 items-end">
                   <div className="sm:col-span-4 space-y-1.5">

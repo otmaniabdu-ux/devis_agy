@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { TYPES_VEHICULE } from '@/lib/business'
 import { useDevisStore } from '@/store/useDevisStore'
+import type { TransfertForm } from '@/types/devis-forms'
 
 export function TransfertsStep() {
   const { devis, updateDevis } = useDevisStore()
@@ -26,9 +27,9 @@ export function TransfertsStep() {
     })
   }
 
-  const update = (idx: number, field: string, value: any) => {
+  const update = (idx: number, field: keyof TransfertForm, value: string | boolean) => {
     updateDevis((d) => {
-      d.transferts[idx][field] = value
+      ;(d.transferts[idx] as unknown as Record<string, unknown>)[field] = value
     })
   }
   
@@ -59,7 +60,7 @@ export function TransfertsStep() {
         </div>
       ) : (
         <div className="space-y-3">
-          {devis.transferts.map((t: any, i: number) => (
+          {devis.transferts.map((t, i: number) => (
             <div key={i} className="border border-border rounded-lg p-4 bg-muted/20">
               <div className="grid sm:grid-cols-12 gap-3 items-end">
                 <div className="sm:col-span-4 space-y-1.5">

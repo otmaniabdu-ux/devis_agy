@@ -13,7 +13,7 @@ export function FinancierStep() {
 
   if (!devis) return null
 
-  const update = (field: string, value: any) => {
+  const update = (field: string, value: string) => {
     updateDevis((d) => { d[field as keyof typeof d] = value as never })
   }
 

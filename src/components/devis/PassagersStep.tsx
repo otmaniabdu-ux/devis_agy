@@ -7,13 +7,14 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CATEGORIES_PASSAGER, verifierAlertePasseport } from '@/lib/business'
 import { useDevisStore } from '@/store/useDevisStore'
+import type { PassagerForm } from '@/types/devis-forms'
 
 export function PassagersStep() {
   const { devis, updateDevis, clients } = useDevisStore()
 
   if (!devis) return null
 
-  const update = (field: string, value: any) => {
+  const update = (field: string, value: string) => {
     updateDevis((d) => { d[field as keyof typeof d] = value as never })
   }
 
@@ -48,7 +49,7 @@ export function PassagersStep() {
     })
   }
 
-  const updatePassager = (idx: number, field: string, value: any) => {
+  const updatePassager = (idx: number, field: keyof PassagerForm, value: string) => {
     updateDevis((d) => {
       d.passagers[idx][field] = value
     })
@@ -143,7 +144,7 @@ export function PassagersStep() {
           </div>
 
           <div className="space-y-3">
-            {devis.passagers.map((p: any, i: number) => {
+            {devis.passagers.map((p, i: number) => {
               const alerte = p.passeportExpiration && verifierAlertePasseport(p.passeportExpiration, devis.dateRetour).alerte
               const catLabel = CATEGORIES_PASSAGER[p.categorie as keyof typeof CATEGORIES_PASSAGER]?.label ?? p.categorie
               return (

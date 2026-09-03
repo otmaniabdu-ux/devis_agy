@@ -1,11 +1,10 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
-import { Search, FileText, AlertTriangle, Eye, Pencil, Trash2, FileDown, FilePlus } from 'lucide-react'
+import { Search, FileText, AlertTriangle, Pencil, Trash2, FileDown, FilePlus } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { fmt, fmtDate, api, downloadPdf } from '@/lib/client-utils'
 import { STATUTS_DEVIS } from '@/lib/business'

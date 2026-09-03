@@ -6,7 +6,6 @@ const DateSchema = z.union([z.string(), z.date()]).refine((val) => {
   return !isNaN(d.getTime())
 }, { message: "Date invalide" })
 
-const MoneyStringSchema = z.string().regex(/^-?\d+(\.\d+)?$/, "Format monétaire invalide (ex: 1250.50)")
 const PositiveMoneyStringSchema = z.string().regex(/^\d+(\.\d+)?$/, "Le montant ne peut pas être négatif")
 
 export const DevisStatusEnum = z.enum(['brouillon', 'envoye', 'accepte', 'refuse', 'archive'])
@@ -147,3 +146,13 @@ export const UpdateDevisSchema = DevisBaseSchema.partial()
 
 export type CreateDevisInput = z.infer<typeof CreateDevisSchema>
 export type UpdateDevisInput = z.infer<typeof UpdateDevisSchema>
+
+// Types des lignes enfants telles que recues du frontend (champs partiels)
+export type PassagerPayload = z.input<ReturnType<typeof PassagerSchema.partial>>
+export type SegmentVolPayload = z.input<ReturnType<typeof SegmentVolSchema.partial>>
+export type HebergementPayload = z.input<ReturnType<typeof HebergementSchema.partial>>
+export type TransfertPayload = z.input<ReturnType<typeof TransfertSchema.partial>>
+export type TrainHaramainPayload = z.input<ReturnType<typeof TrainHaramainSchema.partial>>
+export type PrestationVipPayload = z.input<ReturnType<typeof PrestationVipSchema.partial>>
+export type CampMashairPayload = z.input<ReturnType<typeof CampMashairSchema.partial>>
+export type TransportMashairPayload = z.input<ReturnType<typeof TransportMashairSchema.partial>>

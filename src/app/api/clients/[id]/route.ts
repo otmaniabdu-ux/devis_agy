@@ -7,7 +7,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const client = await ClientUseCases.getById(id)
     return NextResponse.json(client)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Client introuvable' }, { status: 404 })
   }
 }
@@ -27,7 +27,7 @@ export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const client = await ClientUseCases.update(id, result.data)
     return NextResponse.json(client)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Erreur lors de la mise à jour' }, { status: 500 })
   }
 }
@@ -37,7 +37,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params
     await ClientUseCases.delete(id)
     return NextResponse.json({ ok: true })
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Erreur lors de la suppression' }, { status: 500 })
   }
 }

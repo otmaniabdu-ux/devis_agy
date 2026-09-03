@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, FileText, Users, Hotel, Plane, Settings, Plus, Menu, X } from 'lucide-react'
+import { LayoutDashboard, FileText, Users, Hotel, Settings, Plus, Menu } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { DashboardView } from '@/components/views/DashboardView'
 import { ListeDevisView } from '@/components/views/ListeDevisView'
 import { NouveauDevisView } from '@/components/views/NouveauDevisView'
@@ -13,7 +14,7 @@ import { cn } from '@/lib/utils'
 
 type View = 'dashboard' | 'liste-devis' | 'nouveau-devis' | 'clients' | 'catalogues' | 'parametres'
 
-const NAV: { id: View; label: string; icon: any }[] = [
+const NAV: { id: View; label: string; icon: LucideIcon }[] = [
   { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { id: 'liste-devis', label: 'Devis', icon: FileText },
   { id: 'nouveau-devis', label: 'Nouveau devis', icon: Plus },

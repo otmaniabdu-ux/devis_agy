@@ -1,5 +1,31 @@
 import { db } from '@/lib/db'
 
+export interface ParametresInput {
+  nomFr?: string
+  nomAr?: string
+  sloganFr?: string
+  sloganAr?: string
+  adresse?: string
+  telephone?: string
+  email?: string
+  rc?: string
+  if?: string
+  art?: string
+  capital?: string
+}
+
+export interface TauxInput {
+  code: string
+  libelleFr: string
+  libelleAr: string
+  tauxDzd: string | number
+}
+
+export interface UpdateParametresInput {
+  parametres?: ParametresInput
+  taux?: TauxInput[]
+}
+
 export class ParametresUseCases {
   static async get() {
     const parametres = await db.parametresAgence.findUnique({ where: { id: 'default' } })
@@ -7,7 +33,7 @@ export class ParametresUseCases {
     return { parametres, taux }
   }
 
-  static async update(body: any) {
+  static async update(body: UpdateParametresInput) {
     if (body.parametres) {
       const p = body.parametres
       await db.parametresAgence.upsert({

@@ -2,18 +2,18 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Middleware de sécurité — Phase 0 (fail-closed)
- * 
+ * Proxy de sécurité — Phase 0 (fail-closed)
+ *
  * Contexte : application desktop Tauri (mono-utilisateur, localhost uniquement).
- * 
+ *
  * Comportement :
  * - Autorise les requêtes provenant de localhost / 127.0.0.1 / ::1 / tauri://
  * - Bloque tout accès externe aux routes /api/** avec un 403
  * - Ajoute des headers de sécurité à toutes les réponses
- * 
- * Ce middleware sera renforcé en Phase 5 avec une authentification complète.
+ *
+ * Migré de `middleware.ts` vers `proxy.ts` (convention Next.js 16).
  */
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Headers de sécurité ajoutés à toutes les réponses

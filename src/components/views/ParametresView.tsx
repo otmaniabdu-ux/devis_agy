@@ -11,15 +11,37 @@ import { api } from '@/lib/client-utils'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
 
+interface ParametresForm {
+  nomFr: string
+  nomAr: string
+  sloganFr: string
+  sloganAr: string
+  adresse: string
+  telephone: string
+  email: string
+  rc: string
+  if: string
+  art: string
+  capital: string
+}
+
+interface TauxItem {
+  id: string
+  code: string
+  libelleFr: string
+  libelleAr: string
+  tauxDzd: string
+}
+
 export function ParametresView() {
-  const [parametres, setParametres] = useState<any>({
+  const [parametres, setParametres] = useState<ParametresForm>({
     nomFr: 'El Mouhssinoune Tours',
     nomAr: 'المحسنون للسياحة',
     sloganFr: '', sloganAr: '',
     adresse: '', telephone: '', email: '',
     rc: '', if: '', art: '', capital: '',
   })
-  const [taux, setTaux] = useState<any[]>([])
+  const [taux, setTaux] = useState<TauxItem[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 

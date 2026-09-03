@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { api } from '@/lib/client-utils'
 import { useDevisStore } from '@/store/useDevisStore'
+import type { SegmentVolForm, CompagnieItem } from '@/types/devis-forms'
 
 // Trajets pré-saisis du Train Haramain
 const TRAJETS_TRAIN_HARAMAIN = [
@@ -23,7 +24,7 @@ const TRAJETS_TRAIN_HARAMAIN = [
 
 export function VolsStep() {
   const { devis, updateDevis } = useDevisStore()
-  const [compagnies, setCompagnies] = useState<any[]>([])
+  const [compagnies, setCompagnies] = useState<CompagnieItem[]>([])
 
   useEffect(() => {
     api('/api/catalogues/compagnies').then(setCompagnies)
@@ -50,7 +51,7 @@ export function VolsStep() {
     })
   }
 
-  const update = (idx: number, field: string, value: any) => {
+  const update = (idx: number, field: keyof SegmentVolForm, value: string) => {
     updateDevis((d) => {
       d.segmentsVol[idx][field] = value
     })
@@ -87,7 +88,7 @@ export function VolsStep() {
           </div>
         ) : (
           <div className="space-y-3">
-            {devis.segmentsVol.map((s: any, i: number) => (
+            {devis.segmentsVol.map((s, i: number) => (
               <div key={i} className="border rounded-lg p-4 bg-muted/20 border-brand-bleu-royal/30 space-y-4">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] px-2 py-0.5 rounded-full font-medium bg-brand-bleu-royal text-white">
@@ -219,7 +220,7 @@ export function VolsStep() {
           </Button>
         </div>
         <div className="space-y-3">
-          {devis.trainsHaramain.map((t: any, i: number) => (
+          {devis.trainsHaramain.map((t, i: number) => (
             <div key={i} className="border border-border rounded-lg p-3 bg-muted/20">
               <div className="grid sm:grid-cols-12 gap-3 items-end">
                 <div className="sm:col-span-3 space-y-1.5">

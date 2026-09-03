@@ -1,6 +1,6 @@
 'use client'
 
-import { FileDown, FileText, Save, Check } from 'lucide-react'
+import { FileDown, FileText, Save } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { fmt, fmtDate, downloadPdf } from '@/lib/client-utils'
 import { D } from '@/lib/money'
@@ -17,7 +17,6 @@ export function RecapitulatifStep({ onSaved }: Props) {
   if (!devis) return null
 
   const nbPassagers = devis.passagers.length
-  const clientNom = devis.clientId ? 'Client sélectionné' : '—'
 
   // Recalcule les sous-totaux par poste
   const parPoste: Record<string, number> = {}
@@ -74,7 +73,7 @@ export function RecapitulatifStep({ onSaved }: Props) {
                 <tr key={poste} className={i % 2 === 0 ? '' : 'bg-muted/20'}>
                   <td className="px-4 py-2.5 font-medium">{poste}</td>
                   <td className="px-4 py-2.5 text-right text-xs text-muted-foreground">
-                    {resultatCalcul.lignes.filter((l: any) => l.poste === poste).length} ligne(s)
+                    {resultatCalcul.lignes.filter((l) => l.poste === poste).length} ligne(s)
                   </td>
                   <td className="px-4 py-2.5 text-right font-mono tabular-nums">{fmt(String(montant))}</td>
                 </tr>

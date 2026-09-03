@@ -1,6 +1,5 @@
 import { db } from '@/lib/db'
-import { z } from 'zod'
-import { CreateDevisSchema, UpdateDevisSchema, CreateDevisInput, UpdateDevisInput } from '@/lib/validation/devisSchemas'
+import { CreateDevisInput, UpdateDevisInput } from '@/lib/validation/devisSchemas'
 import { buildDevisCreateData, buildDevisUpdateData, buildChildLines } from '@/lib/devisPayload'
 import { RecalculerDevisUseCase } from '@/application/RecalculerDevisUseCase'
 import { verifierAlertePasseport } from '@/lib/business'
@@ -20,7 +19,7 @@ export class DevisUseCases {
       )
       
       const safePassagers = d.passagers.map(p => {
-        const { passeportNumero, ...safe } = p
+        const { passeportNumero: _passeportNumero, ...safe } = p
         return safe
       })
       

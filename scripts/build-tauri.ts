@@ -25,16 +25,16 @@ await copyFile(".env", join(standaloneDir, ".env"));
 
 console.log("🛠️  Correction du bug de hachage Prisma (Next.js Turbopack)...");
 async function fixPrismaImports(dir: string) {
-    const entries = await fs.readdir(dir, { withFileTypes: true });
+    const entries = await readdir(dir, { withFileTypes: true });
     for (const entry of entries) {
         const fullPath = join(dir, entry.name);
         if (entry.isDirectory() && entry.name !== "node_modules") {
             await fixPrismaImports(fullPath);
         } else if (entry.isFile() && entry.name.endsWith('.js')) {
-            let content = await fs.readFile(fullPath, 'utf8');
+            let content = await readFile(fullPath, 'utf8');
             if (content.includes('@prisma/client-')) {
                 content = content.replace(/@prisma\/client-[a-f0-9]+/g, '@prisma/client');
-                await fs.writeFile(fullPath, content, 'utf8');
+                await writeFile(fullPath, content, 'utf8');
                 console.log(`✅ Corrigé : ${entry.name}`);
             }
         }

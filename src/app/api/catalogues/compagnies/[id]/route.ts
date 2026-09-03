@@ -6,7 +6,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     const { id } = await params
     const compagnie = await CompagnieUseCases.getById(id)
     return NextResponse.json(compagnie)
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Introuvable' }, { status: 404 })
   }
 }

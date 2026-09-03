@@ -3,14 +3,18 @@
 
 import { db } from '@/lib/db'
 import { Prisma } from '@prisma/client'
-import { NumerotationService } from '@/domain/NumerotationService'
+import { NumerotationService } from '@/application/numerotation/NumerotationService'
 import { differenceInCalendarDays } from 'date-fns'
-import { CreateDevisInput, UpdateDevisInput } from '@/lib/validation/devisSchemas'
+import {
+  CreateDevisInput, UpdateDevisInput,
+  PassagerPayload, SegmentVolPayload, HebergementPayload, TransfertPayload,
+  TrainHaramainPayload, PrestationVipPayload, CampMashairPayload, TransportMashairPayload,
+} from '@/lib/validation/devisSchemas'
 
 // ============ Helpers dates ============
 
 /** Parse une date de façon robuste. Retourne null si invalide. */
-export function safeDate(v: any): Date | null {
+export function safeDate(v: unknown): Date | null {
   if (!v) return null
   if (v instanceof Date) return isNaN(v.getTime()) ? null : v
   const s = String(v).trim()
@@ -27,19 +31,19 @@ export function safeDate(v: any): Date | null {
 // ============ Filtres lignes vides ============
 
 const isEmpty = {
-  passager: (p: any) => !p.categorie && !p.nom && !p.prenom,
-  segmentVol: (s: any) => !s.origine && !s.destination && !s.dateVol,
-  hebergement: (h: any) => !h.hotelNom && !h.dateCheckin && !h.dateCheckout,
-  transfert: (t: any) => !t.trajet,
-  train: (t: any) => !t.trajet && !t.dateTrain,
-  prestation: (p: any) => !p.descriptionFr && !p.type,
-  campMashair: (c: any) => !c.nomCamp && !c.typeTente,
-  transportMashair: (t: any) => !t.trajet && !t.typeVehicule,
+  passager: (p: PassagerPayload) => !p.categorie && !p.nom && !p.prenom,
+  segmentVol: (s: SegmentVolPayload) => !s.origine && !s.destination && !s.dateVol,
+  hebergement: (h: HebergementPayload) => !h.hotelNom && !h.dateCheckin && !h.dateCheckout,
+  transfert: (t: TransfertPayload) => !t.trajet,
+  train: (t: TrainHaramainPayload) => !t.trajet && !t.dateTrain,
+  prestation: (p: PrestationVipPayload) => !p.descriptionFr && !p.type,
+  campMashair: (c: CampMashairPayload) => !c.nomCamp && !c.typeTente,
+  transportMashair: (t: TransportMashairPayload) => !t.trajet && !t.typeVehicule,
 }
 
 // ============ Mappers (payload frontend → data Prisma) ============
 
-export function mapPassager(p: any, devisId?: string): Prisma.PassagerCreateManyInput {
+export function mapPassager(p: PassagerPayload, devisId?: string): Prisma.PassagerCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     categorie: p.categorie || 'adulte',
@@ -51,7 +55,7 @@ export function mapPassager(p: any, devisId?: string): Prisma.PassagerCreateMany
   } as Prisma.PassagerCreateManyInput
 }
 
-export function mapSegmentVol(s: any, devisId?: string, ordre = 0): Prisma.SegmentVolCreateManyInput {
+export function mapSegmentVol(s: SegmentVolPayload, devisId?: string, ordre = 0): Prisma.SegmentVolCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     ordre,
@@ -71,7 +75,7 @@ export function mapSegmentVol(s: any, devisId?: string, ordre = 0): Prisma.Segme
   } as Prisma.SegmentVolCreateManyInput
 }
 
-export function mapHebergement(h: any, devisId?: string): Prisma.HebergementCreateManyInput {
+export function mapHebergement(h: HebergementPayload, devisId?: string): Prisma.HebergementCreateManyInput {
   const ci = safeDate(h.dateCheckin) ?? new Date()
   const co = safeDate(h.dateCheckout) ?? new Date()
   const nbNuit = Math.max(0, differenceInCalendarDays(co, ci))
@@ -92,7 +96,7 @@ export function mapHebergement(h: any, devisId?: string): Prisma.HebergementCrea
   } as Prisma.HebergementCreateManyInput
 }
 
-export function mapTransfert(t: any, devisId?: string, ordre = 0): Prisma.TransfertCreateManyInput {
+export function mapTransfert(t: TransfertPayload, devisId?: string, ordre = 0): Prisma.TransfertCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     ordre,
@@ -104,7 +108,7 @@ export function mapTransfert(t: any, devisId?: string, ordre = 0): Prisma.Transf
   } as Prisma.TransfertCreateManyInput
 }
 
-export function mapTrain(t: any, devisId?: string): Prisma.TrainHaramainCreateManyInput {
+export function mapTrain(t: TrainHaramainPayload, devisId?: string): Prisma.TrainHaramainCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     trajet: t.trajet || '',
@@ -116,7 +120,7 @@ export function mapTrain(t: any, devisId?: string): Prisma.TrainHaramainCreateMa
   } as Prisma.TrainHaramainCreateManyInput
 }
 
-export function mapPrestation(p: any, devisId?: string): Prisma.PrestationVIPCreateManyInput {
+export function mapPrestation(p: PrestationVipPayload, devisId?: string): Prisma.PrestationVIPCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     type: p.type ?? 'autre',
@@ -127,7 +131,7 @@ export function mapPrestation(p: any, devisId?: string): Prisma.PrestationVIPCre
   } as Prisma.PrestationVIPCreateManyInput
 }
 
-export function mapCampMashair(c: any, devisId?: string): Prisma.CampMashairCreateManyInput {
+export function mapCampMashair(c: CampMashairPayload, devisId?: string): Prisma.CampMashairCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     nomCamp: c.nomCamp || '',
@@ -139,7 +143,7 @@ export function mapCampMashair(c: any, devisId?: string): Prisma.CampMashairCrea
   } as Prisma.CampMashairCreateManyInput
 }
 
-export function mapTransportMashair(t: any, devisId?: string): Prisma.TransportMashairCreateManyInput {
+export function mapTransportMashair(t: TransportMashairPayload, devisId?: string): Prisma.TransportMashairCreateManyInput {
   return {
     ...(devisId ? { devisId } : {}),
     typeVehicule: t.typeVehicule || '',
@@ -170,14 +174,14 @@ export async function buildDevisCreateData(body: CreateDevisInput) {
   const numero = await NumerotationService.attribuerNumero(body.dateDepart ? safeDate(body.dateDepart) ?? new Date() : new Date())
 
   // Filtre les lignes vides
-  const passagers = (body.passagers ?? []).filter((p: any) => !isEmpty.passager(p)).map((p: any) => mapPassager(p))
-  const segmentsVol = (body.segmentsVol ?? []).filter((s: any) => !isEmpty.segmentVol(s)).map((s: any, i: number) => mapSegmentVol(s, undefined, i))
-  const hebergements = (body.hebergements ?? []).filter((h: any) => !isEmpty.hebergement(h)).map((h: any) => mapHebergement(h))
-  const transferts = (body.transferts ?? []).filter((t: any) => !isEmpty.transfert(t)).map((t: any, i: number) => mapTransfert(t, undefined, i))
-  const trainsHaramain = (body.trainsHaramain ?? []).filter((t: any) => !isEmpty.train(t)).map((t: any) => mapTrain(t))
-  const prestationsVip = (body.prestationsVip ?? []).filter((p: any) => !isEmpty.prestation(p)).map((p: any) => mapPrestation(p))
-  const campsMashair = (body.campsMashair ?? []).filter((c: any) => !isEmpty.campMashair(c)).map((c: any) => mapCampMashair(c))
-  const transportsMashair = (body.transportsMashair ?? []).filter((t: any) => !isEmpty.transportMashair(t)).map((t: any) => mapTransportMashair(t))
+  const passagers = (body.passagers ?? []).filter((p) => !isEmpty.passager(p)).map((p) => mapPassager(p))
+  const segmentsVol = (body.segmentsVol ?? []).filter((s) => !isEmpty.segmentVol(s)).map((s, i: number) => mapSegmentVol(s, undefined, i))
+  const hebergements = (body.hebergements ?? []).filter((h) => !isEmpty.hebergement(h)).map((h) => mapHebergement(h))
+  const transferts = (body.transferts ?? []).filter((t) => !isEmpty.transfert(t)).map((t, i: number) => mapTransfert(t, undefined, i))
+  const trainsHaramain = (body.trainsHaramain ?? []).filter((t) => !isEmpty.train(t)).map((t) => mapTrain(t))
+  const prestationsVip = (body.prestationsVip ?? []).filter((p) => !isEmpty.prestation(p)).map((p) => mapPrestation(p))
+  const campsMashair = (body.campsMashair ?? []).filter((c) => !isEmpty.campMashair(c)).map((c) => mapCampMashair(c))
+  const transportsMashair = (body.transportsMashair ?? []).filter((t) => !isEmpty.transportMashair(t)).map((t) => mapTransportMashair(t))
 
   return {
     numero,
@@ -212,9 +216,10 @@ export async function buildDevisCreateData(body: CreateDevisInput) {
 
 /** Extrait les champs scalaires modifiables d'un body PUT. */
 export function buildDevisUpdateData(body: UpdateDevisInput): Prisma.DevisUpdateInput {
-  const data: any = {}
-  const setIf = (field: keyof UpdateDevisInput, transform: (v: any) => any = (v) => v) => {
-    if (body[field] !== undefined) data[field] = transform(body[field])
+  const data: Record<string, unknown> = {}
+  const setIf = (field: keyof UpdateDevisInput, transform?: (v: unknown) => unknown) => {
+    const value = body[field]
+    if (value !== undefined) data[field] = transform ? transform(value) : value
   }
 
   setIf('statut')
@@ -236,35 +241,35 @@ export function buildDevisUpdateData(body: UpdateDevisInput): Prisma.DevisUpdate
 
   // Supprime les undefined pour éviter d'écraser avec null
   Object.keys(data).forEach((k) => data[k] === undefined && delete data[k])
-  return data
+  return data as Prisma.DevisUpdateInput
 }
 
 /** Reconstruit les lignes enfants filtrées pour un update PUT. */
 export function buildChildLines(body: UpdateDevisInput, devisId: string) {
   return {
     passagers: body.passagers !== undefined
-      ? (body.passagers as any[]).filter((p) => !isEmpty.passager(p)).map((p) => mapPassager(p, devisId))
+      ? body.passagers.filter((p) => !isEmpty.passager(p)).map((p) => mapPassager(p, devisId))
       : null,
     segmentsVol: body.segmentsVol !== undefined
-      ? (body.segmentsVol as any[]).filter((s) => !isEmpty.segmentVol(s)).map((s, i) => mapSegmentVol(s, devisId, i))
+      ? body.segmentsVol.filter((s) => !isEmpty.segmentVol(s)).map((s, i) => mapSegmentVol(s, devisId, i))
       : null,
     hebergements: body.hebergements !== undefined
-      ? (body.hebergements as any[]).filter((h) => !isEmpty.hebergement(h)).map((h) => mapHebergement(h, devisId))
+      ? body.hebergements.filter((h) => !isEmpty.hebergement(h)).map((h) => mapHebergement(h, devisId))
       : null,
     transferts: body.transferts !== undefined
-      ? (body.transferts as any[]).filter((t) => !isEmpty.transfert(t)).map((t, i) => mapTransfert(t, devisId, i))
+      ? body.transferts.filter((t) => !isEmpty.transfert(t)).map((t, i) => mapTransfert(t, devisId, i))
       : null,
     trainsHaramain: body.trainsHaramain !== undefined
-      ? (body.trainsHaramain as any[]).filter((t) => !isEmpty.train(t)).map((t) => mapTrain(t, devisId))
+      ? body.trainsHaramain.filter((t) => !isEmpty.train(t)).map((t) => mapTrain(t, devisId))
       : null,
     prestationsVip: body.prestationsVip !== undefined
-      ? (body.prestationsVip as any[]).filter((p) => !isEmpty.prestation(p)).map((p) => mapPrestation(p, devisId))
+      ? body.prestationsVip.filter((p) => !isEmpty.prestation(p)).map((p) => mapPrestation(p, devisId))
       : null,
     campsMashair: body.campsMashair !== undefined
-      ? (body.campsMashair as any[]).filter((c) => !isEmpty.campMashair(c)).map((c) => mapCampMashair(c, devisId))
+      ? body.campsMashair.filter((c) => !isEmpty.campMashair(c)).map((c) => mapCampMashair(c, devisId))
       : null,
     transportsMashair: body.transportsMashair !== undefined
-      ? (body.transportsMashair as any[]).filter((t) => !isEmpty.transportMashair(t)).map((t) => mapTransportMashair(t, devisId))
+      ? body.transportsMashair.filter((t) => !isEmpty.transportMashair(t)).map((t) => mapTransportMashair(t, devisId))
       : null,
   }
 }

@@ -3,6 +3,7 @@
 // Marge incluse dans chaque ligne (somme des lignes = prix de vente total).
 
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer'
+import type { Prisma, ParametresAgence } from '@prisma/client'
 import type { ResultatCalculDevis } from '@/lib/calculDevis'
 import { D } from '@/lib/money'
 import {
@@ -76,36 +77,26 @@ const styles = StyleSheet.create({
   tauxText: { fontSize: 6, color: '#777', textAlign: 'center' },
 })
 
-interface DevisForPdf {
-  id: string
-  numero: string
+/** Ligne du devis enrichie des relations incluses par GeneratePdfUseCase. */
+type DevisCompletPourPdf = Prisma.DevisGetPayload<{
+  include: {
+    client: true
+    passagers: true
+    segmentsVol: { include: { compagnie: true } }
+    hebergements: { include: { hotel: true } }
+    transferts: true
+    trainsHaramain: true
+    prestationsVip: true
+    campsMashair: true
+    transportsMashair: true
+  }
+}>
+
+export interface DevisForPdf extends Omit<DevisCompletPourPdf, 'dateDepart' | 'dateRetour'> {
   dateDepart: Date | string
   dateRetour: Date | string
-  tauxSarDzd: string
-  tauxUsdDzd: string
-  tauxEurDzd: string
-  visaType: string
-  visaPrixUnit: string
-  visaDevise: string
-  assurancePrixUnit: string
-  assuranceDevise: string
-  margeType: string
-  margeValeur: string
-  coutNetDzd: string
-  prixVenteDzd: string
-  margeMontantDzd: string
-  notesClient?: string | null
-  client?: any
-  passagers: any[]
-  segmentsVol: any[]
-  hebergements: any[]
-  transferts: any[]
-  trainsHaramain: any[]
-  prestationsVip: any[]
-  campsMashair: any[]
-  transportsMashair: any[]
   _resultatCalcul?: ResultatCalculDevis
-  parametres?: any
+  parametres?: ParametresAgence | null
 }
 
 function formatDate(d: Date | string): string {
@@ -183,7 +174,8 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* Watermark logo en fond de page (transparence filigrane) */}
+        {/* Watermark logo en fond de page (transparence filigrane) — Image @react-pdf/renderer n'a pas de prop alt */}
+        {/* eslint-disable-next-line jsx-a11y/alt-text */}
         <Image src={LOGO_PATH} style={styles.watermarkLogo} fixed />
 
         {/* Header */}
@@ -322,7 +314,7 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
         {devis.campsMashair?.length > 0 ? (
           <View style={{ marginBottom: 4 }}>
             <Text style={styles.detailLabel}>Camps Mashair</Text>
-            {devis.campsMashair.map((c: any, i: number) => (
+            {devis.campsMashair.map((c, i: number) => (
               <View key={`c${i}`} style={styles.detailRow}>
                 <Text style={[styles.tableCell, { flex: 4 }]}>{c.nomCamp}</Text>
                 <Text style={[styles.tableCell, { flex: 3 }]}>{c.typeTente}</Text>
@@ -335,7 +327,7 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
         {devis.transportsMashair?.length > 0 ? (
           <View style={{ marginBottom: 4 }}>
             <Text style={styles.detailLabel}>Transport Mashair</Text>
-            {devis.transportsMashair.map((t: any, i: number) => (
+            {devis.transportsMashair.map((t, i: number) => (
               <View key={`tm${i}`} style={styles.detailRow}>
                 <Text style={[styles.tableCell, { flex: 7 }]}>{t.trajet}</Text>
                 <Text style={[styles.tableCell, { flex: 3, textAlign: 'right' }]}>{t.typeVehicule}</Text>
@@ -425,4 +417,3 @@ function DevisDocument({ devis, variante }: DevisDocumentProps) {
 }
 
 export { DevisDocument }
-export type { DevisForPdf }

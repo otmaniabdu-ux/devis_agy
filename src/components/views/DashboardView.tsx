@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { FileText, Users, TrendingUp, AlertTriangle, ArrowRight, Plus, Sparkles, Building2, Plane } from 'lucide-react'
+import { FileText, Users, TrendingUp, AlertTriangle, ArrowRight, Plus, Sparkles, Building2 } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -238,7 +239,7 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: View, devisId?: 
 
 function KpiCard({
   label, value, sub, icon: Icon, accentColor, iconColor, bg,
-}: { label: string; value: string; sub: string; icon: any; accentColor: string; iconColor: string; bg: string }) {
+}: { label: string; value: string; sub: string; icon: LucideIcon; accentColor: string; iconColor: string; bg: string }) {
   return (
     <Card className="p-5 relative overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-0.5 border-border/80 group">
       <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${accentColor}`} />
@@ -258,7 +259,7 @@ function KpiCard({
 
 function QuickAction({
   title, desc, icon: Icon, onClick,
-}: { title: string; desc: string; icon: any; onClick: () => void }) {
+}: { title: string; desc: string; icon: LucideIcon; onClick: () => void }) {
   return (
     <button
       onClick={onClick}

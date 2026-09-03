@@ -1,9 +1,9 @@
 // Ce fichier agit désormais comme un proxy vers la Clean Architecture (Phase 3).
 // Il sera supprimé une fois tous les imports mis à jour.
 
-import { ResultatCalculDevis, PricingEngine } from '@/domain/PricingEngine'
+import type { ResultatCalculDevis } from '@/domain/PricingEngine'
 import { RecalculerDevisUseCase } from '@/application/RecalculerDevisUseCase'
-import { NumerotationService } from '@/domain/NumerotationService'
+import { NumerotationService } from '@/application/numerotation/NumerotationService'
 import { db } from '@/lib/db'
 
 export type { ResultatCalculDevis } from '@/domain/PricingEngine'

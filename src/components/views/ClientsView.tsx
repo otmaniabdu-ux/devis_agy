@@ -9,11 +9,11 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { fmtDate, api } from '@/lib/client-utils'
+import { api } from '@/lib/client-utils'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -40,13 +40,24 @@ const EMPTY = {
   telephone: '', email: '', adresse: '', notes: '',
 }
 
+interface ClientForm {
+  type: string
+  nom: string
+  prenom: string
+  raisonSociale: string
+  telephone: string
+  email: string
+  adresse: string
+  notes: string
+}
+
 export function ClientsView() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editId, setEditId] = useState<string | null>(null)
-  const [form, setForm] = useState<any>(EMPTY)
+  const [form, setForm] = useState<ClientForm>(EMPTY)
   const [toDelete, setToDelete] = useState<Client | null>(null)
 
   const load = () => {
