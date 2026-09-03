@@ -23,6 +23,25 @@ await $`xcopy /E /I /Y public .next\\standalone\\public`;
 await $`xcopy /E /I /Y prisma .next\\standalone\\prisma`;
 await copyFile(".env", join(standaloneDir, ".env"));
 
+console.log("🛠️  Correction du bug de hachage Prisma (Next.js Turbopack)...");
+const fs = require("node:fs/promises");
+async function fixPrismaImports(dir: string) {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    for (const entry of entries) {
+        const fullPath = join(dir, entry.name);
+        if (entry.isDirectory() && entry.name !== "node_modules") {
+            await fixPrismaImports(fullPath);
+        } else if (entry.isFile() && entry.name.endsWith('.js')) {
+            let content = await fs.readFile(fullPath, 'utf8');
+            if (content.includes('@prisma/client-')) {
+                content = content.replace(/@prisma\/client-[a-f0-9]+/g, '@prisma/client');
+                await fs.writeFile(fullPath, content, 'utf8');
+                console.log(`✅ Corrigé : ${entry.name}`);
+            }
+        }
+    }
+}
+await fixPrismaImports(standaloneDir);
 // 3. Préparation du Sidecar (Bun executable)
 console.log("⚙️  Création de l'exécutable Sidecar...");
 const binDir = join(import.meta.dir, "../src-tauri/bin");
@@ -58,9 +77,9 @@ const html = `
     <script>
         const checkServer = async () => {
             try {
-                const res = await fetch("http://localhost:3000/api/parametres");
+                const res = await fetch("http://localhost:14242/api/parametres");
                 if (res.ok) {
-                    window.location.href = "http://localhost:3000";
+                    window.location.href = "http://localhost:14242";
                     return;
                 }
             } catch (e) { }
