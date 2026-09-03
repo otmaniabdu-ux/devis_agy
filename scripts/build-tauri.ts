@@ -1,5 +1,6 @@
 import { $ } from "bun";
-import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readdir, readFile, rm, cp, writeFile } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { join } from "path";
 
 console.log("🚀 Démarrage de la préparation du build Tauri...");
@@ -23,17 +24,19 @@ await $`xcopy /E /I /Y public .next\\standalone\\public`;
 await $`xcopy /E /I /Y prisma .next\\standalone\\prisma`;
 await copyFile(".env", join(standaloneDir, ".env"));
 
-console.log("🛠️  Correction du bug de hachage Prisma (Next.js Turbopack)...");
+console.log("🛠️  Correction des modules externes hashés par Turbopack (Prisma, react-pdf)...");
 async function fixPrismaImports(dir: string) {
     const entries = await readdir(dir, { withFileTypes: true });
     for (const entry of entries) {
         const fullPath = join(dir, entry.name);
         if (entry.isDirectory() && entry.name !== "node_modules") {
             await fixPrismaImports(fullPath);
-        } else if (entry.isFile() && entry.name.endsWith('.js')) {
+        } else if (entry.isFile() && (entry.name.endsWith('.js') || entry.name.endsWith('.mjs'))) {
             let content = await readFile(fullPath, 'utf8');
-            if (content.includes('@prisma/client-')) {
+            const hadHash = content.includes('@prisma/client-') || content.includes('@react-pdf/renderer-');
+            if (hadHash) {
                 content = content.replace(/@prisma\/client-[a-f0-9]+/g, '@prisma/client');
+                content = content.replace(/@react-pdf\/renderer-[a-f0-9]+/g, '@react-pdf/renderer');
                 await writeFile(fullPath, content, 'utf8');
                 console.log(`✅ Corrigé : ${entry.name}`);
             }
@@ -41,15 +44,46 @@ async function fixPrismaImports(dir: string) {
     }
 }
 await fixPrismaImports(standaloneDir);
+// 2b. Le tracing Turbopack tronque les packages node_modules (ne copie que les
+// fichiers vus par l'analyse ESM — ex: @noble/hashes sans utils.js, restructure
+// sans dist/). On restaure l'arbre complet de @react-pdf/renderer depuis les
+// node_modules du repo (qui fonctionnent en dev).
+console.log("📦 Restauration de l'arbre complet @react-pdf...");
+const repoNodeModules = join(import.meta.dir, "../node_modules");
+const standaloneNodeModules = join(standaloneDir, "node_modules");
+const visited = new Set<string>();
+const queue: string[] = ["@react-pdf/renderer"];
+while (queue.length) {
+    const name = queue.shift()!;
+    if (visited.has(name)) continue;
+    visited.add(name);
+    const src = join(repoNodeModules, ...name.split("/"));
+    if (!existsSync(src)) { console.log(`⚠️  absent du repo: ${name}`); continue; }
+    const dst = join(standaloneNodeModules, ...name.split("/"));
+    if (existsSync(dst)) await rm(dst, { recursive: true });
+    await mkdir(join(dst, ".."), { recursive: true });
+    await cp(src, dst, { recursive: true });
+    try {
+        const pkg = JSON.parse(await readFile(join(src, "package.json"), "utf8"));
+        for (const dep of Object.keys(pkg.dependencies ?? {})) queue.push(dep);
+    } catch { /* package sans package.json lisible */ }
+}
+console.log(`✅ ${visited.size} packages react-pdf restaurés`);
+
 // 3. Préparation du Sidecar (Bun executable)
 console.log("⚙️  Création de l'exécutable Sidecar...");
 const binDir = join(import.meta.dir, "../src-tauri/bin");
 await mkdir(binDir, { recursive: true });
 
-// Copie de bun.exe en tant que sidecar Tauri
-const bunPath = "C:\\Users\\otman\\.bun\\bin\\bun.exe";
+// Copie de node.exe en tant que sidecar Tauri.
+// Bun est incompatible avec le standalone Turbopack pour la génération PDF
+// (#imports pdfkit non résolus, import.meta.url vide) — Node exécute
+// correctement server.js et l'arbre node_modules tracé.
+const nodePath = Bun.which("node");
+if (!nodePath) throw new Error("node.exe introuvable dans le PATH");
 const sidecarPath = join(binDir, "server-x86_64-pc-windows-msvc.exe");
-await copyFile(bunPath, sidecarPath);
+await copyFile(nodePath, sidecarPath);
+console.log(`✅ Sidecar = Node.js (${nodePath})`);
 
 // 4. Préparation du frontend Tauri (Redirection HTML)
 console.log("🌐 Création du frontend de chargement...");
