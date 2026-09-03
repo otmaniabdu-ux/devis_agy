@@ -87,7 +87,8 @@ const html = `
         };
         setTimeout(checkServer, 1000);
         // Filet de sécurité : navigation forcée si le serveur tarde à démarrer
-        setTimeout(() => { window.location.href = "http://localhost:14242"; }, 20000);
+        // 60 s : au premier lancement, l'app copie le serveur (~160 Mo) vers AppData
+        setTimeout(() => { window.location.href = "http://localhost:14242"; }, 60000);
     </script>
 </body>
 </html>
