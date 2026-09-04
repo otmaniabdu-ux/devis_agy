@@ -7,10 +7,10 @@ export const ClientTypeEnum = z.enum(['particulier', 'societe'])
 const clientCoreSchema = z.object({
   type: ClientTypeEnum.default('particulier'),
   nom: z.string().min(2, "Le nom doit contenir au moins 2 caractères"),
-  prenom: z.string().min(2, "Le prénom doit contenir au moins 2 caractères").optional().nullable(),
-  raisonSociale: z.string().min(2, "La raison sociale doit contenir au moins 2 caractères").optional().nullable(),
-  telephone: z.string().min(8, "Le numéro de téléphone est invalide").optional().nullable(),
-  email: z.string().email("Adresse email invalide").optional().nullable(),
+  prenom: z.union([z.string().min(2, "Le prénom doit contenir au moins 2 caractères"), z.literal('')]).optional().nullable(),
+  raisonSociale: z.union([z.string().min(2, "La raison sociale doit contenir au moins 2 caractères"), z.literal('')]).optional().nullable(),
+  telephone: z.union([z.string().min(8, "Le numéro de téléphone est invalide"), z.literal('')]).optional().nullable(),
+  email: z.union([z.string().email("Adresse email invalide"), z.literal('')]).optional().nullable(),
   adresse: z.string().optional().nullable(),
   notes: z.string().optional().nullable(),
 }).refine(data => {

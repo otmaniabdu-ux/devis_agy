@@ -2,11 +2,15 @@ import { z } from 'zod'
 
 // Helpers
 const DateSchema = z.union([z.string(), z.date()]).refine((val) => {
+  if (val === '') return true
   const d = new Date(val)
   return !isNaN(d.getTime())
 }, { message: "Date invalide" })
 
-const PositiveMoneyStringSchema = z.string().regex(/^\d+(\.\d+)?$/, "Le montant ne peut pas être négatif")
+const PositiveMoneyStringSchema = z.union([
+  z.string().regex(/^\d+(\.\d+)?$/, "Le montant ne peut pas être négatif"),
+  z.literal('')
+]).transform(v => v === '' ? '0' : v)
 
 export const DevisStatusEnum = z.enum(['brouillon', 'envoye', 'accepte', 'refuse', 'archive'])
 export const VisaTypeEnum = z.enum(['omra_standard', 'touristique', 'hadj'])
@@ -27,12 +31,12 @@ const SegmentVolSchema = z.object({
   origine: z.string(),
   destination: z.string(),
   dateVol: DateSchema,
-  classe: z.enum(['economique', 'affaires', 'premiere']).default('economique'),
+  classe: z.preprocess((v) => (v === '' ? 'economique' : v), z.enum(['economique', 'affaires', 'premiere']).default('economique')),
   origineRetour: z.string().optional().nullable(),
   destinationRetour: z.string().optional().nullable(),
-  dateVolRetour: DateSchema.optional().nullable(),
-  classeRetour: z.enum(['economique', 'affaires', 'premiere']).optional().nullable(),
-  compagnieId: z.string().optional().nullable(),
+  dateVolRetour: z.preprocess((v) => (v === '' ? null : v), DateSchema.optional().nullable()),
+  classeRetour: z.preprocess((v) => (v === '' ? null : v), z.enum(['economique', 'affaires', 'premiere']).optional().nullable()),
+  compagnieId: z.preprocess((v) => (v === '' ? null : v), z.string().optional().nullable()),
   prixAdulte: PositiveMoneyStringSchema.default('0'),
   prixEnfant: PositiveMoneyStringSchema.default('0'),
   prixBebe: PositiveMoneyStringSchema.default('0'),
@@ -41,14 +45,14 @@ const SegmentVolSchema = z.object({
 
 const HebergementSchema = z.object({
   ville: z.string().optional().default('Makkah'),
-  hotelId: z.string().optional().nullable(),
+  hotelId: z.preprocess((v) => (v === '' ? null : v), z.string().optional().nullable()),
   hotelNom: z.string().optional(),
   typeChambre: z.string().optional().default('double'),
   formuleRepas: z.string().optional().default('demi_pension'),
   vue: z.string().optional().default('city'),
-  dateCheckin: DateSchema.optional().nullable(),
-  dateCheckout: DateSchema.optional().nullable(),
-  nbNuitees: z.number().optional(),
+  dateCheckin: z.preprocess((v) => (v === '' ? null : v), DateSchema.optional().nullable()),
+  dateCheckout: z.preprocess((v) => (v === '' ? null : v), DateSchema.optional().nullable()),
+  nbNuitees: z.preprocess((v) => (v === '' ? undefined : v), z.union([z.string(), z.number()]).transform(Number).optional()),
   nbChambres: z.union([z.string(), z.number()]).transform(Number).optional().default(1),
   prixNuitChambre: z.union([PositiveMoneyStringSchema, z.number()]).transform(String).optional().default('0'),
   devise: z.string().optional().default('SAR'),
@@ -65,7 +69,7 @@ const TransfertSchema = z.object({
 const TrainHaramainSchema = z.object({
   trajet: z.string().optional(),
   classe: z.string().optional().default('economique'),
-  dateTrain: DateSchema.optional().nullable(),
+  dateTrain: z.preprocess((v) => (v === '' ? null : v), DateSchema.optional().nullable()),
   prixAdulte: z.union([PositiveMoneyStringSchema, z.number()]).transform(String).optional().default('0'),
   prixEnfant: z.union([PositiveMoneyStringSchema, z.number()]).transform(String).optional().default('0'),
   devise: z.string().optional().default('SAR'),
@@ -125,7 +129,7 @@ export const DevisBaseSchema = z.object({
   notesClient: z.string().optional().nullable(),
   
   // Optimistic locking (uniquement pour PUT)
-  updatedAt: DateSchema.optional(),
+  updatedAt: z.preprocess((v) => (v === '' ? undefined : v), DateSchema.optional()),
 
   // Arrays (minimal validation pour ne pas bloquer les objets complexes non formatés)
   passagers: z.array(PassagerSchema.partial()).optional(),

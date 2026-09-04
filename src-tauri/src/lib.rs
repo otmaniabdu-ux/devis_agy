@@ -18,6 +18,9 @@ fn copy_dir_recursive(src: &std::path::Path, dst: &std::path::Path) -> std::io::
   Ok(())
 }
 
+#[cfg(not(debug_assertions))]
+struct SidecarState(std::sync::Mutex<Option<tauri_plugin_shell::process::CommandChild>>);
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
   tauri::Builder::default()
@@ -85,7 +88,7 @@ pub fn run() {
         let handle = app.handle().clone();
         
         tauri::async_runtime::spawn(async move {
-            let (mut rx, _child) = handle
+            let (mut rx, child) = handle
                 .shell()
                 .sidecar("server")
                 .expect("Failed to create sidecar command")
@@ -97,6 +100,8 @@ pub fn run() {
                 .env("DATABASE_URL", db_url)
                 .spawn()
                 .expect("Failed to spawn sidecar");
+
+            handle.manage(SidecarState(std::sync::Mutex::new(Some(child))));
 
             while let Some(event) = rx.recv().await {
                 match event {
@@ -112,6 +117,18 @@ pub fn run() {
 
       Ok(())
     })
-    .run(tauri::generate_context!())
-    .expect("error while running tauri application");
+    .build(tauri::generate_context!())
+    .expect("error while running tauri application")
+    .run(|_app_handle, event| {
+        if let tauri::RunEvent::Exit = event {
+            #[cfg(not(debug_assertions))]
+            if let Some(state) = _app_handle.try_state::<SidecarState>() {
+                if let Ok(mut lock) = state.0.lock() {
+                    if let Some(child) = lock.take() {
+                        let _ = child.kill();
+                    }
+                }
+            }
+        }
+    });
 }
