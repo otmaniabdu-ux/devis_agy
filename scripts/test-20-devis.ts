@@ -698,7 +698,11 @@ async function main() {
       clientId: clientParticulierId,
       dateDepart: '2026-11-01',
       dateRetour: '2026-11-10',
-      passagers: [{ categorie: 'adulte' as const, nom: 'TestZod', prenom: 'Ali' }],
+      passagers: [
+        { categorie: 'adulte' as const, nom: 'TestZod', prenom: 'Ali' },
+        { categorie: 'adulte' as const, nom: '', prenom: '' },
+        { categorie: 'enfant_avec_lit' as const, nom: '', prenom: '' },
+      ],
       segmentsVol: [
         {
           origine: 'ALG',

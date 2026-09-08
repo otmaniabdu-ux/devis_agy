@@ -19,12 +19,13 @@ export const PassengerCategoryEnum = z.enum(['adulte', 'enfant_avec_lit', 'enfan
 
 // Schémas enfants
 const PassagerSchema = z.object({
-  categorie: PassengerCategoryEnum,
-  nom: z.string().min(1, "Le nom est requis"),
-  prenom: z.string(),
-  dateNaissance: DateSchema.optional().nullable(),
-  passeportNumero: z.string().optional().nullable(),
-  passeportExpiration: DateSchema.optional().nullable(),
+  id: z.string().optional().nullable(),
+  categorie: z.preprocess((v) => (v === '' || !v ? 'adulte' : v), PassengerCategoryEnum.default('adulte')),
+  nom: z.preprocess((v) => (v === null || v === undefined ? '' : String(v)), z.string().default('')),
+  prenom: z.preprocess((v) => (v === null || v === undefined ? '' : String(v)), z.string().default('')),
+  dateNaissance: z.preprocess((v) => (v === '' ? null : v), DateSchema.optional().nullable()),
+  passeportNumero: z.preprocess((v) => (v === '' ? null : v), z.string().optional().nullable()),
+  passeportExpiration: z.preprocess((v) => (v === '' ? null : v), DateSchema.optional().nullable()),
 })
 
 const SegmentVolSchema = z.object({

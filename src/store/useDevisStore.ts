@@ -202,8 +202,12 @@ export const useDevisStore = create<DevisStore>((set, get) => ({
       const payload = {
         ...devis,
         passagers: devis.passagers.map((p) => ({
-          categorie: p.categorie, nom: p.nom, prenom: p.prenom,
-          dateNaissance: p.dateNaissance || null, passeportNumero: p.passeportNumero || null,
+          ...(p.id ? { id: p.id } : {}),
+          categorie: p.categorie || 'adulte',
+          nom: p.nom || '',
+          prenom: p.prenom || '',
+          dateNaissance: p.dateNaissance || null,
+          passeportNumero: p.passeportNumero || null,
           passeportExpiration: p.passeportExpiration || null,
         })),
         segmentsVol: devis.segmentsVol.map((s) => ({
