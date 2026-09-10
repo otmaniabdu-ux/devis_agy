@@ -4,6 +4,14 @@ const nextConfig: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   reactStrictMode: true,
+  allowedDevOrigins: [
+    "localhost",
+    "127.0.0.1",
+    "192.168.1.6",
+    "192.168.*",
+    "10.*",
+    "172.*",
+  ],
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -25,7 +33,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob:",
               "font-src 'self' data:",
-              "connect-src 'self'",
+              "connect-src 'self' ws: wss:",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
