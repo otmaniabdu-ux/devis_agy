@@ -95,7 +95,7 @@ pub fn run() {
                 .arg(server_path_str)
                 .current_dir(server_dir_str)
                 .env("PORT", "14242")
-                .env("HOSTNAME", "127.0.0.1")
+                .env("HOSTNAME", "0.0.0.0")
                 .env("NODE_ENV", "production")
                 .env("DATABASE_URL", db_url)
                 .spawn()

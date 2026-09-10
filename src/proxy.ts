@@ -2,16 +2,14 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /**
- * Proxy de sécurité — Phase 0 (fail-closed)
+ * Proxy de sécurité — Next.js 16
  *
- * Contexte : application desktop Tauri (mono-utilisateur, localhost uniquement).
+ * Contexte : application web locale & desktop (accessible sur localhost et réseau local LAN).
  *
  * Comportement :
- * - Autorise les requêtes provenant de localhost / 127.0.0.1 / ::1 / tauri://
- * - Bloque tout accès externe aux routes /api/** avec un 403
+ * - Autorise les requêtes provenant de localhost, 127.0.0.1, ::1, tauri:// et des adresses IP locales privées (LAN : 192.168.x.x, 10.x.x.x, 172.16-31.x.x, *.local)
+ * - Bloque tout accès externe public non autorisé aux routes /api/** avec un 403
  * - Ajoute des headers de sécurité à toutes les réponses
- *
- * Migré de `middleware.ts` vers `proxy.ts` (convention Next.js 16).
  */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -31,18 +29,48 @@ export function proxy(request: NextRequest) {
     const host = request.headers.get('host') ?? ''
     const referer = request.headers.get('referer') ?? ''
 
-    const isLocalhost = (value: string): boolean => {
-      if (!value) return true // Pas d'origin = requête same-origin (navigateur local)
-      return /^https?:\/\/(localhost|127\.0\.0\.1|::1|\[::1\])(:\d+)?/.test(value)
-        || value.startsWith('tauri://localhost')
-        || value.startsWith('http://tauri.localhost')
+    const isLocalOrLan = (value: string): boolean => {
+      if (!value) return true // Pas d'origin = requête same-origin
+      // Supprimer protocole si présent
+      const cleaned = value.replace(/^https?:\/\//, '').split('/')[0]
+      const hostname = cleaned.split(':')[0]
+
+      if (
+        hostname === 'localhost' ||
+        hostname === '127.0.0.1' ||
+        hostname === '::1' ||
+        hostname === '[::1]' ||
+        hostname.endsWith('.local') ||
+        hostname.startsWith('tauri.') ||
+        value.startsWith('tauri://') ||
+        value.startsWith('http://tauri.')
+      ) {
+        return true
+      }
+
+      // Vérification IP privée RFC 1918
+      const parts = hostname.split('.').map(Number)
+      if (parts.length === 4 && parts.every(p => !isNaN(p) && p >= 0 && p <= 255)) {
+        if (parts[0] === 10) return true
+        if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true
+        if (parts[0] === 192 && parts[1] === 168) return true
+        if (parts[0] === 169 && parts[1] === 254) return true
+        if (parts[0] === 127) return true
+      }
+
+      // Nom d'hôte machine locale sans point (ex: "DESKTOP-ABC")
+      if (!hostname.includes('.')) {
+        return true
+      }
+
+      return false
     }
 
-    const hostIsLocal = /^(localhost|127\.0\.0\.1|::1|\[::1\])(:\d+)?$/.test(host)
+    const hostIsAllowed = isLocalOrLan(host)
 
-    if (!hostIsLocal && !isLocalhost(origin) && !isLocalhost(referer)) {
+    if (!hostIsAllowed && !isLocalOrLan(origin) && !isLocalOrLan(referer)) {
       return new NextResponse(
-        JSON.stringify({ error: 'Accès refusé — application desktop uniquement.' }),
+        JSON.stringify({ error: 'Accès refusé — réseau local ou desktop uniquement.' }),
         {
           status: 403,
           headers: {

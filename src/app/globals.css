@@ -167,3 +167,13 @@
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
 }
+
+/* Print — L'impression est gérée via une fenêtre dédiée (printDocument dans client-utils.ts).
+   Ces règles minimales ne servent qu'en cas de fallback Ctrl+P sur la page principale. */
+@media print {
+  .no-print, button.no-print {
+    display: none !important;
+  }
+}
+
+

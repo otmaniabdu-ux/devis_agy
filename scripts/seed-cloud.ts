@@ -260,7 +260,7 @@ async function seedCloud() {
     })
   }
 
-  console.log('✅ Base Supabase remplie avec succès ! (20 Hôtels, 11 Compagnies, 4 Clients, 2 Devis complets)')
+  console.log('✅ Base SQLite locale remplie avec succès ! (20 Hôtels, 11 Compagnies, 4 Clients, 2 Devis complets)')
 }
 
 seedCloud()

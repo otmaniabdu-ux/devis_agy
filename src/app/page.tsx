@@ -1,23 +1,25 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, FileText, Users, Hotel, Settings, Plus, Menu } from 'lucide-react'
+import { LayoutDashboard, FileText, Users, Hotel, Settings, Plus, Menu, Receipt } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { DashboardView } from '@/components/views/DashboardView'
 import { ListeDevisView } from '@/components/views/ListeDevisView'
 import { NouveauDevisView } from '@/components/views/NouveauDevisView'
+import { FacturationView } from '@/components/views/FacturationView'
 import { ClientsView } from '@/components/views/ClientsView'
 import { CataloguesView } from '@/components/views/CataloguesView'
 import { ParametresView } from '@/components/views/ParametresView'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-type View = 'dashboard' | 'liste-devis' | 'nouveau-devis' | 'clients' | 'catalogues' | 'parametres'
+type View = 'dashboard' | 'liste-devis' | 'nouveau-devis' | 'facturation' | 'clients' | 'catalogues' | 'parametres'
 
 const NAV: { id: View; label: string; icon: LucideIcon }[] = [
   { id: 'dashboard', label: 'Tableau de bord', icon: LayoutDashboard },
   { id: 'liste-devis', label: 'Devis', icon: FileText },
   { id: 'nouveau-devis', label: 'Nouveau devis', icon: Plus },
+  { id: 'facturation', label: 'Facturation & Règlements', icon: Receipt },
   { id: 'clients', label: 'Clients', icon: Users },
   { id: 'catalogues', label: 'Catalogues', icon: Hotel },
   { id: 'parametres', label: 'Paramètres', icon: Settings },
@@ -112,9 +114,13 @@ export default function Home() {
 
         {/* Footer */}
         <div className="p-4 border-t border-sidebar-border">
-          <p className="text-[10px] text-sidebar-foreground/50 leading-relaxed">
-            <span className="text-accent">●</span> Application Vercel / Cloud<br />
-            Données stockées sur ce poste
+          <div className="flex items-center gap-2 mb-1">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse" />
+            <span className="text-[11px] font-semibold text-sidebar-foreground/90">Base SQLite Locale</span>
+          </div>
+          <p className="text-[10px] text-sidebar-foreground/60 leading-relaxed">
+            Mode 100% hors-ligne &amp; sécurisé<br />
+            Fichier : <code className="font-mono text-[9px] text-brand-or font-semibold">db/custom.db</code>
           </p>
         </div>
       </aside>
@@ -148,6 +154,7 @@ export default function Home() {
                   {view === 'dashboard' && "Vue d'ensemble de l'activité Omra VIP"}
                   {view === 'liste-devis' && 'Tous les devis créés'}
                   {view === 'nouveau-devis' && (editDevisId ? 'Modifier un devis' : 'Créer un nouveau devis VIP')}
+                  {view === 'facturation' && 'Factures, versements clients et quittances de paiement'}
                   {view === 'clients' && 'Gestion des clients'}
                   {view === 'catalogues' && 'Hôtels et compagnies aériennes'}
                   {view === 'parametres' && "Paramètres de l'agence et taux de change"}
@@ -173,6 +180,7 @@ export default function Home() {
           {view === 'nouveau-devis' && (
             <NouveauDevisView editDevisId={editDevisId} onDone={() => navigate('liste-devis')} />
           )}
+          {view === 'facturation' && <FacturationView onNavigate={navigate} />}
           {view === 'clients' && <ClientsView />}
           {view === 'catalogues' && <CataloguesView />}
           {view === 'parametres' && <ParametresView />}

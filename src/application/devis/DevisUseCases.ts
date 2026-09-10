@@ -4,11 +4,17 @@ import { buildDevisCreateData, buildDevisUpdateData, buildChildLines } from '@/l
 import { RecalculerDevisUseCase } from '@/application/RecalculerDevisUseCase'
 import { verifierAlertePasseport } from '@/lib/business'
 import { AuditUseCases } from '@/application/audit/AuditUseCases'
+import { NumerotationService } from '@/application/numerotation/NumerotationService'
 
 export class DevisUseCases {
   static async list() {
     const devis = await db.devis.findMany({
-      include: { client: true, passagers: true },
+      include: {
+        client: true,
+        passagers: true,
+        hebergements: { select: { id: true, hotelNom: true, ville: true } },
+        facture: { select: { id: true, numero: true, statut: true } },
+      },
       orderBy: { createdAt: 'desc' },
     })
     
@@ -139,4 +145,183 @@ export class DevisUseCases {
     await AuditUseCases.log('DELETE_DEVIS', 'Devis', id)
     return true
   }
+
+  static async duplicate(id: string) {
+    const existing = await db.devis.findUnique({
+      where: { id },
+      include: {
+        passagers: true,
+        segmentsVol: true,
+        hebergements: true,
+        transferts: true,
+        trainsHaramain: true,
+        prestationsVip: true,
+        campsMashair: true,
+        transportsMashair: true,
+      },
+    })
+    if (!existing) throw new Error('Devis introuvable')
+
+    const nouveauNumero = await NumerotationService.attribuerNumero()
+
+    const newDevis = await db.$transaction(async (tx) => {
+      const created = await tx.devis.create({
+        data: {
+          numero: nouveauNumero,
+          clientId: existing.clientId,
+          dateDepart: existing.dateDepart,
+          dateRetour: existing.dateRetour,
+          tauxSarDzd: existing.tauxSarDzd,
+          tauxUsdDzd: existing.tauxUsdDzd,
+          tauxEurDzd: existing.tauxEurDzd,
+          visaType: existing.visaType,
+          visaPrixUnit: existing.visaPrixUnit,
+          visaDevise: existing.visaDevise,
+          assurancePrixUnit: existing.assurancePrixUnit,
+          assuranceDevise: existing.assuranceDevise,
+          fraisOnpoPrixUnit: existing.fraisOnpoPrixUnit,
+          fraisOnpoDevise: existing.fraisOnpoDevise,
+          margeType: existing.margeType,
+          margeValeur: existing.margeValeur,
+          coutNetDzd: existing.coutNetDzd,
+          prixVenteDzd: existing.prixVenteDzd,
+          margeMontantDzd: existing.margeMontantDzd,
+          statut: 'brouillon',
+          notesInternes: existing.notesInternes ? `[Copie de ${existing.numero}] ${existing.notesInternes}` : `[Copie de ${existing.numero}]`,
+          notesClient: existing.notesClient,
+        },
+      })
+
+      if (existing.passagers.length > 0) {
+        await tx.passager.createMany({
+          data: existing.passagers.map((p) => ({
+            devisId: created.id,
+            categorie: p.categorie,
+            nom: p.nom,
+            prenom: p.prenom,
+            dateNaissance: p.dateNaissance,
+            passeportNumero: p.passeportNumero,
+            passeportExpiration: p.passeportExpiration,
+          })),
+        })
+      }
+
+      if (existing.segmentsVol.length > 0) {
+        await tx.segmentVol.createMany({
+          data: existing.segmentsVol.map((s) => ({
+            devisId: created.id,
+            ordre: s.ordre,
+            compagnieId: s.compagnieId,
+            origine: s.origine,
+            destination: s.destination,
+            dateVol: s.dateVol,
+            classe: s.classe,
+            origineRetour: s.origineRetour,
+            destinationRetour: s.destinationRetour,
+            dateVolRetour: s.dateVolRetour,
+            classeRetour: s.classeRetour,
+            prixAdulte: s.prixAdulte,
+            prixEnfant: s.prixEnfant,
+            prixBebe: s.prixBebe,
+            devise: s.devise,
+          })),
+        })
+      }
+
+      if (existing.hebergements.length > 0) {
+        await tx.hebergement.createMany({
+          data: existing.hebergements.map((h) => ({
+            devisId: created.id,
+            ville: h.ville,
+            hotelId: h.hotelId,
+            hotelNom: h.hotelNom,
+            typeChambre: h.typeChambre,
+            formuleRepas: h.formuleRepas,
+            vue: h.vue,
+            dateCheckin: h.dateCheckin,
+            dateCheckout: h.dateCheckout,
+            nbNuitees: h.nbNuitees,
+            prixNuitChambre: h.prixNuitChambre,
+            nbChambres: h.nbChambres,
+            devise: h.devise,
+          })),
+        })
+      }
+
+      if (existing.transferts.length > 0) {
+        await tx.transfert.createMany({
+          data: existing.transferts.map((t) => ({
+            devisId: created.id,
+            ordre: t.ordre,
+            trajet: t.trajet,
+            typeVehicule: t.typeVehicule,
+            prix: t.prix,
+            devise: t.devise,
+            obligatoire: t.obligatoire,
+          })),
+        })
+      }
+
+      if (existing.trainsHaramain.length > 0) {
+        await tx.trainHaramain.createMany({
+          data: existing.trainsHaramain.map((t) => ({
+            devisId: created.id,
+            trajet: t.trajet,
+            classe: t.classe,
+            dateTrain: t.dateTrain,
+            prixAdulte: t.prixAdulte,
+            prixEnfant: t.prixEnfant,
+            devise: t.devise,
+          })),
+        })
+      }
+
+      if (existing.prestationsVip.length > 0) {
+        await tx.prestationVIP.createMany({
+          data: existing.prestationsVip.map((p) => ({
+            devisId: created.id,
+            type: p.type,
+            descriptionFr: p.descriptionFr,
+            descriptionAr: p.descriptionAr,
+            prix: p.prix,
+            devise: p.devise,
+          })),
+        })
+      }
+
+      if (existing.campsMashair.length > 0) {
+        await tx.campMashair.createMany({
+          data: existing.campsMashair.map((c) => ({
+            devisId: created.id,
+            nomCamp: c.nomCamp,
+            typeTente: c.typeTente,
+            restauration: c.restauration,
+            prixAdulte: c.prixAdulte,
+            prixEnfant: c.prixEnfant,
+            devise: c.devise,
+          })),
+        })
+      }
+
+      if (existing.transportsMashair.length > 0) {
+        await tx.transportMashair.createMany({
+          data: existing.transportsMashair.map((t) => ({
+            devisId: created.id,
+            typeVehicule: t.typeVehicule,
+            trajet: t.trajet,
+            prix: t.prix,
+            typePrix: t.typePrix,
+            devise: t.devise,
+          })),
+        })
+      }
+
+      await RecalculerDevisUseCase.execute(created.id, tx)
+      return created
+    })
+
+    await AuditUseCases.log('DUPLICATE_DEVIS', 'Devis', newDevis.id)
+    return this.getById(newDevis.id)
+  }
 }
+

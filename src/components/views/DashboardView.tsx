@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { FileText, Users, TrendingUp, AlertTriangle, ArrowRight, Plus, Sparkles, Building2 } from 'lucide-react'
+import { FileText, Users, TrendingUp, AlertTriangle, ArrowRight, Plus, Sparkles, Building2, Receipt, Database } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ import { fmt, fmtDate, api } from '@/lib/client-utils'
 import { STATUTS_DEVIS } from '@/lib/business'
 import { D } from '@/lib/money'
 
-type View = 'dashboard' | 'liste-devis' | 'nouveau-devis' | 'clients' | 'catalogues' | 'parametres'
+type View = 'dashboard' | 'liste-devis' | 'nouveau-devis' | 'facturation' | 'clients' | 'catalogues' | 'parametres'
 
 interface DevisListItem {
   id: string
@@ -204,6 +204,12 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: View, devisId?: 
                 onClick={() => onNavigate('nouveau-devis')}
               />
               <QuickAction
+                title="Factures & Versements"
+                desc="Suivi des encaissements & reçus"
+                icon={Receipt}
+                onClick={() => onNavigate('facturation')}
+              />
+              <QuickAction
                 title="Base Clients"
                 desc="Gérer les fiches pèlerins"
                 icon={Users}
@@ -215,6 +221,26 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: View, devisId?: 
                 icon={Building2}
                 onClick={() => onNavigate('catalogues')}
               />
+            </div>
+          </Card>
+
+          {/* État Base de Données SQLite Locale */}
+          <Card className="p-4 border-emerald-500/20 bg-emerald-500/5 backdrop-blur-sm relative overflow-hidden">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/15 flex items-center justify-center text-emerald-600 shrink-0">
+                <Database className="w-4 h-4" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-xs font-bold text-foreground">Base SQLite Locale</p>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900">
+                    100% Hors-ligne
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">
+                  db/custom.db • Zéro cloud
+                </p>
+              </div>
             </div>
           </Card>
 

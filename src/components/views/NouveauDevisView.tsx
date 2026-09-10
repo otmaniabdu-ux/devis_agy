@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Save, AlertTriangle, Check, FileDown, FileText } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Save, AlertTriangle, Check, FileDown, FileText, Copy, Image as ImageIcon } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { verifierAlertePasseport } from '@/lib/business'
-import { downloadPdf } from '@/lib/client-utils'
+import { downloadPdf, api } from '@/lib/client-utils'
 import { toast } from 'sonner'
+import { getErrorMessage } from '@/lib/errors'
 import { useDevisStore } from '@/store/useDevisStore'
 import { PassagersStep } from '@/components/devis/PassagersStep'
 import { VolsStep } from '@/components/devis/VolsStep'
@@ -16,6 +17,7 @@ import { PrestationsVipStep } from '@/components/devis/PrestationsVipStep'
 import { FinancierStep } from '@/components/devis/FinancierStep'
 import { RecapitulatifStep } from '@/components/devis/RecapitulatifStep'
 import { HadjStep } from '@/components/devis/HadjStep'
+import { ReservationJpegModal } from '@/components/devis/ReservationJpegModal'
 
 const STEPS = [
   { id: 'passagers', label: 'Passagers' },
@@ -38,8 +40,21 @@ export function NouveauDevisView({
   onDone: () => void
 }) {
   const [step, setStep] = useState<StepId>('passagers')
+  const [showJpegModal, setShowJpegModal] = useState(false)
   
   const { devis, loading, saving, load, save, reset } = useDevisStore()
+
+  const handleDuplicate = async () => {
+    if (!devis?.id) return
+    try {
+      toast.loading('Duplication en cours...', { id: 'dup' })
+      const res = await api(`/api/devis/${devis.id}/duplicate`, { method: 'POST' })
+      toast.success(`Nouveau devis ${res.devis.numero} créé avec succès !`, { id: 'dup' })
+      onDone()
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e) || 'Erreur lors de la duplication', { id: 'dup' })
+    }
+  }
 
   useEffect(() => {
     load(editDevisId)
@@ -146,6 +161,22 @@ export function NouveauDevisView({
             <>
               <Button
                 variant="outline"
+                onClick={handleDuplicate}
+                className="gap-2 text-brand-or border-brand-or/40 hover:bg-brand-or/10"
+                title="Créer une copie conforme de ce devis"
+              >
+                <Copy className="w-4 h-4" /> Dupliquer
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowJpegModal(true)}
+                className="gap-2 text-amber-600 border-amber-500/40 hover:bg-amber-500/10"
+                title="Générer bon fournisseur JPEG"
+              >
+                <ImageIcon className="w-4 h-4" /> Bon JPEG
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => downloadPdf(devis.id!, 'client', devis.numero).catch((e) => toast.error(e.message))}
                 className="gap-2"
               >
@@ -178,6 +209,20 @@ export function NouveauDevisView({
           </Button>
         )}
       </div>
+
+      {showJpegModal && devis.id && (
+        <ReservationJpegModal
+          open={showJpegModal}
+          onOpenChange={setShowJpegModal}
+          devisId={devis.id}
+          devisNumero={devis.numero ?? ''}
+          hebergements={devis.hebergements.map((h) => ({
+            id: h.id || '',
+            hotelNom: h.hotelNom || 'Hôtel',
+            ville: h.ville || 'Makkah',
+          }))}
+        />
+      )}
     </div>
   )
 }

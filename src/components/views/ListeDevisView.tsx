@@ -1,7 +1,5 @@
-'use client'
-
 import { useEffect, useState, useMemo } from 'react'
-import { Search, FileText, AlertTriangle, Pencil, Trash2, FileDown, FilePlus } from 'lucide-react'
+import { Search, FileText, AlertTriangle, Pencil, Trash2, FileDown, FilePlus, Copy, Receipt, Image as ImageIcon } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,12 +9,13 @@ import { STATUTS_DEVIS } from '@/lib/business'
 import { D } from '@/lib/money'
 import { toast } from 'sonner'
 import { getErrorMessage } from '@/lib/errors'
+import { ReservationJpegModal } from '@/components/devis/ReservationJpegModal'
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 
-type View = 'dashboard' | 'liste-devis' | 'nouveau-devis' | 'clients' | 'catalogues' | 'parametres'
+type View = 'dashboard' | 'liste-devis' | 'nouveau-devis' | 'facturation' | 'clients' | 'catalogues' | 'parametres'
 
 interface DevisListItem {
   id: string
@@ -31,6 +30,8 @@ interface DevisListItem {
   margeValeur: string
   client: { nom: string; prenom?: string | null; raisonSociale?: string | null; type: string }
   passagers: { passeportExpiration?: string | null }[]
+  hebergements?: { id: string; hotelNom: string; ville: string }[]
+  facture?: { id: string; numero: string; statut: string } | null
   hasAlertePasseport?: boolean
 }
 
@@ -41,6 +42,7 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
   const [filterStatut, setFilterStatut] = useState<string>('all')
   const [filterAlerte, setFilterAlerte] = useState(false)
   const [toDelete, setToDelete] = useState<DevisListItem | null>(null)
+  const [jpegModalDevis, setJpegModalDevis] = useState<DevisListItem | null>(null)
 
   const load = () => {
     setLoading(true)
@@ -51,6 +53,32 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
   }
 
   useEffect(() => { load() }, [])
+
+  const handleDuplicate = async (id: string, numero: string) => {
+    try {
+      toast.loading(`Duplication du devis ${numero}...`, { id: 'dup' })
+      const res = await api(`/api/devis/${id}/duplicate`, { method: 'POST' })
+      toast.success(`Nouveau devis ${res.devis.numero} créé avec succès !`, { id: 'dup' })
+      load()
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e) || 'Erreur lors de la duplication', { id: 'dup' })
+    }
+  }
+
+  const handleCreateFacture = async (devisId: string, numero: string) => {
+    try {
+      toast.loading(`Création de la facture pour ${numero}...`, { id: 'fact' })
+      const res = await api('/api/factures', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ devisId }),
+      })
+      toast.success(`Facture ${res.numero} générée avec succès !`, { id: 'fact' })
+      onNavigate('facturation')
+    } catch (e: unknown) {
+      toast.error(getErrorMessage(e) || 'Erreur lors de la facturation', { id: 'fact' })
+    }
+  }
 
   const filtered = useMemo(() => {
     let r = devis
@@ -193,6 +221,31 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
+                          {/* Bouton Facture ou Facturer */}
+                          {d.facture ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2 text-xs gap-1 font-mono text-emerald-600 border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                              onClick={() => onNavigate('facturation')}
+                              title={`Voir Facture ${d.facture.numero}`}
+                            >
+                              <Receipt className="w-3.5 h-3.5" />
+                              <span className="hidden xl:inline">{d.facture.numero}</span>
+                            </Button>
+                          ) : d.statut === 'accepte' ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 px-2 text-xs gap-1 font-semibold text-brand-or border-brand-or/40 hover:bg-brand-or/10"
+                              onClick={() => handleCreateFacture(d.id, d.numero)}
+                              title="Générer la facture officielle"
+                            >
+                              <Receipt className="w-3.5 h-3.5" />
+                              <span>Facturer</span>
+                            </Button>
+                          ) : null}
+
                           <Button
                             size="icon" variant="ghost" className="h-8 w-8"
                             onClick={() => onNavigate('nouveau-devis', d.id)}
@@ -200,6 +253,23 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
                           >
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>
+
+                          <Button
+                            size="icon" variant="ghost" className="h-8 w-8 hover:text-brand-or"
+                            onClick={() => handleDuplicate(d.id, d.numero)}
+                            title="Dupliquer ce devis"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </Button>
+
+                          <Button
+                            size="icon" variant="ghost" className="h-8 w-8 hover:text-amber-600"
+                            onClick={() => setJpegModalDevis(d)}
+                            title="Bons de réservation fournisseurs (JPEG)"
+                          >
+                            <ImageIcon className="w-3.5 h-3.5 text-amber-600" />
+                          </Button>
+
                           <Button
                             size="icon" variant="ghost" className="h-8 w-8"
                             onClick={() => openPdf(d.id, 'client', d.numero)}
@@ -239,6 +309,7 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
         )}
       </Card>
 
+      {/* Modal Suppression */}
       <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -258,6 +329,17 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal Demande de Réservation Fournisseur JPEG */}
+      {jpegModalDevis && (
+        <ReservationJpegModal
+          open={!!jpegModalDevis}
+          onOpenChange={(o) => !o && setJpegModalDevis(null)}
+          devisId={jpegModalDevis.id}
+          devisNumero={jpegModalDevis.numero}
+          hebergements={jpegModalDevis.hebergements}
+        />
+      )}
     </div>
   )
 }

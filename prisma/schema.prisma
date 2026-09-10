@@ -67,6 +67,7 @@ model Client {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   devis        Devis[]
+  factures     Facture[]
 }
 
 // --- Devis ---
@@ -123,6 +124,7 @@ model Devis {
 
   campsMashair    CampMashair[]
   transportsMashair TransportMashair[]
+  facture         Facture?
 
   @@index([clientId])
   @@index([numero])
@@ -304,3 +306,55 @@ model AuditEvent {
   details   String?  // JSON avec l'ancien/nouveau state ou métadonnées
   createdAt DateTime @default(now())
 }
+
+// --- Factures (générées à partir d'un devis confirmé) ---
+model Facture {
+  id              String      @id @default(cuid())
+  numero          String      @unique // FACT-YYYY-MM-NNN
+  devisId         String      @unique // 1 devis confirmé = 1 facture
+  devis           Devis       @relation(fields: [devisId], references: [id], onDelete: Cascade)
+  clientId        String
+  client          Client      @relation(fields: [clientId], references: [id])
+
+  dateEmission    DateTime    @default(now())
+  dateEcheance    DateTime?
+
+  montantTotalDzd String      // prixVenteDzd du devis (en decimal TEXT)
+  montantPayeDzd  String      @default("0") // Somme des versements
+  resteAPayerDzd  String      // montantTotalDzd - montantPayeDzd
+
+  statut          String      @default("non_payee") // non_payee | partiellement_payee | payee | annulee
+  notes           String?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  versements      Versement[]
+
+  @@index([clientId])
+  @@index([devisId])
+  @@index([numero])
+  @@index([statut])
+}
+
+// --- Versements / Règlements des clients ---
+model Versement {
+  id            String   @id @default(cuid())
+  factureId     String
+  facture       Facture  @relation(fields: [factureId], references: [id], onDelete: Cascade)
+
+  numeroRecu    String   @unique // RECU-YYYY-MM-NNN
+  dateVersement DateTime @default(now())
+  montantDzd    String   // Decimal string DZD
+  modePaiement  String   @default("especes") // especes | virement | cheque | versement_bancaire
+  reference     String?  // Numéro de chèque, transaction, reçu manuel
+  recuPar       String?  // Agent ayant encaissé
+  notes         String?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([factureId])
+  @@index([numeroRecu])
+}
+
