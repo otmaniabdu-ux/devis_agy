@@ -1,5 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const AUTH_FILE = './e2e/.auth/agent.json'
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -13,8 +15,18 @@ export default defineConfig({
   },
   projects: [
     {
+      // Projet d'amorçage : connexion /api/auth/login + storageState persistée
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // Tous les tests E2E héritent de la session agent authentifiée
+        storageState: AUTH_FILE,
+      },
+      dependencies: ['setup'],
     },
   ],
   webServer: {

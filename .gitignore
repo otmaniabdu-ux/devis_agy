@@ -53,3 +53,8 @@ local-*
 test-results/
 src-tauri/bin/
 src-tauri/dist/
+
+# Playwright storageState (cookie de session E2E)
+e2e/.auth/
+playwright-report/
+test-results/

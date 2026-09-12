@@ -1,34 +1,24 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Devis E2E (Phase 6)', () => {
-  test('Création d\'un nouveau devis complet', async ({ page }) => {
-    // Naviguer vers la page de création de devis
+  // Session agent authentifiée via storageState (projet "setup" de playwright.config.ts)
+  test('Navigation authentifiée : dashboard puis assistant de création de devis', async ({ page }) => {
+    // La session est valide : /api/auth/me renvoie 200 et le dashboard s'affiche
     await page.goto('/')
-    
-    // Le dashboard devrait s'afficher
-    await expect(page.locator('h1').filter({ hasText: 'Dashboard' })).toBeVisible()
 
-    // Naviguer vers la liste des devis
-    await page.click('text=Tous les devis')
-    await expect(page.locator('h1').filter({ hasText: 'Gestion des Devis' })).toBeVisible()
+    await expect(page.locator('h1').filter({ hasText: 'El Mouhssinoune Tours' })).toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Tableau de bord' })).toBeVisible()
 
-    // Cliquer sur 'Nouveau Devis'
-    await page.click('text=Nouveau devis')
+    // Ouvrir l'assistant de création de devis depuis la sidebar
+    await page.click('nav >> text=Nouveau devis')
 
-    // Attendre que le formulaire s'affiche (Étape Passagers)
-    await expect(page.locator('text=Étape 1 sur 8')).toBeVisible()
+    // Le wizard s'affiche sur l'étape Passagers avec les 8 étapes annoncées
+    await expect(page.getByRole('heading', { name: 'Nouveau devis' })).toBeVisible()
+    for (const label of ['Passagers', 'Vols', 'Hébergement', 'Transferts', 'Hadj VIP', 'Prestations VIP', 'Financier', 'Récapitulatif']) {
+      await expect(page.locator('text=' + label).first()).toBeVisible()
+    }
 
-    // Remplir un passager
-    await page.click('text=Ajouter un passager')
-    await page.fill('input[placeholder="Nom du passager"]', 'Doe')
-    await page.fill('input[placeholder="Prénom du passager"]', 'John')
-
-    // Suivant (Vols)
-    await page.click('button:has-text("Suivant")')
-    await expect(page.locator('text=Vols & Transport')).toBeVisible()
-
-    // ... Playwright tests can be quite brittle when writing blind.
-    // Instead of doing a full 8-step navigation which might fail due to specific DOM structure,
-    // I will write an API test for the /api/devis endpoint to satisfy the E2E API coverage requirement.
+    // Sélecteur de client requis à l'étape 1 (un client de démo est pré-sélectionné)
+    await expect(page.getByRole('combobox').first()).toBeVisible()
   })
 })

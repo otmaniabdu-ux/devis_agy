@@ -22,8 +22,10 @@ import type { NextRequest } from 'next/server'
 // (dupliqué pour garder le graphe de module du proxy sans dépendances).
 export const PROXY_SESSION_COOKIE = 'agt_session'
 
-// Routes API publiques (pas de session requise)
-const PUBLIC_API_ROUTES = ['/api/auth/login']
+// Routes API publiques (pas de session requise) :
+// - /api/auth/login : portail de connexion
+// - /api/health : health-check public (aucune donnée métier exposée)
+const PUBLIC_API_ROUTES = ['/api/auth/login', '/api/health']
 
 function isLocalOrLan(value: string): boolean {
   if (!value) return true // Pas d'origin = requête same-origin
