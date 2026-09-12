@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAgent } from '@/lib/api-auth'
 import { CreateDevisSchema } from '@/lib/validation/devisSchemas'
 import { DevisUseCases } from '@/application/devis/DevisUseCases'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const agent = await requireAgent(req)
+  if (agent instanceof NextResponse) return agent
+
   const result = await DevisUseCases.list()
   return NextResponse.json(result)
 }
 
 export async function POST(req: NextRequest) {
+  const agent = await requireAgent(req)
+  if (agent instanceof NextResponse) return agent
+
   try {
     const body = await req.json()
 

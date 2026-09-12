@@ -5,8 +5,20 @@ import { AuditUseCases } from '@/application/audit/AuditUseCases'
 
 export class ClientUseCases {
   static async list() {
+    // Projection minimale : la liste n'expose que les champs affichés
+    // (adresse et notes réservés au endpoint de détail GET /api/clients/[id]).
     return db.client.findMany({
-      include: { _count: { select: { devis: true } } },
+      select: {
+        id: true,
+        type: true,
+        nom: true,
+        prenom: true,
+        raisonSociale: true,
+        telephone: true,
+        email: true,
+        createdAt: true,
+        _count: { select: { devis: true } },
+      },
       orderBy: { createdAt: 'desc' },
     })
   }

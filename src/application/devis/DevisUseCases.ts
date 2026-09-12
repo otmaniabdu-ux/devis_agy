@@ -65,10 +65,17 @@ export class DevisUseCases {
 
   static async create(body: CreateDevisInput) {
     const data = await buildDevisCreateData(body)
-    const devis = await db.devis.create({ data })
-    await RecalculerDevisUseCase.execute(devis.id)
-    await AuditUseCases.log('CREATE_DEVIS', 'Devis', devis.id)
-    return this.getById(devis.id)
+
+    // Création + recalcul des totaux dans une seule transaction :
+    // en cas d'échec du recalcul, le devis orphelin est rollbacké.
+    const devisId = await db.$transaction(async (tx) => {
+      const devis = await tx.devis.create({ data })
+      await RecalculerDevisUseCase.execute(devis.id, tx)
+      return devis.id
+    })
+
+    await AuditUseCases.log('CREATE_DEVIS', 'Devis', devisId)
+    return this.getById(devisId)
   }
 
   static async update(id: string, body: UpdateDevisInput) {

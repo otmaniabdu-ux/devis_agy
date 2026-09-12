@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAgent } from '@/lib/api-auth'
 import { FactureUseCases } from '@/application/facturation/FactureUseCases'
 import { CreateVersementSchema } from '@/lib/validation/factureSchemas'
 import { getErrorMessage } from '@/lib/errors'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const agent = await requireAgent(req)
+  if (agent instanceof NextResponse) return agent
+
   try {
     const { id: factureId } = await params
     const body = await req.json()

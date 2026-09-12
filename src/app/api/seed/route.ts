@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAgent } from '@/lib/api-auth'
 import { db } from '@/lib/db'
 import { bookingHotels } from '@/lib/data/booking-hotels'
 import { compagniesAeriennes } from '@/lib/data/airlines'
@@ -16,7 +17,10 @@ export const revalidate = 0
  * GET /api/seed — DÉSACTIVÉ (prévention CSRF)
  * Retourne systématiquement 405 Method Not Allowed.
  */
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const agent = await requireAgent(req)
+  if (agent instanceof NextResponse) return agent
+
   return NextResponse.json(
     { error: 'GET method not allowed on seed endpoint. Use POST in development only.' },
     { status: 405 }
@@ -28,6 +32,9 @@ export async function GET() {
  * UNIQUEMENT disponible en mode développement (NODE_ENV !== 'production').
  */
 export async function POST(_req: NextRequest) {
+  const agent = await requireAgent(_req)
+  if (agent instanceof NextResponse) return agent
+
   if (process.env.NODE_ENV === 'production') {
     return NextResponse.json(
       { error: 'Seed endpoint is disabled in production.' },

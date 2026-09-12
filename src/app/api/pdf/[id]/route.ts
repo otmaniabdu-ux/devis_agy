@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAgent } from '@/lib/api-auth'
 import { GeneratePdfUseCase } from '@/application/pdf/GeneratePdfUseCase'
 import { getErrorMessage } from '@/lib/errors'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const agent = await requireAgent(req)
+  if (agent instanceof NextResponse) return agent
+
   try {
     const { id } = await params
     const { searchParams } = new URL(req.url)

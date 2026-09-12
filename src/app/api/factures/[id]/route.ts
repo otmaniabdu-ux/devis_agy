@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAgent } from '@/lib/api-auth'
 import { FactureUseCases } from '@/application/facturation/FactureUseCases'
 import { getErrorMessage } from '@/lib/errors'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const agent = await requireAgent(_req)
+  if (agent instanceof NextResponse) return agent
+
   try {
     const { id } = await params
     const facture = await FactureUseCases.getById(id)

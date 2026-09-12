@@ -1,15 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAgent } from '@/lib/api-auth'
+import { z } from 'zod'
 import { generateReservationJpeg } from '@/lib/reservationJpegRenderer'
 import { getErrorMessage } from '@/lib/errors'
 
+const ExportJpegSchema = z.object({
+  devisId: z.string().min(1, 'devisId manquant'),
+  typePrestation: z.enum(['hotel', 'vol', 'transport', 'global']).default('hotel'),
+  targetId: z.string().optional(),
+})
+
 export async function POST(req: NextRequest) {
+  const agent = await requireAgent(req)
+  if (agent instanceof NextResponse) return agent
+
   try {
     const body = await req.json()
-    const { devisId, typePrestation = 'hotel', targetId } = body
-
-    if (!devisId) {
-      return NextResponse.json({ error: 'devisId manquant' }, { status: 400 })
+    const parsed = ExportJpegSchema.safeParse(body)
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: 'Données invalides', details: parsed.error.format() },
+        { status: 400 }
+      )
     }
+
+    const { devisId, typePrestation, targetId } = parsed.data
 
     const jpegBuffer = await generateReservationJpeg({
       devisId,

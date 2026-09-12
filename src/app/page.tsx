@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { LayoutDashboard, FileText, Users, Hotel, Settings, Plus, Menu, Receipt } from 'lucide-react'
+import { LayoutDashboard, FileText, Users, Hotel, Settings, Plus, Menu, Receipt, LogOut } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { DashboardView } from '@/components/views/DashboardView'
 import { ListeDevisView } from '@/components/views/ListeDevisView'
@@ -10,6 +10,7 @@ import { FacturationView } from '@/components/views/FacturationView'
 import { ClientsView } from '@/components/views/ClientsView'
 import { CataloguesView } from '@/components/views/CataloguesView'
 import { ParametresView } from '@/components/views/ParametresView'
+import { LoginForm } from '@/components/auth/LoginForm'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -29,12 +30,28 @@ export default function Home() {
   const [view, setView] = useState<View>('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [editDevisId, setEditDevisId] = useState<string | null>(null)
-  const [seeded, setSeeded] = useState<boolean | null>(null)
+  const [authState, setAuthState] = useState<'checking' | 'anon' | 'auth'>('checking')
+  const [nomAgent, setNomAgent] = useState<string | null>(null)
 
-  // Initialisation de l'application — sans auto-seed (sécurité Phase 0)
+  // Vérifie la session au chargement — affiche le portail de connexion sinon
   useEffect(() => {
-    setSeeded(true)
+    fetch('/api/auth/me')
+      .then((res) => {
+        if (res.ok) return res.json()
+        throw new Error('anon')
+      })
+      .then((u: { nomUtilisateur: string }) => {
+        setNomAgent(u.nomUtilisateur)
+        setAuthState('auth')
+      })
+      .catch(() => setAuthState('anon'))
   }, [])
+
+  const logout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
+    setNomAgent(null)
+    setAuthState('anon')
+  }
 
   const navigate = (v: View, devisId?: string) => {
     setEditDevisId(devisId ?? null)
@@ -42,7 +59,7 @@ export default function Home() {
     setSidebarOpen(false)
   }
 
-  if (seeded === null) {
+  if (authState === 'checking') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -51,6 +68,10 @@ export default function Home() {
         </div>
       </div>
     )
+  }
+
+  if (authState === 'anon') {
+    return <LoginForm onLoginSuccess={() => setAuthState('auth')} />
   }
 
   return (
@@ -122,6 +143,24 @@ export default function Home() {
             Mode 100% hors-ligne &amp; sécurisé<br />
             Fichier : <code className="font-mono text-[9px] text-brand-or font-semibold">db/custom.db</code>
           </p>
+          {nomAgent && (
+            <div className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-sidebar-accent/40 px-3 py-2">
+              <div className="min-w-0">
+                <p className="text-[10px] text-sidebar-foreground/60">Connecté en tant que</p>
+                <p className="text-xs font-semibold text-sidebar-foreground truncate">{nomAgent}</p>
+              </div>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-7 w-7 text-sidebar-foreground/70 hover:text-sidebar-foreground"
+                onClick={logout}
+                aria-label="Se déconnecter"
+                title="Se déconnecter"
+              >
+                <LogOut className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
       </aside>
 

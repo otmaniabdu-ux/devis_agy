@@ -11,6 +11,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// --- Authentification (rôle unique "agent d'agence") ---
+model Utilisateur {
+  id             String    @id @default(cuid())
+  nomUtilisateur String    @unique
+  passwordHash   String    // bcrypt (bcryptjs) — jamais de hash maison
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  sessions       Session[]
+}
+
+model Session {
+  id            String      @id @default(cuid())
+  tokenHash     String      @unique // SHA-256 du token — le token brut n'est jamais stocké
+  utilisateur   Utilisateur @relation(fields: [utilisateurId], references: [id], onDelete: Cascade)
+  utilisateurId String
+  expiresAt     DateTime
+  createdAt     DateTime    @default(now())
+}
+
 // --- Paramètres globaux de l'agence (singleton) ---
 model ParametresAgence {
   id              String   @id @default("default")

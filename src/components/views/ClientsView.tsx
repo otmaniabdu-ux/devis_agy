@@ -81,13 +81,21 @@ export function ClientsView() {
     setDialogOpen(true)
   }
 
-  const openEdit = (c: Client) => {
-    setForm({
-      type: c.type, nom: c.nom, prenom: c.prenom ?? '', raisonSociale: c.raisonSociale ?? '',
-      telephone: c.telephone ?? '', email: c.email ?? '', adresse: c.adresse ?? '', notes: c.notes ?? '',
-    })
+  const openEdit = async (c: Client) => {
+    // La liste est une projection minimale (sans adresse/notes) :
+    // on recharge le détail complet pour préremplir le formulaire.
+    setForm(EMPTY)
     setEditId(c.id)
     setDialogOpen(true)
+    try {
+      const full: Client = await api(`/api/clients/${c.id}`)
+      setForm({
+        type: full.type, nom: full.nom, prenom: full.prenom ?? '', raisonSociale: full.raisonSociale ?? '',
+        telephone: full.telephone ?? '', email: full.email ?? '', adresse: full.adresse ?? '', notes: full.notes ?? '',
+      })
+    } catch {
+      toast.error('Impossible de charger la fiche client')
+    }
   }
 
   const submit = async () => {

@@ -1,9 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { requireAgent } from '@/lib/api-auth'
 import { FactureUseCases } from '@/application/facturation/FactureUseCases'
 import { CreateFactureSchema } from '@/lib/validation/factureSchemas'
 import { getErrorMessage } from '@/lib/errors'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
+  const agent = await requireAgent(req)
+  if (agent instanceof NextResponse) return agent
+
   try {
     const factures = await FactureUseCases.list()
     return NextResponse.json(factures)
@@ -14,6 +18,9 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const agent = await requireAgent(req)
+  if (agent instanceof NextResponse) return agent
+
   try {
     const body = await req.json()
     const parsed = CreateFactureSchema.safeParse(body)

@@ -10,6 +10,15 @@ vi.mock('@/lib/db', () => ({
       create: vi.fn(),
       findMany: vi.fn(),
     },
+    // Session requise par requireAgent (garde d'authentification des routes)
+    session: {
+      findUnique: vi.fn().mockResolvedValue({
+        id: 'session-1',
+        expiresAt: new Date(Date.now() + 3_600_000),
+        utilisateur: { id: 'user-1', nomUtilisateur: 'agent' },
+      }),
+      delete: vi.fn(),
+    },
   },
 }))
 
@@ -26,6 +35,7 @@ describe('POST /api/clients', () => {
     }
 
     const req = new NextRequest('http://localhost/api/clients', {
+      headers: { cookie: 'agt_session=valid-token' },
       method: 'POST',
       body: JSON.stringify(payload),
     })
@@ -59,6 +69,7 @@ describe('POST /api/clients', () => {
     }
 
     const req = new NextRequest('http://localhost/api/clients', {
+      headers: { cookie: 'agt_session=valid-token' },
       method: 'POST',
       body: JSON.stringify(payload),
     })
@@ -80,6 +91,7 @@ describe('POST /api/clients', () => {
     }
 
     const req = new NextRequest('http://localhost/api/clients', {
+      headers: { cookie: 'agt_session=valid-token' },
       method: 'POST',
       body: JSON.stringify(payload),
     })
@@ -98,6 +110,7 @@ describe('POST /api/clients', () => {
     }
 
     const req = new NextRequest('http://localhost/api/clients', {
+      headers: { cookie: 'agt_session=valid-token' },
       method: 'POST',
       body: JSON.stringify(payload),
     })
