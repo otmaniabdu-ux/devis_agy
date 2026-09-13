@@ -117,7 +117,8 @@ Garanties de qualité vérifiées en continu :
 | :--- | :--- | :---: |
 | Typage strict TypeScript | `bunx tsc --noEmit` | ✅ 0 erreur |
 | Lint ESLint | `bun run lint` | ✅ 0 erreur |
-| Tests unitaires (Vitest) | `bun run test` | ✅ 53/53 |
+| Tests unitaires (Vitest) | `bun run test` | ✅ 70/70 |
+| Tests E2E authentifiés (Playwright) | `bun run test:e2e` | ✅ 7/7 |
 | Build production Next + Rust (Tauri) | `bun run scripts/build-tauri.ts` | ✅ |
 
 **Zéro `any`** dans le code de production : les données de formulaires sont typées par interfaces dédiées, les payloads API par les schémas Zod et le template PDF par `Prisma.DevisGetPayload`.
@@ -126,12 +127,22 @@ Garanties de qualité vérifiées en continu :
 
 ## 🔒 Sécurité (Desktop & Local)
 
-- **Proxy de sécurité Next.js 16** (`src/proxy.ts`, ex-`middleware.ts`) : accès aux routes `/api/**` réservé à `localhost` / `127.0.0.1` / `::1` / WebView Tauri (fail-closed, 403 sinon) + headers de sécurité (`X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`).
+- **Authentification par session réelle** : compte unique « agent d'agence » (`Utilisateur`, mot de passe hashé **bcryptjs** coût 12), sessions serveur en base (`Session`, seul le SHA-256 du token est stocké), cookie **httpOnly + SameSite=Lax** d'une durée de 7 jours, portail de connexion intégré à l'interface et bouton de déconnexion dans la sidebar.
+- **Proxy de sécurité Next.js 16** (`src/proxy.ts`, ex-`middleware.ts`) :
+  - **401 immédiat** sur toute requête `/api/**` sans cookie de session (indépendant des en-têtes `Host`/`Origin`/`Referer` falsifiables) ;
+  - **garde `requireAgent()`** dans chaque route API : validation du token contre la table `Session` en base (un cookie falsifié est rejeté) ;
+  - routes API publiques limitées à `/api/auth/login` et `/api/health` (health-check sans donnée métier) ;
+  - accès réservé à `localhost` / `127.0.0.1` / `::1` / WebView Tauri (fail-closed, 403 sinon) + headers de sécurité (`X-Frame-Options`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`).
+- **Validation Zod systématique** sur toutes les routes API recevant un body (`400` avec détails, jamais d'exception Prisma brute).
+- **Atomicité financière** : création/modification de devis et recalcul des totaux enveloppés dans `db.$transaction` (rollback complet en cas d'échec).
+- **Minimisation des données personnelles** : les endpoints de liste ne renvoient que les champs affichés (les numéros de passeport et les champs sensibles sont réservés aux vues de détail).
 - **Sidecar Next.js bindé sur `127.0.0.1:14242` uniquement** — aucune exposition réseau externe ; base SQLite copiée dans `AppData` au premier lancement.
 - **CSP Tauri stricte** (`default-src 'self'`, `object-src 'none'`) et capabilities minimales (`core:default` seulement).
 - **Endpoint de seed désactivé en production** (403) et `GET` interdit (anti-CSRF).
 - **Conformité RGPD** : route `/api/rgpd` d'anonymisation des devis clients.
 - **Dépendances auditées** : vulnérabilités corrigées (`sharp ≥ 0.35`, `picomatch ≥ 2.3.2`, `brace-expansion`, `browserslist`, `@babel/core`) via `overrides` npm/bun.
+
+> ⚠️ **Premier lancement** : le compte par défaut `agent` / `Agence@2026` est créé par `bun scripts/seed-user.ts` — **changez le mot de passe immédiatement** (`MOT_DE_PASSE=... bun scripts/seed-user.ts`).
 
 ---
 
@@ -143,8 +154,9 @@ Garanties de qualité vérifiées en continu :
 - **Moteur Financier** : [Decimal.js](https://mikemcl.github.io/decimal.js/).
 - **Génération PDF** : [@react-pdf/renderer](https://react-pdf.org/).
 - **Application Desktop Native** : [Tauri v2](https://v2.tauri.app/) (Fenêtre native de bureau, sidecar serveur sur `127.0.0.1:14242`).
-- **Tests & Qualité** : [Vitest](https://vitest.dev/) (53 tests unitaires), [ESLint 9](https://eslint.org/) (0 erreur), [Playwright](https://playwright.dev/) (tests E2E).
+- **Tests & Qualité** : [Vitest](https://vitest.dev/) (70 tests unitaires), [ESLint 9](https://eslint.org/) (0 erreur), [Playwright](https://playwright.dev/) (7 tests E2E authentifiés via `storageState`).
 - **Runtime** : [Bun](https://bun.sh/) (avec support fallback Node.js).
+- **Sécurité** : [bcryptjs](https://github.com/dcodeIO/bcrypt.js) (hashage des mots de passe), sessions serveur en base (SHA-256 du token).
 
 ---
 
@@ -164,18 +176,24 @@ bun run db:push
 bun run db:generate
 ```
 
-### 3. Peupler les catalogues (118 Hôtels & 25 Compagnies)
+### 3. Créer le compte agent (authentification)
+```bash
+bun scripts/seed-user.ts                                    # agent / Agence@2026 (défaut)
+MOT_DE_PASSE="VotreMotDePasse" bun scripts/seed-user.ts     # recommandé
+```
+
+### 4. Peupler les catalogues (118 Hôtels & 25 Compagnies)
 ```bash
 bun scripts/populate-hotels-booking.ts
 ```
 
-### 4. Lancement du serveur Web de développement
+### 5. Lancement du serveur Web de développement
 ```bash
 bun run dev
 ```
-Accédez à l'application sur : **`http://localhost:3000`**
+Accédez à l'application sur : **`http://localhost:3000`** puis connectez-vous avec le compte agent.
 
-### 5. Lancement en Mode Desktop Natif (Tauri v2)
+### 6. Lancement en Mode Desktop Natif (Tauri v2)
 **En développement :**
 ```bash
 bun x tauri dev
@@ -198,17 +216,19 @@ Dans le fichier `package.json` :
 | Commande | Action |
 | :--- | :--- |
 | `bun run dev` | Lance l'application web Next.js en mode développement sur le port 3000. |
-| `bun run build` | Compile l'application Next.js en mode production (`standalone`). |
+| `bun run build` | Compile l'application Next.js en mode production (`standalone`) **et copie les assets statiques + DLL natives sharp** (`build:standalone-assets`). |
 | `bun run start` | Démarre le serveur Next.js en mode production. |
+| `bun run build:standalone-assets` | Recopie manuellement `.next/static`, `public/` et `node_modules/@img` (DLL sharp/libvips) dans `.next/standalone`. |
 | `bun run scripts/build-tauri.ts` | Prépare le build Tauri en empaquetant le serveur Next.js dans un Sidecar Bun local. |
 | `bunx @tauri-apps/cli build` | Compile l'application Desktop native de production (génère `.msi` et `.exe`). |
+| `bun scripts/seed-user.ts` | Crée/réinitialise le compte agent d'authentification (`agent` / `Agence@2026` par défaut, surchargeable via `NOM_UTILISATEUR` / `MOT_DE_PASSE`). |
 | `bun scripts/populate-hotels-booking.ts` | Met à jour le catalogue avec les 118 hôtels et 25 compagnies aériennes. |
 | `bun scripts/seed-cloud.ts` | Réinitialise la base SQLite locale avec les paramètres, taux et devis de démonstration. |
 | `bun run db:push` | Synchronise le schéma Prisma avec le fichier SQLite `db/custom.db`. |
 | `bun run db:generate` | Régénère le client TypeScript Prisma. |
 | `bun run test` | Lance les tests unitaires (vitest) couvrant le typage strict et les règles métier (100% de succès). |
 | `bun run lint` | Analyse statique ESLint de tout le projet (doit rester à 0 erreur). |
-| `bun run test:e2e` | Lance les tests de bout en bout Playwright (parcours devis + API). |
+| `bun run test:e2e` | Lance les tests E2E Playwright authentifiés (projet `setup` : login `/api/auth/login` + `storageState`, puis parcours devis + API + garde 401). |
 
 ---
 

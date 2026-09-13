@@ -26,8 +26,9 @@ L'application **El Mouhssinoune Tours — Omra & Hadj VIP Quotes** (`devis-agy`)
 - **Génération PDF** : `@react-pdf/renderer` avec rendu serveur optimisé (`src/lib/pdfRenderer.ts`), polices embarquées (DejaVu / Helvetica) et téléchargement Blob (`downloadPdf`) compatible WebView2 / Tauri v2 (Variantes: `client`, `interne`, `programme` sans prix).
 - **Runtime / Executable** : Bun (utilisé pour les scripts et comme moteur d'exécution local).
 - **Application Desktop Native** : Tauri v2 (pour un mode fenêtre native). En production, un **Sidecar Bun** est embarqué pour faire tourner le serveur Next.js en tâche de fond, bindé exclusivement sur `127.0.0.1:14242`.
-- **Tests** : Vitest (fichiers `*.test.ts` dans `src/domain/__tests__/`).
-- **Scripts d'Automatisation** : `scripts/populate-hotels-booking.ts`, `scripts/seed-cloud.ts`, `scripts/build-tauri.ts`.
+- **Authentification** : session serveur en base — compte unique « agent d'agence » (`Utilisateur`), mot de passe hashé **bcryptjs** (coût 12), token de session stocké en SHA-256 (`Session`), cookie **httpOnly + SameSite=Lax** 7 jours. Garde `requireAgent()` (`src/lib/api-auth.ts`) + proxy 401 (`src/proxy.ts`). Compte créé via `scripts/seed-user.ts` (défaut `agent` / `Agence@2026` — à changer).
+- **Tests** : Vitest (70 tests unitaires, `src/domain/__tests__/` + `src/lib/__tests__/`) et Playwright (7 tests E2E authentifiés via projet `setup` + `storageState`, `e2e/`).
+- **Scripts d'Automatisation** : `scripts/populate-hotels-booking.ts`, `scripts/seed-cloud.ts`, `scripts/seed-user.ts`, `scripts/build-tauri.ts`, `scripts/copy-standalone-assets.ts`.
 
 ---
 
@@ -62,6 +63,21 @@ L'application **El Mouhssinoune Tours — Omra & Hadj VIP Quotes** (`devis-agy`)
 3. **Tests Unitaires** : Tout nouveau Use Case ou algorithme financier (ex: `PricingEngine.ts`) doit être couvert par un test Vitest (`bun run test`).
 4. **Qualité Automatisée** : `bun run lint` doit rester à **0 erreur** (obligatoire) ; les `console.error` des routes API sont tolérés (journalisation serveur). Le hook de sécurité serveur est `src/proxy.ts` (convention Next.js 16, ex-`middleware.ts`).
 
+### F. Authentification & Routes API (obligatoire)
+1. **Garde obligatoire** : tout handler de route API (sauf `/api/auth/login` et `/api/health`) doit appeler `requireAgent(req)` de `src/lib/api-auth.ts` en première instruction et retourner la réponse 401 si reçue :
+   ```ts
+   const agent = await requireAgent(req)
+   if (agent instanceof NextResponse) return agent
+   ```
+2. **Proxy** (`src/proxy.ts`) : renvoie 401 sur toute requête `/api/**` sans cookie de session — ne jamais élargir `PUBLIC_API_ROUTES` (actuellement `/api/auth/login`, `/api/health`) sans justification sécurité.
+3. **Sessions** : le token brut n'est jamais persisté (seul son SHA-256 l'est, table `Session`) ; le cookie est `httpOnly`, `SameSite=Lax`, 7 jours. Aucun secret ni mot de passe en clair dans le code versionné.
+4. **Validation Zod systématique** : toute route recevant un body (POST/PUT/PATCH) doit `safeParse` avec un schéma de `src/lib/validation/` et renvoyer `400` avec les détails Zod — jamais d'exception Prisma brute. Les champs nullable en base doivent être acceptés par le schéma (`nullish` + transformation « ne pas modifier »).
+5. **Écritures atomiques** : toute opération multi-tables (création de devis + recalcul, lignes enfants, etc.) est enveloppée dans `db.$transaction` avec passage du client transactionnel (`tx`) aux Use Cases concernés (`RecalculerDevisUseCase.execute(id, tx)`).
+6. **Minimisation des données personnelles (PII)** : les endpoints de liste n'exposent que les champs affichés (`select` Prisma) — passeports, adresses et notes sont réservés aux endpoints de détail.
+
+### G. Build Production Standalone
+- `bun run build` exécute `next build` **puis** `scripts/copy-standalone-assets.ts` : le mode `output: 'standalone'` ne sert pas `.next/static`, `public/` ni les DLL natives de `sharp` (`node_modules/@img`, DLL libvips) — sans cette copie les bundles renvoient 404 (app bloquée sur « Initialisation de l'application… ») et l'export JPEG échoue en 500.
+
 ---
 
 ## 4. Schéma de Base de Données (Prisma)
@@ -71,6 +87,8 @@ Le schéma se trouve dans `prisma/schema.prisma`. Modèles clés :
 | Modèle | Description |
 | :--- | :--- |
 | `ParametresAgence` | Configuration singleton de l'agence (Noms FR/AR, coordonnées, couleurs, logo). |
+| `Utilisateur` | Compte d'authentification « agent d'agence » (nom unique, hash bcrypt). |
+| `Session` | Sessions serveur (SHA-256 du token, utilisateur, expiration) — le token brut n'est jamais stocké. |
 | `TauxChange` | Taux de change globaux par défaut (SAR, USD, EUR en DZD). |
 | `CompteurNumerotation` | Clé mensuelle (`DEVIS-YYYY-MM`) pour l'attribution atomique des numéros. |
 | `Client` | Fiche client (particulier ou société, coordonnées, alertes passeport). |
@@ -93,11 +111,11 @@ Le schéma se trouve dans `prisma/schema.prisma`. Modèles clés :
 ```
 src/
 ├── app/
-│   ├── api/                # Endpoints Next.js API (devis, clients, catalogues, parametres, pdf, rgpd, seed)
+│   ├── api/                # Endpoints Next.js API (auth, devis, clients, catalogues, parametres, factures, pdf, reservations, rgpd, seed, health)
 │   ├── globals.css         # Thème Tailwind v4 Liquid Glass & Variables CSS
 │   ├── layout.tsx          # Layout racine avec police Inter et métadonnées
-│   ├── page.tsx            # Navigation SPA (Dashboard, Devis, Clients, Catalogues, Paramètres)
-│   └── proxy.ts            # Proxy sécurité Next.js 16 (fail-closed localhost/Tauri, headers — ex-middleware.ts)
+│   ├── page.tsx            # Portail de connexion + Navigation SPA (Dashboard, Devis, Clients, Catalogues, Paramètres)
+│   └── proxy.ts            # Proxy sécurité Next.js 16 (401 sans session, fail-closed localhost/Tauri, headers — ex-middleware.ts)
 ├── application/            # Couche Application (Use Cases, dépend de l'infrastructure)
 │   ├── numerotation/       # NumerotationService (numérotation atomique DEVIS-YYYY-MM-NNN)
 │   ├── audit/ catalogues/ clients/ devis/ parametres/ pdf/ rgpd/
@@ -105,6 +123,7 @@ src/
 │   ├── PricingEngine.ts    # Moteur de calcul financier (ResultatCalculDevis, LigneCout)
 │   └── __tests__/          # Tests Vitest du domaine
 ├── components/
+│   ├── auth/               # Portail de connexion (LoginForm)
 │   ├── devis/              # Assistant création devis (Passagers, Vols, Hébergements, Transferts, Hadj, VIP, Financier, Récap)
 │   ├── ui/                 # Composants UI Radix/Shadcn (Button, Dialog, Input, Select, Card, etc.)
 │   └── views/              # Vues principales (DashboardView, ListeDevisView, CataloguesView, etc.)
@@ -113,6 +132,8 @@ src/
 ├── types/
 │   └── devis-forms.ts      # Interfaces de formulaires UI (montants en strings décimales)
 └── lib/
+    ├── api-auth.ts         # Garde requireAgent() : validation de session en base pour chaque route API
+    ├── auth.ts             # Sessions (création/validation/destroy, cookie agt_session), bcryptjs
     ├── business.ts         # Métier Omra/Hadj (libellés, calcul des nuitées, vues d'hôtel, catégories)
     ├── calculDevis.ts      # Moteur financier complet Decimal.js, frais ONPO & recalculs
     ├── client-utils.ts     # Helper downloadPdf Blob compatible Tauri & utilitaires formatage
@@ -123,8 +144,10 @@ src/
     ├── money.ts            # Utilitaires financiers strict Decimal.js
     ├── pdfDocument.tsx     # Template PDF React-PDF (variantes client, interne, programme)
     ├── pdfRenderer.ts      # Moteur d'encapsulation de rendu PDF serveur (sémaphore + cache LRU)
-    └── validation/         # Schémas Zod (devisSchemas, clientSchemas, catalogueSchemas) + types de payload
+    └── validation/         # Schémas Zod (devisSchemas, clientSchemas, catalogueSchemas, parametresSchemas, factureSchemas) + types de payload
 ```
+
+Artefacts hors `src/` : `e2e/` (tests Playwright authentifiés : `auth.setup.ts` → `storageState` dans `e2e/.auth/`, git-ignoré), `scripts/` (seed-user, copy-standalone-assets, build-tauri, populate-hotels-booking, seed-cloud).
 
 ---
 
@@ -137,8 +160,15 @@ bun run dev
 # Lancement en mode Desktop (Fenêtre Native Tauri v2)
 bun x tauri dev
 
+# Créer/réinitialiser le compte agent d'authentification (défaut: agent / Agence@2026)
+bun scripts/seed-user.ts
+MOT_DE_PASSE="NouveauMotDePasse" bun scripts/seed-user.ts
+
 # Lancer les tests unitaires
 bun run test
+
+# Lancer les tests E2E Playwright (login automatique + storageState)
+bun run test:e2e
 
 # Vérification qualité (doit rester à 0 erreur)
 bun run lint
@@ -146,8 +176,9 @@ bun run lint
 # Vérification du typage strict
 bunx tsc --noEmit
 
-# Build Web pour la production
+# Build Web pour la production (compile ET copie static/public + DLL sharp dans .next/standalone)
 bun run build
+bun run start
 
 # Préparer et Builder l'exécutable Desktop Tauri (Production)
 bun run scripts/build-tauri.ts
