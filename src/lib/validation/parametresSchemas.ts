@@ -1,6 +1,9 @@
 import { z } from 'zod'
 
-const OptionalText = z.string().optional()
+// Champ libre du formulaire paramètres : la vue renvoie l'enregistrement complet
+// tel que lu en base, où les champs optionnels peuvent valoir null.
+// null est accepté puis transformé en undefined = "ne pas modifier" côté use case.
+const OptionalText = z.string().nullish().transform((v) => v ?? undefined)
 
 export const ParametresAgenceSchema = z.object({
   nomFr: OptionalText,
@@ -9,7 +12,9 @@ export const ParametresAgenceSchema = z.object({
   sloganAr: OptionalText,
   adresse: OptionalText,
   telephone: OptionalText,
-  email: z.string().email('Adresse email invalide').optional().or(z.literal('')),
+  // Champ d'affichage libre : la base peut contenir plusieurs emails composés
+  // (ex: "a@x.com / b@y.com") — pas de validation email stricte ici.
+  email: OptionalText,
   rc: OptionalText,
   if: OptionalText,
   art: OptionalText,

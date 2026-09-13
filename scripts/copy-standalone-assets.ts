@@ -27,4 +27,13 @@ cpSync(staticSrc, staticDest, { recursive: true })
 mkdirSync(publicDest, { recursive: true })
 cpSync(publicSrc, publicDest, { recursive: true })
 
-console.log('Assets standalone copiés : .next/static → .next/standalone/.next/static, public → .next/standalone/public')
+// Paquets natifs sharp : le traçage Turbopack copie le binaire .node mais omet
+// les DLL dépendantes (libvips-*.dll) → ERR_DLOPEN_FAILED au runtime standalone.
+const imgSrc = join(root, 'node_modules/@img')
+const imgDest = join(root, '.next/standalone/node_modules/@img')
+if (existsSync(imgSrc)) {
+  mkdirSync(imgDest, { recursive: true })
+  cpSync(imgSrc, imgDest, { recursive: true, force: true })
+}
+
+console.log('Assets standalone copiés : .next/static, public/ et node_modules/@img (DLL sharp/libvips)')
