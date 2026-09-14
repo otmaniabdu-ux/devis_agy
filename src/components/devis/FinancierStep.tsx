@@ -18,8 +18,8 @@ export function FinancierStep() {
   }
 
   const nbPassagers = devis.passagers.length
-  const visaTotal = (parseFloat(devis.visaPrixUnit || '0') * nbPassagers).toFixed(2)
-  const assuranceTotal = (parseFloat(devis.assurancePrixUnit || '0') * nbPassagers).toFixed(2)
+  const visaTotal = D(devis.visaPrixUnit || '0').mul(nbPassagers).toDecimalPlaces(2).toString()
+  const assuranceTotal = D(devis.assurancePrixUnit || '0').mul(nbPassagers).toDecimalPlaces(2).toString()
 
   return (
     <div className="space-y-6">
@@ -196,8 +196,8 @@ export function FinancierStep() {
               </p>
               <p className="text-[10px] text-white/60 mt-0.5">
                 {devis.margeType === 'pourcentage' ? `${devis.margeValeur}%` : 'montant fixe'}
-                {Number(D(resultatCalcul.coutNetDzd)) > 0 && (
-                  <> • {(Number(D(resultatCalcul.margeMontantDzd)) / Number(D(resultatCalcul.prixVenteDzd)) * 100).toFixed(1)}% du CA</>
+                {D(resultatCalcul.coutNetDzd).gt(0) && (
+                  <> • {D(resultatCalcul.margeMontantDzd).div(D(resultatCalcul.prixVenteDzd)).mul(100).toDecimalPlaces(1).toString()}% du CA</>
                 )}
               </p>
             </div>

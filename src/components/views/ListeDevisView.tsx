@@ -184,8 +184,8 @@ export function ListeDevisView({ onNavigate }: { onNavigate: (v: View, devisId?:
               <tbody>
                 {filtered.map((d, i) => {
                   const st = STATUTS_DEVIS[d.statut as keyof typeof STATUTS_DEVIS] ?? STATUTS_DEVIS.brouillon
-                  const margePct = Number(D(d.coutNetDzd)) > 0
-                    ? (Number(D(d.margeMontantDzd)) / Number(D(d.prixVenteDzd)) * 100).toFixed(1)
+                  const margePct = D(d.prixVenteDzd).gt(0)
+                    ? D(d.margeMontantDzd).div(D(d.prixVenteDzd)).mul(100).toDecimalPlaces(1).toString()
                     : '0'
                   return (
                     <tr

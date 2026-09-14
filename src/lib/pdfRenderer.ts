@@ -83,6 +83,9 @@ export async function generateOptimizedPdf(
   // 1. Vérification du cache mémoire rapide (0ms / 0 CPU)
   const cached = pdfCache.get(cacheKey)
   if (cached && Date.now() - cached.timestamp < CACHE_TTL_MS) {
+    // Mettre à jour l'entrée pour marquer comme récemment utilisée (LRU touch)
+    pdfCache.delete(cacheKey)
+    pdfCache.set(cacheKey, { buffer: cached.buffer, timestamp: Date.now() })
     return cached.buffer
   }
 

@@ -18,11 +18,11 @@ export function RecapitulatifStep({ onSaved }: Props) {
 
   const nbPassagers = devis.passagers.length
 
-  // Recalcule les sous-totaux par poste
-  const parPoste: Record<string, number> = {}
+  // Recalcule les sous-totaux par poste (stockés en string decimal)
+  const parPoste: Record<string, string> = {}
   if (resultatCalcul) {
     for (const l of resultatCalcul.lignes) {
-      parPoste[l.poste] = (parPoste[l.poste] ?? 0) + Number(D(l.montantDzd))
+      parPoste[l.poste] = D(parPoste[l.poste] ?? '0').plus(D(l.montantDzd)).toString()
     }
   }
 

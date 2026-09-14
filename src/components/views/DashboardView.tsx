@@ -39,8 +39,8 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: View, devisId?: 
 
   // KPIs
   const totalDevis = devis.length
-  const totalPrixVente = devis.reduce((s, d) => s + Number(D(d.prixVenteDzd)), 0)
-  const totalMarge = devis.reduce((s, d) => s + Number(D(d.margeMontantDzd)), 0)
+  const totalPrixVente = devis.reduce((acc, d) => acc.plus(D(d.prixVenteDzd)), D('0'))
+  const totalMarge = devis.reduce((acc, d) => acc.plus(D(d.margeMontantDzd)), D('0'))
   const alertesPasseport = devis.filter((d) => d.hasAlertePasseport).length
   const devisActifs = devis.filter((d) => d.statut !== 'archive' && d.statut !== 'refuse').length
 
@@ -95,7 +95,7 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: View, devisId?: 
         />
         <KpiCard
           label="Chiffre d'Affaires cumulé"
-          value={fmt(String(totalPrixVente)) + ' DZD'}
+          value={fmt(totalPrixVente.toString()) + ' DZD'}
           sub={`${devis.length} devis enregistrés`}
           icon={TrendingUp}
           accentColor="from-amber-400 to-brand-or"
@@ -104,8 +104,8 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: View, devisId?: 
         />
         <KpiCard
           label="Marge cumulée"
-          value={fmt(String(totalMarge)) + ' DZD'}
-          sub={totalPrixVente > 0 ? `${(Number(totalMarge) / Number(totalPrixVente) * 100).toFixed(1)}% du CA` : '—'}
+          value={fmt(totalMarge.toString()) + ' DZD'}
+          sub={totalPrixVente.gt(0) ? `${totalMarge.div(totalPrixVente).mul(100).toDecimalPlaces(1).toString()}% du CA` : '—'}
           icon={TrendingUp}
           accentColor="from-blue-400 to-brand-bleu-royal"
           iconColor="text-brand-bleu-royal"

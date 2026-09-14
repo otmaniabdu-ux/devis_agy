@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { TYPES_CHAMBRE, FORMULES_REPAS, VUES_HOTEL } from '@/lib/business'
-import { api } from '@/lib/client-utils'
+import { api, fmt } from '@/lib/client-utils'
+import { D } from '@/lib/money'
 import { useDevisStore } from '@/store/useDevisStore'
 import type { HebergementForm, HotelCatalogueItem } from '@/types/devis-forms'
 
@@ -117,7 +118,7 @@ export function HebergementStep() {
         <div className="space-y-3">
           {devis.hebergements.map((h, i: number) => {
             const nbNuits = calcNuitees(h)
-            const total = (parseFloat(h.prixNuitChambre || '0') * nbNuits * h.nbChambres).toFixed(2)
+            const total = D(h.prixNuitChambre || '0').mul(nbNuits).mul(h.nbChambres).toDecimalPlaces(2).toString()
             return (
               <div key={i} className="border border-border rounded-lg p-4 bg-muted/20">
                 <div className="grid sm:grid-cols-12 gap-3 items-end">
@@ -221,7 +222,7 @@ export function HebergementStep() {
                 </div>
                 <div className="mt-2 pt-2 border-t border-border/50 text-xs text-muted-foreground flex justify-between">
                   <span>Sous-total: {nbNuits} nuits × {h.nbChambres} ch. × {h.prixNuitChambre} {h.devise}</span>
-                  <span className="font-bold text-brand-bleu-nuit">{total} {h.devise}</span>
+                  <span className="font-bold text-brand-bleu-nuit">{fmt(total, h.devise)}</span>
                 </div>
               </div>
             )
